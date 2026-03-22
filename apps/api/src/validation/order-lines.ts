@@ -113,7 +113,9 @@ export function parseOrderLineCreate(
     errors
   );
   const lineDiscountTypeProvided =
-    "line_discount_type" in body && body.line_discount_type !== undefined && body.line_discount_type !== null;
+    "line_discount_type" in body &&
+    body.line_discount_type !== undefined &&
+    body.line_discount_type !== null;
   const line_discount_value = optionalNullableNonNegativeNumber(
     body,
     "line_discount_value",
@@ -149,6 +151,12 @@ export function parseOrderLineCreate(
     errors
   );
   const notes = optionalTrimmedString(body, "notes", errors);
+
+  if (line_type === "configuration" && configuration_variant_id !== null) {
+    // Configuration lines are allowed without a product link, but they must point at a real variant.
+  } else if (line_type === "configuration") {
+    push(errors, "configuration_variant_id is required when line_type is configuration");
+  }
 
   if (
     order_id === null ||

@@ -1,4 +1,5 @@
 import {
+  TABLE_DOOR_CONFIGURATION_VARIANTS,
   TABLE_PRODUCTS,
   TABLE_QUOTE_VERSIONS,
   TABLE_UNITS_OF_MEASURE,
@@ -50,9 +51,22 @@ export async function handleQuoteLines(
   }
 
   if (input.product_id !== null) {
-    const ok = await rowExists(db, TABLE_PRODUCTS, input.product_id);
-    if (!ok) {
+    const productOk = await rowExists(db, TABLE_PRODUCTS, input.product_id);
+    if (!productOk) {
       return badRequest(`product_id ${input.product_id} not found`);
+    }
+  }
+
+  if (input.configuration_variant_id !== null) {
+    const variantOk = await rowExists(
+      db,
+      TABLE_DOOR_CONFIGURATION_VARIANTS,
+      input.configuration_variant_id
+    );
+    if (!variantOk) {
+      return badRequest(
+        `configuration_variant_id ${input.configuration_variant_id} not found`
+      );
     }
   }
 
