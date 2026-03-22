@@ -8,6 +8,10 @@ import { handleHealth } from "./health";
 import { handleLocations } from "./locations";
 import { handlePermissions } from "./permissions";
 import { handleRolePermissions } from "./role-permissions";
+import { handlePurchaseReceiptLines } from "./purchase-receipt-lines";
+import { handlePurchaseReceipts } from "./purchase-receipts";
+import { handleInventoryCountLines } from "./inventory-count-lines";
+import { handleInventoryCounts } from "./inventory-counts";
 import { handleProductAttributeValues } from "./product-attribute-values";
 import { handleProductAttributes } from "./product-attributes";
 import { handleProductBundleItems } from "./product-bundle-items";
@@ -17,9 +21,15 @@ import { handleProductSuppliers } from "./product-suppliers";
 import { handleProducts } from "./products";
 import { handleRoles } from "./roles";
 import { handleSuppliers } from "./suppliers";
+import { handleStockAdjustmentLines } from "./stock-adjustment-lines";
+import { handleStockAdjustments } from "./stock-adjustments";
 import { handleStockBalances } from "./stock-balances";
 import { handleStockMovementLines } from "./stock-movement-lines";
 import { handleStockMovements } from "./stock-movements";
+import { handleStockTransferDocuments } from "./stock-transfer-documents";
+import { handleStockTransferLines } from "./stock-transfer-lines";
+import { handleStockWriteoffLines } from "./stock-writeoff-lines";
+import { handleStockWriteoffs } from "./stock-writeoffs";
 import { handleUnits } from "./units";
 import { handleUserRoles } from "./user-roles";
 import { handleUsers } from "./users";
@@ -61,14 +71,34 @@ export async function routeRequest(request: Request, env: Env): Promise<Response
       return handleWarehouses(request, env);
     case "/api/warehouse-positions":
       return handleWarehousePositions(request, env);
+    case "/api/purchase-receipts":
+      return handlePurchaseReceipts(request, env);
+    case "/api/purchase-receipt-lines":
+      return handlePurchaseReceiptLines(request, env);
     case "/api/product-categories":
       return handleProductCategories(request, env);
     case "/api/units":
       return handleUnits(request, env);
     case "/api/suppliers":
       return handleSuppliers(request, env);
+    case "/api/stock-adjustments":
+      return handleStockAdjustments(request, env);
+    case "/api/stock-adjustment-lines":
+      return handleStockAdjustmentLines(request, env);
     case "/api/stock-balances":
       return handleStockBalances(request, env);
+    case "/api/stock-writeoffs":
+      return handleStockWriteoffs(request, env);
+    case "/api/stock-writeoff-lines":
+      return handleStockWriteoffLines(request, env);
+    case "/api/inventory-counts":
+      return handleInventoryCounts(request, env);
+    case "/api/inventory-count-lines":
+      return handleInventoryCountLines(request, env);
+    case "/api/stock-transfer-documents":
+      return handleStockTransferDocuments(request, env);
+    case "/api/stock-transfer-lines":
+      return handleStockTransferLines(request, env);
     case "/api/stock-movements":
       return handleStockMovements(request, env);
     case "/api/stock-movement-lines":

@@ -131,6 +131,33 @@ export function requirePositiveNumber(
   return v;
 }
 
+export function requireNumber(
+  body: JsonObject,
+  key: string,
+  errors: Failures
+): number | null {
+  const v = body[key];
+  if (typeof v !== "number" || Number.isNaN(v)) {
+    push(errors, `${key} is required and must be a number`);
+    return null;
+  }
+  return v;
+}
+
+export function requireNonNegativeNumber(
+  body: JsonObject,
+  key: string,
+  errors: Failures
+): number | null {
+  const v = requireNumber(body, key, errors);
+  if (v === null) return null;
+  if (v < 0) {
+    push(errors, `${key} is required and must be a non-negative number`);
+    return null;
+  }
+  return v;
+}
+
 export function optionalNullableNumber(
   body: JsonObject,
   key: string,
