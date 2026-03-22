@@ -1,4 +1,4 @@
 /**
- * Schema surface: row types and table name constants for Phase 1 entities.
+ * Schema surface: row types and table name constants (Phase 1 + Phase 2).
  */
 export * from "./types";

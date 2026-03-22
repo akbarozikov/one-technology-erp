@@ -2,3 +2,8 @@ export * from "./access-control";
 export * from "./hr";
 export * from "./sites";
 export * from "./audit";
+export * from "./catalog-core";
+export * from "./products";
+export * from "./product-media";
+export * from "./product-attributes";
+export * from "./product-catalog-relations";
