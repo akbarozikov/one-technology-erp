@@ -1,0 +1,24 @@
+{
+    "name": "one-technology-erp-api",
+    "main": "src/index.ts",
+    "compatibility_date": "2026-03-22",
+    "d1_databases": [
+      {
+        "binding": "one_technology_erp_db",
+        "database_name": "one-technology-erp-db",
+        "database_id": "80fe76ce-225f-4975-ac1e-b4a88079dd2b"
+      }
+    ],
+    "kv_namespaces": [
+      {
+        "binding": "ERP_CACHE",
+        "id": "59d74c50d0c845418c0dec5509bc60e6"
+      }
+    ],
+    "r2_buckets": [
+      {
+        "binding": "one_technology_erp_files",
+        "bucket_name": "one-technology-erp-files"
+      }
+    ]
+  }
