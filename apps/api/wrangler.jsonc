@@ -6,7 +6,8 @@
       {
         "binding": "one_technology_erp_db",
         "database_name": "one-technology-erp-db",
-        "database_id": "80fe76ce-225f-4975-ac1e-b4a88079dd2b"
+        "database_id": "80fe76ce-225f-4975-ac1e-b4a88079dd2b",
+        "migrations_dir": "../../packages/db/migrations"
       }
     ],
     "kv_namespaces": [
