@@ -110,6 +110,27 @@ const stockMovementStatuses = [
   { value: "cancelled", label: "cancelled" },
 ];
 
+const warehouseDocumentStatuses = [
+  { value: "draft", label: "draft" },
+  { value: "confirmed", label: "confirmed" },
+  { value: "cancelled", label: "cancelled" },
+];
+
+const inventoryCountStatuses = [
+  { value: "draft", label: "draft" },
+  { value: "in_progress", label: "in_progress" },
+  { value: "completed", label: "completed" },
+  { value: "cancelled", label: "cancelled" },
+];
+
+const writeoffReasons = [
+  { value: "damage", label: "damage" },
+  { value: "loss", label: "loss" },
+  { value: "defect", label: "defect" },
+  { value: "expired", label: "expired" },
+  { value: "other", label: "other" },
+];
+
 export const entityConfigs = {
   roles: {
     title: "Roles",
@@ -700,6 +721,260 @@ export const entityConfigs = {
       { key: "line_notes", label: "Line notes", kind: "textarea" },
     ],
   },
+  purchase_receipts: {
+    title: "Purchase receipts",
+    apiPath: "/api/purchase-receipts",
+    fields: [
+      { key: "supplier_id", label: "Supplier ID", kind: "number", required: true },
+      {
+        key: "destination_warehouse_id",
+        label: "Destination warehouse ID",
+        kind: "number",
+        required: true,
+      },
+      { key: "receipt_date", label: "Receipt date", kind: "text", required: true },
+      {
+        key: "status",
+        label: "Status",
+        kind: "select",
+        options: warehouseDocumentStatuses,
+      },
+      { key: "receipt_number", label: "Receipt number", kind: "text" },
+      { key: "source_document_number", label: "Source document number", kind: "text" },
+      { key: "currency", label: "Currency", kind: "text" },
+      { key: "total_amount", label: "Total amount", kind: "number", step: "any", min: 0 },
+      { key: "received_by_user_id", label: "Received by user ID", kind: "number" },
+      { key: "approved_by_user_id", label: "Approved by user ID", kind: "number" },
+      { key: "notes", label: "Notes", kind: "textarea" },
+    ],
+  },
+  purchase_receipt_lines: {
+    title: "Purchase receipt lines",
+    apiPath: "/api/purchase-receipt-lines",
+    fields: [
+      {
+        key: "purchase_receipt_id",
+        label: "Purchase receipt ID",
+        kind: "number",
+        required: true,
+      },
+      { key: "line_number", label: "Line number", kind: "number", required: true },
+      { key: "product_id", label: "Product ID", kind: "number", required: true },
+      {
+        key: "destination_position_id",
+        label: "Destination position ID",
+        kind: "number",
+        required: true,
+      },
+      {
+        key: "quantity",
+        label: "Quantity",
+        kind: "number",
+        required: true,
+        step: "any",
+        min: 0.000001,
+      },
+      { key: "unit_id", label: "Unit ID", kind: "number", required: true },
+      { key: "unit_cost", label: "Unit cost", kind: "number", step: "any", min: 0 },
+      { key: "line_total", label: "Line total", kind: "number", step: "any", min: 0 },
+      {
+        key: "snapshot_product_name",
+        label: "Snapshot product name",
+        kind: "text",
+        required: true,
+      },
+      { key: "snapshot_sku", label: "Snapshot SKU", kind: "text", required: true },
+      {
+        key: "snapshot_unit_name",
+        label: "Snapshot unit name",
+        kind: "text",
+        required: true,
+      },
+      { key: "notes", label: "Notes", kind: "textarea" },
+    ],
+  },
+  stock_adjustments: {
+    title: "Stock adjustments",
+    apiPath: "/api/stock-adjustments",
+    fields: [
+      { key: "warehouse_id", label: "Warehouse ID", kind: "number", required: true },
+      {
+        key: "adjustment_date",
+        label: "Adjustment date",
+        kind: "text",
+        required: true,
+      },
+      { key: "reason", label: "Reason", kind: "text" },
+      {
+        key: "status",
+        label: "Status",
+        kind: "select",
+        options: warehouseDocumentStatuses,
+      },
+      { key: "reference_code", label: "Reference code", kind: "text" },
+      { key: "performed_by_user_id", label: "Performed by user ID", kind: "number" },
+      { key: "approved_by_user_id", label: "Approved by user ID", kind: "number" },
+      { key: "notes", label: "Notes", kind: "textarea" },
+    ],
+  },
+  stock_adjustment_lines: {
+    title: "Stock adjustment lines",
+    apiPath: "/api/stock-adjustment-lines",
+    fields: [
+      {
+        key: "stock_adjustment_id",
+        label: "Stock adjustment ID",
+        kind: "number",
+        required: true,
+      },
+      { key: "product_id", label: "Product ID", kind: "number", required: true },
+      { key: "position_id", label: "Position ID", kind: "number", required: true },
+      { key: "old_qty", label: "Old qty", kind: "number", required: true, step: "any", min: 0 },
+      { key: "new_qty", label: "New qty", kind: "number", required: true, step: "any", min: 0 },
+      { key: "difference_qty", label: "Difference qty", kind: "number", required: true, step: "any" },
+      { key: "unit_id", label: "Unit ID", kind: "number", required: true },
+      { key: "line_notes", label: "Line notes", kind: "textarea" },
+    ],
+  },
+  stock_writeoffs: {
+    title: "Stock writeoffs",
+    apiPath: "/api/stock-writeoffs",
+    fields: [
+      { key: "warehouse_id", label: "Warehouse ID", kind: "number", required: true },
+      { key: "writeoff_date", label: "Writeoff date", kind: "text", required: true },
+      {
+        key: "writeoff_reason",
+        label: "Writeoff reason",
+        kind: "select",
+        required: true,
+        options: writeoffReasons,
+      },
+      {
+        key: "status",
+        label: "Status",
+        kind: "select",
+        options: warehouseDocumentStatuses,
+      },
+      { key: "reference_code", label: "Reference code", kind: "text" },
+      { key: "performed_by_user_id", label: "Performed by user ID", kind: "number" },
+      { key: "approved_by_user_id", label: "Approved by user ID", kind: "number" },
+      { key: "notes", label: "Notes", kind: "textarea" },
+    ],
+  },
+  stock_writeoff_lines: {
+    title: "Stock writeoff lines",
+    apiPath: "/api/stock-writeoff-lines",
+    fields: [
+      {
+        key: "stock_writeoff_id",
+        label: "Stock writeoff ID",
+        kind: "number",
+        required: true,
+      },
+      { key: "product_id", label: "Product ID", kind: "number", required: true },
+      { key: "position_id", label: "Position ID", kind: "number", required: true },
+      {
+        key: "quantity",
+        label: "Quantity",
+        kind: "number",
+        required: true,
+        step: "any",
+        min: 0.000001,
+      },
+      { key: "unit_id", label: "Unit ID", kind: "number", required: true },
+      { key: "line_notes", label: "Line notes", kind: "textarea" },
+    ],
+  },
+  inventory_counts: {
+    title: "Inventory counts",
+    apiPath: "/api/inventory-counts",
+    fields: [
+      { key: "warehouse_id", label: "Warehouse ID", kind: "number", required: true },
+      { key: "count_date", label: "Count date", kind: "text", required: true },
+      {
+        key: "status",
+        label: "Status",
+        kind: "select",
+        options: inventoryCountStatuses,
+      },
+      { key: "reference_code", label: "Reference code", kind: "text" },
+      { key: "performed_by_user_id", label: "Performed by user ID", kind: "number" },
+      { key: "notes", label: "Notes", kind: "textarea" },
+    ],
+  },
+  inventory_count_lines: {
+    title: "Inventory count lines",
+    apiPath: "/api/inventory-count-lines",
+    fields: [
+      {
+        key: "inventory_count_id",
+        label: "Inventory count ID",
+        kind: "number",
+        required: true,
+      },
+      { key: "product_id", label: "Product ID", kind: "number", required: true },
+      { key: "position_id", label: "Position ID", kind: "number", required: true },
+      { key: "system_qty", label: "System qty", kind: "number", required: true, step: "any", min: 0 },
+      { key: "counted_qty", label: "Counted qty", kind: "number", required: true, step: "any", min: 0 },
+      { key: "difference_qty", label: "Difference qty", kind: "number", required: true, step: "any" },
+      { key: "unit_id", label: "Unit ID", kind: "number", required: true },
+      { key: "line_notes", label: "Line notes", kind: "textarea" },
+    ],
+  },
+  stock_transfer_documents: {
+    title: "Stock transfer documents",
+    apiPath: "/api/stock-transfer-documents",
+    fields: [
+      {
+        key: "source_warehouse_id",
+        label: "Source warehouse ID",
+        kind: "number",
+        required: true,
+      },
+      {
+        key: "destination_warehouse_id",
+        label: "Destination warehouse ID",
+        kind: "number",
+        required: true,
+      },
+      { key: "transfer_date", label: "Transfer date", kind: "text", required: true },
+      {
+        key: "status",
+        label: "Status",
+        kind: "select",
+        options: warehouseDocumentStatuses,
+      },
+      { key: "reference_code", label: "Reference code", kind: "text" },
+      { key: "requested_by_user_id", label: "Requested by user ID", kind: "number" },
+      { key: "confirmed_by_user_id", label: "Confirmed by user ID", kind: "number" },
+      { key: "notes", label: "Notes", kind: "textarea" },
+    ],
+  },
+  stock_transfer_lines: {
+    title: "Stock transfer lines",
+    apiPath: "/api/stock-transfer-lines",
+    fields: [
+      {
+        key: "stock_transfer_document_id",
+        label: "Stock transfer document ID",
+        kind: "number",
+        required: true,
+      },
+      { key: "product_id", label: "Product ID", kind: "number", required: true },
+      { key: "from_position_id", label: "From position ID", kind: "number", required: true },
+      { key: "to_position_id", label: "To position ID", kind: "number", required: true },
+      {
+        key: "quantity",
+        label: "Quantity",
+        kind: "number",
+        required: true,
+        step: "any",
+        min: 0.000001,
+      },
+      { key: "unit_id", label: "Unit ID", kind: "number", required: true },
+      { key: "line_notes", label: "Line notes", kind: "textarea" },
+    ],
+  },
 } as const satisfies Record<string, EntityConfig>;
 
 export type EntityKey = keyof typeof entityConfigs;
@@ -731,4 +1006,14 @@ export const adminNav: { href: string; label: string }[] = [
   { href: "/admin/stock-balances", label: "Stock Balances" },
   { href: "/admin/stock-movements", label: "Stock Movements" },
   { href: "/admin/stock-movement-lines", label: "Stock Movement Lines" },
+  { href: "/admin/purchase-receipts", label: "Purchase Receipts" },
+  { href: "/admin/purchase-receipt-lines", label: "Purchase Receipt Lines" },
+  { href: "/admin/stock-adjustments", label: "Stock Adjustments" },
+  { href: "/admin/stock-adjustment-lines", label: "Stock Adjustment Lines" },
+  { href: "/admin/stock-writeoffs", label: "Stock Writeoffs" },
+  { href: "/admin/stock-writeoff-lines", label: "Stock Writeoff Lines" },
+  { href: "/admin/inventory-counts", label: "Inventory Counts" },
+  { href: "/admin/inventory-count-lines", label: "Inventory Count Lines" },
+  { href: "/admin/stock-transfer-documents", label: "Stock Transfer Documents" },
+  { href: "/admin/stock-transfer-lines", label: "Stock Transfer Lines" },
 ];
