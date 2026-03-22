@@ -20,6 +20,7 @@ import { handleProductCategories } from "./product-categories";
 import { handleProductSuppliers } from "./product-suppliers";
 import { handleProducts } from "./products";
 import { handleRoles } from "./roles";
+import { handleStockReservations } from "./stock-reservations";
 import { handleSuppliers } from "./suppliers";
 import { handleStockAdjustmentLines } from "./stock-adjustment-lines";
 import { handleStockAdjustments } from "./stock-adjustments";
@@ -103,6 +104,8 @@ export async function routeRequest(request: Request, env: Env): Promise<Response
       return handleStockMovements(request, env);
     case "/api/stock-movement-lines":
       return handleStockMovementLines(request, env);
+    case "/api/stock-reservations":
+      return handleStockReservations(request, env);
     case "/api/products":
       return handleProducts(request, env);
     case "/api/product-attributes":
