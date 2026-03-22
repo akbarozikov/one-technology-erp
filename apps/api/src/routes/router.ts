@@ -15,6 +15,11 @@ import { handleHealth } from "./health";
 import { handleInventoryCountLines } from "./inventory-count-lines";
 import { handleInventoryCounts } from "./inventory-counts";
 import { handleLocations } from "./locations";
+import { handleOrderDiscounts } from "./order-discounts";
+import { handleOrderLines } from "./order-lines";
+import { handleOrders } from "./orders";
+import { handlePaymentMethods } from "./payment-methods";
+import { handlePayments } from "./payments";
 import { handlePermissions } from "./permissions";
 import { handleProductAttributeValues } from "./product-attribute-values";
 import { handleProductAttributes } from "./product-attributes";
@@ -25,6 +30,10 @@ import { handleProductSuppliers } from "./product-suppliers";
 import { handleProducts } from "./products";
 import { handlePurchaseReceiptLines } from "./purchase-receipt-lines";
 import { handlePurchaseReceipts } from "./purchase-receipts";
+import { handleQuoteDiscounts } from "./quote-discounts";
+import { handleQuoteLines } from "./quote-lines";
+import { handleQuotes } from "./quotes";
+import { handleQuoteVersions } from "./quote-versions";
 import { handleRolePermissions } from "./role-permissions";
 import { handleRoles } from "./roles";
 import { handleSpringCalculationResults } from "./spring-calculation-results";
@@ -130,6 +139,24 @@ export async function routeRequest(request: Request, env: Env): Promise<Response
       return handleBomChangeLogs(request, env);
     case "/api/configuration-visuals":
       return handleConfigurationVisuals(request, env);
+    case "/api/quotes":
+      return handleQuotes(request, env);
+    case "/api/quote-versions":
+      return handleQuoteVersions(request, env);
+    case "/api/quote-lines":
+      return handleQuoteLines(request, env);
+    case "/api/quote-discounts":
+      return handleQuoteDiscounts(request, env);
+    case "/api/orders":
+      return handleOrders(request, env);
+    case "/api/order-lines":
+      return handleOrderLines(request, env);
+    case "/api/order-discounts":
+      return handleOrderDiscounts(request, env);
+    case "/api/payment-methods":
+      return handlePaymentMethods(request, env);
+    case "/api/payments":
+      return handlePayments(request, env);
     case "/api/products":
       return handleProducts(request, env);
     case "/api/product-attributes":
