@@ -8,3 +8,4 @@ export * from "./product-media";
 export * from "./product-attributes";
 export * from "./product-catalog-relations";
 export * from "./warehouse-core";
+export * from "./warehouse-operational-documents";

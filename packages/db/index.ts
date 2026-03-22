@@ -13,3 +13,6 @@ export const PHASE2_PRODUCT_CATALOG_MIGRATION =
 
 export const PHASE3A_WAREHOUSE_CORE_MIGRATION =
   "0003_phase3a_warehouse_core.sql" as const;
+
+export const PHASE4A_WAREHOUSE_OPERATIONAL_DOCUMENTS_MIGRATION =
+  "0004_phase4a_warehouse_operational_documents.sql" as const;

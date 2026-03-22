@@ -7,7 +7,7 @@ Cloudflare D1 (SQLite) schema types and migrations for **One Technology ERP**.
 | Path | Purpose |
 |------|---------|
 | `schema/types/` | Row interfaces, domain unions, and `TABLE_*` constants |
-| `migrations/` | SQL migrations applied via Wrangler (`0001` Phase 1, `0002` product catalog, `0003` warehouse core foundation) |
+| `migrations/` | SQL migrations applied via Wrangler (`0001` Phase 1, `0002` product catalog, `0003` warehouse core foundation, `0004` warehouse operational documents) |
 
 ## Applying migrations
 
@@ -37,3 +37,7 @@ Tables cover categories (tree), units of measure, suppliers, products (with type
 ### Phase 3A (warehouse core foundation)
 
 Tables cover current per-position stock state in `stock_balances` plus historical stock movement headers and lines in `stock_movements` / `stock_movement_lines`. Balances are modeled by product and warehouse position, with `warehouse_id` stored explicitly for query speed and future document workflows.
+
+### Phase 4A (warehouse operational documents)
+
+Tables cover warehouse business documents and their lines for purchase receipts, stock adjustments, stock writeoffs, inventory counts, and stock transfers. These headers/lines intentionally stop at document persistence for now; later phases can generate `stock_movements` from confirmed documents without redesigning the core ledger.
