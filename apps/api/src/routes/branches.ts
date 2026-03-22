@@ -1,0 +1,63 @@
+import type { BranchRow } from "@one-technology/db";
+import { getDb } from "../lib/db";
+import { asSqlFailure } from "../lib/d1-errors";
+import { readJsonObject } from "../lib/json";
+import { badRequest, jsonOk, methodNotAllowed } from "../lib/response";
+import type { Env } from "../types/env";
+import { parseBranchCreate } from "../validation/branches";
+
+export async function handleBranches(request: Request, env: Env): Promise<Response> {
+  const db = getDb(env);
+
+  if (request.method === "GET") {
+    const { results } = await db
+      .prepare("SELECT * FROM branches ORDER BY id ASC")
+      .all<BranchRow>();
+    return jsonOk({ data: results ?? [] });
+  }
+
+  if (request.method !== "POST") {
+    return methodNotAllowed(["GET", "POST"]);
+  }
+
+  let body: Record<string, unknown>;
+  try {
+    body = await readJsonObject(request);
+  } catch {
+    return badRequest("Invalid JSON body");
+  }
+
+  const errors: string[] = [];
+  const input = parseBranchCreate(body, errors);
+  if (!input || errors.length > 0) {
+    return badRequest(errors.length ? errors.join("; ") : "Validation failed");
+  }
+
+  try {
+    const row = await db
+      .prepare(
+        `INSERT INTO branches (
+          name, code, branch_type, phone, email, address_text, city, country, is_active, notes
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?) RETURNING *`
+      )
+      .bind(
+        input.name,
+        input.code,
+        input.branch_type,
+        input.phone,
+        input.email,
+        input.address_text,
+        input.city,
+        input.country,
+        input.is_active,
+        input.notes
+      )
+      .first<BranchRow>();
+    if (!row) {
+      return badRequest("Insert did not return a row");
+    }
+    return jsonOk({ data: row }, { status: 201 });
+  } catch (err) {
+    return asSqlFailure(err);
+  }
+}
