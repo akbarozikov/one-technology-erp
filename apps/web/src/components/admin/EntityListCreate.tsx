@@ -54,6 +54,7 @@ function cellValue(v: unknown): string {
 }
 
 export function EntityListCreate({ config }: { config: EntityConfig }) {
+  const createEnabled = config.createEnabled ?? true;
   const [rows, setRows] = useState<Record<string, unknown>[] | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -128,7 +129,11 @@ export function EntityListCreate({ config }: { config: EntityConfig }) {
   const columnKeys =
     rows && rows.length > 0
       ? Object.keys(rows[0] as object)
-      : ["id", ...config.fields.map((f) => f.key)];
+      : [
+          "id",
+          ...config.fields.map((f) => f.key),
+          ...(createEnabled ? [] : ["created_at", "updated_at"]),
+        ];
 
   return (
     <div className="space-y-8">
@@ -202,101 +207,103 @@ export function EntityListCreate({ config }: { config: EntityConfig }) {
         )}
       </section>
 
-      <section className="rounded border border-zinc-200 bg-white p-4 shadow-sm dark:border-zinc-700 dark:bg-zinc-900">
-        <h2 className="mb-3 text-lg font-semibold text-zinc-900 dark:text-zinc-50">
-          Add {config.title}
-        </h2>
-        <form
-          className="max-w-xl space-y-3"
-          onSubmit={onSubmit}
-          aria-busy={submitting}
-        >
-          {config.fields.map((f) => (
-            <label key={f.key} className="block text-sm">
-              <span className="mb-1 block font-medium text-zinc-700 dark:text-zinc-300">
-                {f.label}
-                {f.required ? " *" : ""}
-              </span>
-              {f.kind === "textarea" && (
-                <textarea
-                  name={f.key}
-                  required={f.required}
-                  rows={3}
-                  className="w-full rounded border border-zinc-300 px-2 py-1.5 text-zinc-900 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100"
-                />
-              )}
-              {f.kind === "text" && (
-                <input
-                  name={f.key}
-                  type="text"
-                  required={f.required}
-                  autoComplete="off"
-                  className="w-full rounded border border-zinc-300 px-2 py-1.5 text-zinc-900 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100"
-                />
-              )}
-              {f.kind === "number" && (
-                <input
-                  name={f.key}
-                  type="number"
-                  required={f.required}
-                  min={f.min ?? (f.key === "sort_order" ? 0 : f.required ? 1 : undefined)}
-                  step={f.step ?? 1}
-                  className="w-full rounded border border-zinc-300 px-2 py-1.5 text-zinc-900 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100"
-                />
-              )}
-              {f.kind === "checkbox" && (
-                <input
-                  name={f.key}
-                  type="checkbox"
-                  defaultChecked={f.defaultChecked ?? false}
-                  className="h-4 w-4 rounded border-zinc-300 text-zinc-900"
-                />
-              )}
-              {f.kind === "select" && (
-                <select
-                  name={f.key}
-                  required={f.required}
-                  defaultValue={f.required ? (f.options?.[0]?.value ?? "") : ""}
-                  className="w-full rounded border border-zinc-300 px-2 py-1.5 text-zinc-900 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100"
-                >
-                  {!f.required && <option value="">-</option>}
-                  {(f.options ?? []).map((o) => (
-                    <option key={o.value} value={o.value}>
-                      {o.label}
-                    </option>
-                  ))}
-                </select>
-              )}
-              {f.kind === "boolean-select" && (
-                <select
-                  name={f.key}
-                  defaultValue=""
-                  className="w-full rounded border border-zinc-300 px-2 py-1.5 text-zinc-900 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100"
-                >
-                  <option value="">-</option>
-                  <option value="true">true</option>
-                  <option value="false">false</option>
-                </select>
-              )}
-            </label>
-          ))}
-          {submitError && (
-            <pre
-              className="whitespace-pre-wrap break-words rounded border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800 dark:border-red-900 dark:bg-red-950/50 dark:text-red-200"
-              role="alert"
-            >
-              {submitError}
-            </pre>
-          )}
-          <button
-            type="submit"
-            disabled={submitting}
-            className="rounded bg-zinc-900 px-4 py-2 text-sm font-medium text-white hover:bg-zinc-800 disabled:opacity-50 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-white"
+      {createEnabled && (
+        <section className="rounded border border-zinc-200 bg-white p-4 shadow-sm dark:border-zinc-700 dark:bg-zinc-900">
+          <h2 className="mb-3 text-lg font-semibold text-zinc-900 dark:text-zinc-50">
+            Add {config.title}
+          </h2>
+          <form
+            className="max-w-xl space-y-3"
+            onSubmit={onSubmit}
+            aria-busy={submitting}
           >
-            {submitting ? "Creating..." : "Create"}
-          </button>
-        </form>
-      </section>
+            {config.fields.map((f) => (
+              <label key={f.key} className="block text-sm">
+                <span className="mb-1 block font-medium text-zinc-700 dark:text-zinc-300">
+                  {f.label}
+                  {f.required ? " *" : ""}
+                </span>
+                {f.kind === "textarea" && (
+                  <textarea
+                    name={f.key}
+                    required={f.required}
+                    rows={3}
+                    className="w-full rounded border border-zinc-300 px-2 py-1.5 text-zinc-900 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100"
+                  />
+                )}
+                {f.kind === "text" && (
+                  <input
+                    name={f.key}
+                    type="text"
+                    required={f.required}
+                    autoComplete="off"
+                    className="w-full rounded border border-zinc-300 px-2 py-1.5 text-zinc-900 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100"
+                  />
+                )}
+                {f.kind === "number" && (
+                  <input
+                    name={f.key}
+                    type="number"
+                    required={f.required}
+                    min={f.min ?? (f.key === "sort_order" ? 0 : f.required ? 1 : undefined)}
+                    step={f.step ?? 1}
+                    className="w-full rounded border border-zinc-300 px-2 py-1.5 text-zinc-900 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100"
+                  />
+                )}
+                {f.kind === "checkbox" && (
+                  <input
+                    name={f.key}
+                    type="checkbox"
+                    defaultChecked={f.defaultChecked ?? false}
+                    className="h-4 w-4 rounded border-zinc-300 text-zinc-900"
+                  />
+                )}
+                {f.kind === "select" && (
+                  <select
+                    name={f.key}
+                    required={f.required}
+                    defaultValue={f.required ? (f.options?.[0]?.value ?? "") : ""}
+                    className="w-full rounded border border-zinc-300 px-2 py-1.5 text-zinc-900 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100"
+                  >
+                    {!f.required && <option value="">-</option>}
+                    {(f.options ?? []).map((o) => (
+                      <option key={o.value} value={o.value}>
+                        {o.label}
+                      </option>
+                    ))}
+                  </select>
+                )}
+                {f.kind === "boolean-select" && (
+                  <select
+                    name={f.key}
+                    defaultValue=""
+                    className="w-full rounded border border-zinc-300 px-2 py-1.5 text-zinc-900 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100"
+                  >
+                    <option value="">-</option>
+                    <option value="true">true</option>
+                    <option value="false">false</option>
+                  </select>
+                )}
+              </label>
+            ))}
+            {submitError && (
+              <pre
+                className="whitespace-pre-wrap break-words rounded border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800 dark:border-red-900 dark:bg-red-950/50 dark:text-red-200"
+                role="alert"
+              >
+                {submitError}
+              </pre>
+            )}
+            <button
+              type="submit"
+              disabled={submitting}
+              className="rounded bg-zinc-900 px-4 py-2 text-sm font-medium text-white hover:bg-zinc-800 disabled:opacity-50 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-white"
+            >
+              {submitting ? "Creating..." : "Create"}
+            </button>
+          </form>
+        </section>
+      )}
     </div>
   );
 }

@@ -23,6 +23,7 @@ export type EntityConfig = {
   /** Worker path, e.g. /api/roles */
   apiPath: string;
   fields: EntityField[];
+  createEnabled?: boolean;
 };
 
 const userStatuses = [
@@ -90,6 +91,23 @@ const productAttributeDataTypes = [
   { value: "boolean", label: "boolean" },
   { value: "select", label: "select" },
   { value: "json", label: "json" },
+];
+
+const stockMovementTypes = [
+  { value: "purchase_receipt", label: "purchase_receipt" },
+  { value: "issue", label: "issue" },
+  { value: "transfer", label: "transfer" },
+  { value: "adjustment", label: "adjustment" },
+  { value: "writeoff", label: "writeoff" },
+  { value: "return", label: "return" },
+  { value: "reservation_release", label: "reservation_release" },
+  { value: "manual", label: "manual" },
+];
+
+const stockMovementStatuses = [
+  { value: "draft", label: "draft" },
+  { value: "confirmed", label: "confirmed" },
+  { value: "cancelled", label: "cancelled" },
 ];
 
 export const entityConfigs = {
@@ -613,6 +631,75 @@ export const entityConfigs = {
       { key: "is_optional", label: "Optional", kind: "checkbox" },
     ],
   },
+  stock_balances: {
+    title: "Stock balances",
+    apiPath: "/api/stock-balances",
+    createEnabled: false,
+    fields: [
+      { key: "product_id", label: "Product ID", kind: "number", required: true },
+      { key: "warehouse_id", label: "Warehouse ID", kind: "number", required: true },
+      { key: "position_id", label: "Position ID", kind: "number", required: true },
+      { key: "on_hand_qty", label: "On hand qty", kind: "number", required: true, step: "any", min: 0 },
+      { key: "reserved_qty", label: "Reserved qty", kind: "number", required: true, step: "any", min: 0 },
+      { key: "available_qty", label: "Available qty", kind: "number", required: true, step: "any", min: 0 },
+      { key: "last_recalculated_at", label: "Last recalculated at", kind: "text" },
+    ],
+  },
+  stock_movements: {
+    title: "Stock movements",
+    apiPath: "/api/stock-movements",
+    fields: [
+      {
+        key: "movement_type",
+        label: "Movement type",
+        kind: "select",
+        required: true,
+        options: stockMovementTypes,
+      },
+      { key: "reference_code", label: "Reference code", kind: "text" },
+      { key: "warehouse_id", label: "Warehouse ID", kind: "number" },
+      { key: "source_warehouse_id", label: "Source warehouse ID", kind: "number" },
+      { key: "destination_warehouse_id", label: "Destination warehouse ID", kind: "number" },
+      { key: "related_entity_type", label: "Related entity type", kind: "text" },
+      { key: "related_entity_id", label: "Related entity ID", kind: "text" },
+      {
+        key: "status",
+        label: "Status",
+        kind: "select",
+        options: stockMovementStatuses,
+      },
+      { key: "movement_date", label: "Movement date", kind: "text", required: true },
+      { key: "performed_by_user_id", label: "Performed by user ID", kind: "number" },
+      { key: "approved_by_user_id", label: "Approved by user ID", kind: "number" },
+      { key: "notes", label: "Notes", kind: "textarea" },
+    ],
+  },
+  stock_movement_lines: {
+    title: "Stock movement lines",
+    apiPath: "/api/stock-movement-lines",
+    fields: [
+      {
+        key: "stock_movement_id",
+        label: "Stock movement ID",
+        kind: "number",
+        required: true,
+      },
+      { key: "product_id", label: "Product ID", kind: "number", required: true },
+      { key: "from_position_id", label: "From position ID", kind: "number" },
+      { key: "to_position_id", label: "To position ID", kind: "number" },
+      {
+        key: "quantity",
+        label: "Quantity",
+        kind: "number",
+        required: true,
+        step: "any",
+        min: 0.000001,
+      },
+      { key: "unit_id", label: "Unit ID", kind: "number", required: true },
+      { key: "unit_cost", label: "Unit cost", kind: "number", step: "any" },
+      { key: "line_notes", label: "Line notes", kind: "textarea" },
+    ],
+  },
 } as const satisfies Record<string, EntityConfig>;
 
 export type EntityKey = keyof typeof entityConfigs;
@@ -641,4 +728,7 @@ export const adminNav: { href: string; label: string }[] = [
   { href: "/admin/product-suppliers", label: "Product Suppliers" },
   { href: "/admin/product-bundles", label: "Product Bundles" },
   { href: "/admin/product-bundle-items", label: "Product Bundle Items" },
+  { href: "/admin/stock-balances", label: "Stock Balances" },
+  { href: "/admin/stock-movements", label: "Stock Movements" },
+  { href: "/admin/stock-movement-lines", label: "Stock Movement Lines" },
 ];
