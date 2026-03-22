@@ -9,3 +9,4 @@ export * from "./product-attributes";
 export * from "./product-catalog-relations";
 export * from "./warehouse-core";
 export * from "./warehouse-operational-documents";
+export * from "./reservations";
