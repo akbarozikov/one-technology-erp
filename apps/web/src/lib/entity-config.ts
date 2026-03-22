@@ -138,6 +138,87 @@ const reservationStatuses = [
   { value: "cancelled", label: "cancelled" },
 ];
 
+const configurationStatuses = [
+  { value: "draft", label: "draft" },
+  { value: "in_progress", label: "in_progress" },
+  { value: "ready", label: "ready" },
+  { value: "quoted", label: "quoted" },
+  { value: "ordered", label: "ordered" },
+  { value: "cancelled", label: "cancelled" },
+  { value: "archived", label: "archived" },
+];
+
+const variantStatuses = [
+  { value: "draft", label: "draft" },
+  { value: "calculated", label: "calculated" },
+  { value: "priced", label: "priced" },
+  { value: "quoted", label: "quoted" },
+  { value: "accepted", label: "accepted" },
+  { value: "cancelled", label: "cancelled" },
+];
+
+const constructorInputTypes = [
+  { value: "text", label: "text" },
+  { value: "number", label: "number" },
+  { value: "boolean", label: "boolean" },
+  { value: "select", label: "select" },
+  { value: "json", label: "json" },
+];
+
+const calculationRunTypes = [
+  { value: "full", label: "full" },
+  { value: "spring_only", label: "spring_only" },
+  { value: "bom_only", label: "bom_only" },
+  { value: "pricing_only", label: "pricing_only" },
+  { value: "validation_only", label: "validation_only" },
+];
+
+const calculationRunStatuses = [
+  { value: "success", label: "success" },
+  { value: "warning", label: "warning" },
+  { value: "failed", label: "failed" },
+];
+
+const springSystemTypes = [
+  { value: "torsion", label: "torsion" },
+  { value: "extension", label: "extension" },
+  { value: "other", label: "other" },
+];
+
+const springResultStatuses = [
+  { value: "valid", label: "valid" },
+  { value: "warning", label: "warning" },
+  { value: "invalid", label: "invalid" },
+];
+
+const bomSourceTypes = [
+  { value: "rule_engine", label: "rule_engine" },
+  { value: "spring_calculation", label: "spring_calculation" },
+  { value: "manual", label: "manual" },
+  { value: "bundle_logic", label: "bundle_logic" },
+  { value: "copied", label: "copied" },
+];
+
+const bomLineStatuses = [
+  { value: "active", label: "active" },
+  { value: "removed", label: "removed" },
+  { value: "superseded", label: "superseded" },
+];
+
+const bomChangeTypes = [
+  { value: "create", label: "create" },
+  { value: "update", label: "update" },
+  { value: "delete", label: "delete" },
+  { value: "manual_override", label: "manual_override" },
+  { value: "auto_regeneration", label: "auto_regeneration" },
+];
+
+const visualTypes = [
+  { value: "2d_preview", label: "2d_preview" },
+  { value: "schematic", label: "schematic" },
+  { value: "image_render", label: "image_render" },
+];
+
 export const entityConfigs = {
   roles: {
     title: "Roles",
@@ -1019,6 +1100,142 @@ export const entityConfigs = {
       { key: "release_reason", label: "Release reason", kind: "textarea" },
     ],
   },
+  door_configurations: {
+    title: "Door configurations",
+    apiPath: "/api/door-configurations",
+    fields: [
+      { key: "configuration_code", label: "Configuration code", kind: "text", required: true },
+      { key: "title", label: "Title", kind: "text", required: true },
+      { key: "customer_id", label: "Customer ID", kind: "number" },
+      { key: "deal_id", label: "Deal ID", kind: "number" },
+      { key: "created_by_user_id", label: "Created by user ID", kind: "number" },
+      { key: "status", label: "Status", kind: "select", options: configurationStatuses },
+      { key: "is_attached_to_quote", label: "Attached to quote", kind: "checkbox" },
+      { key: "is_attached_to_order", label: "Attached to order", kind: "checkbox" },
+      { key: "selected_variant_id", label: "Selected variant ID", kind: "number" },
+      { key: "notes", label: "Notes", kind: "textarea" },
+    ],
+  },
+  door_configuration_variants: {
+    title: "Door configuration variants",
+    apiPath: "/api/door-configuration-variants",
+    fields: [
+      { key: "configuration_id", label: "Configuration ID", kind: "number", required: true },
+      { key: "variant_number", label: "Variant number", kind: "number", required: true },
+      { key: "name", label: "Name", kind: "text", required: true },
+      { key: "description", label: "Description", kind: "textarea" },
+      { key: "is_current", label: "Current", kind: "checkbox", defaultChecked: true },
+      { key: "is_selected", label: "Selected", kind: "checkbox" },
+      { key: "variant_status", label: "Variant status", kind: "select", options: variantStatuses },
+      { key: "quote_line_id", label: "Quote line ID", kind: "number" },
+      { key: "order_line_id", label: "Order line ID", kind: "number" },
+      { key: "minimum_sale_total", label: "Minimum sale total", kind: "number", step: "any", min: 0 },
+      { key: "actual_sale_total", label: "Actual sale total", kind: "number", step: "any", min: 0 },
+      { key: "bom_total_cost", label: "BOM total cost", kind: "number", step: "any", min: 0 },
+      { key: "bom_total_items", label: "BOM total items", kind: "number", min: 0 },
+      { key: "created_by_user_id", label: "Created by user ID", kind: "number" },
+    ],
+  },
+  door_configuration_inputs: {
+    title: "Door configuration inputs",
+    apiPath: "/api/door-configuration-inputs",
+    fields: [
+      { key: "variant_id", label: "Variant ID", kind: "number", required: true },
+      { key: "input_key", label: "Input key", kind: "text", required: true },
+      { key: "input_label", label: "Input label", kind: "text", required: true },
+      { key: "input_type", label: "Input type", kind: "select", required: true, options: constructorInputTypes },
+      { key: "value_text", label: "Value text", kind: "text" },
+      { key: "value_number", label: "Value number", kind: "number", step: "any" },
+      { key: "value_boolean", label: "Value boolean", kind: "boolean-select" },
+      { key: "value_json", label: "Value JSON", kind: "textarea" },
+      { key: "unit_hint", label: "Unit hint", kind: "text" },
+      { key: "sort_order", label: "Sort order", kind: "number", min: 0 },
+    ],
+  },
+  calculation_runs: {
+    title: "Calculation runs",
+    apiPath: "/api/calculation-runs",
+    fields: [
+      { key: "variant_id", label: "Variant ID", kind: "number", required: true },
+      { key: "run_type", label: "Run type", kind: "select", required: true, options: calculationRunTypes },
+      { key: "run_status", label: "Run status", kind: "select", options: calculationRunStatuses },
+      { key: "input_snapshot_json", label: "Input snapshot JSON", kind: "textarea" },
+      { key: "output_snapshot_json", label: "Output snapshot JSON", kind: "textarea" },
+      { key: "warnings_json", label: "Warnings JSON", kind: "textarea" },
+      { key: "errors_json", label: "Errors JSON", kind: "textarea" },
+      { key: "executed_by_user_id", label: "Executed by user ID", kind: "number" },
+      { key: "executed_at", label: "Executed at", kind: "text" },
+    ],
+  },
+  spring_calculation_results: {
+    title: "Spring calculation results",
+    apiPath: "/api/spring-calculation-results",
+    fields: [
+      { key: "calculation_run_id", label: "Calculation run ID", kind: "number", required: true },
+      { key: "spring_system_type", label: "Spring system type", kind: "select", required: true, options: springSystemTypes },
+      { key: "spring_count", label: "Spring count", kind: "number", min: 0 },
+      { key: "wire_size", label: "Wire size", kind: "number", step: "any", min: 0 },
+      { key: "inner_diameter", label: "Inner diameter", kind: "number", step: "any", min: 0 },
+      { key: "spring_length", label: "Spring length", kind: "number", step: "any", min: 0 },
+      { key: "torque_value", label: "Torque value", kind: "number", step: "any" },
+      { key: "cycle_rating", label: "Cycle rating", kind: "number", min: 0 },
+      { key: "safety_factor", label: "Safety factor", kind: "number", step: "any", min: 0 },
+      { key: "result_status", label: "Result status", kind: "select", required: true, options: springResultStatuses },
+      { key: "warning_text", label: "Warning text", kind: "textarea" },
+      { key: "notes", label: "Notes", kind: "textarea" },
+    ],
+  },
+  bom_lines: {
+    title: "BOM lines",
+    apiPath: "/api/bom-lines",
+    fields: [
+      { key: "variant_id", label: "Variant ID", kind: "number", required: true },
+      { key: "product_id", label: "Product ID", kind: "number", required: true },
+      { key: "source_type", label: "Source type", kind: "select", required: true, options: bomSourceTypes },
+      { key: "source_reference", label: "Source reference", kind: "text" },
+      { key: "line_number", label: "Line number", kind: "number", required: true },
+      { key: "quantity", label: "Quantity", kind: "number", required: true, step: "any", min: 0.000001 },
+      { key: "unit_id", label: "Unit ID", kind: "number", required: true },
+      { key: "waste_factor", label: "Waste factor", kind: "number", step: "any", min: 0 },
+      { key: "unit_cost_snapshot", label: "Unit cost snapshot", kind: "number", step: "any", min: 0 },
+      { key: "unit_price_snapshot", label: "Unit price snapshot", kind: "number", step: "any", min: 0 },
+      { key: "line_cost_total", label: "Line cost total", kind: "number", step: "any", min: 0 },
+      { key: "line_price_total", label: "Line price total", kind: "number", step: "any", min: 0 },
+      { key: "snapshot_product_name", label: "Snapshot product name", kind: "text", required: true },
+      { key: "snapshot_sku", label: "Snapshot SKU", kind: "text", required: true },
+      { key: "snapshot_unit_name", label: "Snapshot unit name", kind: "text", required: true },
+      { key: "is_auto_generated", label: "Auto generated", kind: "checkbox" },
+      { key: "is_manually_edited", label: "Manually edited", kind: "checkbox" },
+      { key: "is_optional", label: "Optional", kind: "checkbox" },
+      { key: "line_status", label: "Line status", kind: "select", options: bomLineStatuses },
+      { key: "notes", label: "Notes", kind: "textarea" },
+    ],
+  },
+  bom_change_logs: {
+    title: "BOM change logs",
+    apiPath: "/api/bom-change-logs",
+    fields: [
+      { key: "variant_id", label: "Variant ID", kind: "number", required: true },
+      { key: "bom_line_id", label: "BOM line ID", kind: "number" },
+      { key: "change_type", label: "Change type", kind: "select", required: true, options: bomChangeTypes },
+      { key: "old_values_json", label: "Old values JSON", kind: "textarea" },
+      { key: "new_values_json", label: "New values JSON", kind: "textarea" },
+      { key: "reason", label: "Reason", kind: "textarea" },
+      { key: "changed_by_user_id", label: "Changed by user ID", kind: "number" },
+    ],
+  },
+  configuration_visuals: {
+    title: "Configuration visuals",
+    apiPath: "/api/configuration-visuals",
+    fields: [
+      { key: "variant_id", label: "Variant ID", kind: "number", required: true },
+      { key: "visual_type", label: "Visual type", kind: "select", required: true, options: visualTypes },
+      { key: "file_url", label: "File URL", kind: "text", required: true },
+      { key: "preview_url", label: "Preview URL", kind: "text" },
+      { key: "render_version", label: "Render version", kind: "text" },
+      { key: "notes", label: "Notes", kind: "textarea" },
+    ],
+  },
 } as const satisfies Record<string, EntityConfig>;
 
 export type EntityKey = keyof typeof entityConfigs;
@@ -1061,5 +1278,14 @@ export const adminNav: { href: string; label: string }[] = [
   { href: "/admin/stock-transfer-documents", label: "Stock Transfer Documents" },
   { href: "/admin/stock-transfer-lines", label: "Stock Transfer Lines" },
   { href: "/admin/stock-reservations", label: "Stock Reservations" },
+  { href: "/admin/door-configurations", label: "Door Configurations" },
+  { href: "/admin/door-configuration-variants", label: "Door Configuration Variants" },
+  { href: "/admin/door-configuration-inputs", label: "Door Configuration Inputs" },
+  { href: "/admin/calculation-runs", label: "Calculation Runs" },
+  { href: "/admin/spring-calculation-results", label: "Spring Calculation Results" },
+  { href: "/admin/bom-lines", label: "BOM Lines" },
+  { href: "/admin/bom-change-logs", label: "BOM Change Logs" },
+  { href: "/admin/configuration-visuals", label: "Configuration Visuals" },
 ];
+
 
