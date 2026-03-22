@@ -1,13 +1,22 @@
 import { notFound } from "../lib/response";
 import type { Env } from "../types/env";
-import { handleDebugBindings } from "./debug";
 import { handleBranches } from "./branches";
+import { handleDebugBindings } from "./debug";
 import { handleDepartments } from "./departments";
 import { handleEmployees } from "./employees";
 import { handleHealth } from "./health";
 import { handleLocations } from "./locations";
 import { handlePermissions } from "./permissions";
+import { handleProductAttributeValues } from "./product-attribute-values";
+import { handleProductAttributes } from "./product-attributes";
+import { handleProductBundleItems } from "./product-bundle-items";
+import { handleProductBundles } from "./product-bundles";
+import { handleProductCategories } from "./product-categories";
+import { handleProductSuppliers } from "./product-suppliers";
+import { handleProducts } from "./products";
 import { handleRoles } from "./roles";
+import { handleSuppliers } from "./suppliers";
+import { handleUnits } from "./units";
 import { handleUsers } from "./users";
 import { handleWarehousePositions } from "./warehouse-positions";
 import { handleWarehouses } from "./warehouses";
@@ -43,6 +52,24 @@ export async function routeRequest(request: Request, env: Env): Promise<Response
       return handleWarehouses(request, env);
     case "/api/warehouse-positions":
       return handleWarehousePositions(request, env);
+    case "/api/product-categories":
+      return handleProductCategories(request, env);
+    case "/api/units":
+      return handleUnits(request, env);
+    case "/api/suppliers":
+      return handleSuppliers(request, env);
+    case "/api/products":
+      return handleProducts(request, env);
+    case "/api/product-attributes":
+      return handleProductAttributes(request, env);
+    case "/api/product-attribute-values":
+      return handleProductAttributeValues(request, env);
+    case "/api/product-suppliers":
+      return handleProductSuppliers(request, env);
+    case "/api/product-bundles":
+      return handleProductBundles(request, env);
+    case "/api/product-bundle-items":
+      return handleProductBundleItems(request, env);
     default:
       return notFound();
   }

@@ -1,6 +1,6 @@
 # One Technology ERP API
 
-Cloudflare Worker + D1. Phase 1 exposes JSON list/create routes under `/api/*` and `GET /health`.
+Cloudflare Worker + D1. Phase 1 (org structure) and Phase 2 (product catalog) expose JSON list/create routes under `/api/*`, plus `GET /health`.
 
 ## Run locally
 
@@ -17,4 +17,6 @@ Apply D1 migrations (from repo root or `packages/db` docs) before creating rows 
 - `routes/` — per-resource handlers + `router.ts`
 - `types/env.ts` — Worker bindings
 
-Authentication and permission enforcement are not part of Phase 1.
+Authentication and permission enforcement are not part of these phases.
+
+Phase 2 catalog routes require migration `0002_phase2_product_catalog.sql` applied to D1.

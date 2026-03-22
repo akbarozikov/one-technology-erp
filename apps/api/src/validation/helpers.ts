@@ -104,3 +104,58 @@ export function optionalEnum<T extends string>(
   }
   return requireEnum(body, key, allowed, errors);
 }
+
+export function requirePositiveInt(
+  body: JsonObject,
+  key: string,
+  errors: Failures
+): number | null {
+  const v = body[key];
+  if (typeof v !== "number" || !Number.isInteger(v) || v <= 0) {
+    push(errors, `${key} is required and must be a positive integer`);
+    return null;
+  }
+  return v;
+}
+
+export function requirePositiveNumber(
+  body: JsonObject,
+  key: string,
+  errors: Failures
+): number | null {
+  const v = body[key];
+  if (typeof v !== "number" || Number.isNaN(v) || v <= 0) {
+    push(errors, `${key} is required and must be a positive number`);
+    return null;
+  }
+  return v;
+}
+
+export function optionalNullableNumber(
+  body: JsonObject,
+  key: string,
+  errors: Failures
+): number | null | undefined {
+  if (!(key in body) || body[key] === undefined || body[key] === null) {
+    return undefined;
+  }
+  const v = body[key];
+  if (typeof v !== "number" || Number.isNaN(v)) {
+    push(errors, `${key} must be a number`);
+    return null;
+  }
+  return v;
+}
+
+export function optionalNullableBoolInt(
+  body: JsonObject,
+  key: string,
+  errors: Failures
+): 0 | 1 | null | undefined {
+  if (!(key in body) || body[key] === undefined) return undefined;
+  if (body[key] === null) return null;
+  const v = body[key];
+  if (typeof v === "boolean") return v ? 1 : 0;
+  push(errors, `${key} must be a boolean or null`);
+  return null;
+}
