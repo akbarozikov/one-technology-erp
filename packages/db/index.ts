@@ -19,3 +19,6 @@ export const PHASE4A_WAREHOUSE_OPERATIONAL_DOCUMENTS_MIGRATION =
 
 export const PHASE5A_RESERVATIONS_MIGRATION =
   "0005_phase5a_reservations.sql" as const;
+
+export const PHASE6AB_CONSTRUCTOR_CORE_MIGRATION =
+  "0006_phase6ab_constructor_core.sql" as const;

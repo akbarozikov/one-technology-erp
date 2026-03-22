@@ -1,17 +1,21 @@
 import { notFound } from "../lib/response";
 import type { Env } from "../types/env";
+import { handleBomChangeLogs } from "./bom-change-logs";
+import { handleBomLines } from "./bom-lines";
 import { handleBranches } from "./branches";
+import { handleCalculationRuns } from "./calculation-runs";
+import { handleConfigurationVisuals } from "./configuration-visuals";
 import { handleDebugBindings } from "./debug";
 import { handleDepartments } from "./departments";
+import { handleDoorConfigurations } from "./door-configurations";
+import { handleDoorConfigurationInputs } from "./door-configuration-inputs";
+import { handleDoorConfigurationVariants } from "./door-configuration-variants";
 import { handleEmployees } from "./employees";
 import { handleHealth } from "./health";
-import { handleLocations } from "./locations";
-import { handlePermissions } from "./permissions";
-import { handleRolePermissions } from "./role-permissions";
-import { handlePurchaseReceiptLines } from "./purchase-receipt-lines";
-import { handlePurchaseReceipts } from "./purchase-receipts";
 import { handleInventoryCountLines } from "./inventory-count-lines";
 import { handleInventoryCounts } from "./inventory-counts";
+import { handleLocations } from "./locations";
+import { handlePermissions } from "./permissions";
 import { handleProductAttributeValues } from "./product-attribute-values";
 import { handleProductAttributes } from "./product-attributes";
 import { handleProductBundleItems } from "./product-bundle-items";
@@ -19,23 +23,27 @@ import { handleProductBundles } from "./product-bundles";
 import { handleProductCategories } from "./product-categories";
 import { handleProductSuppliers } from "./product-suppliers";
 import { handleProducts } from "./products";
+import { handlePurchaseReceiptLines } from "./purchase-receipt-lines";
+import { handlePurchaseReceipts } from "./purchase-receipts";
+import { handleRolePermissions } from "./role-permissions";
 import { handleRoles } from "./roles";
-import { handleStockReservations } from "./stock-reservations";
-import { handleSuppliers } from "./suppliers";
+import { handleSpringCalculationResults } from "./spring-calculation-results";
 import { handleStockAdjustmentLines } from "./stock-adjustment-lines";
 import { handleStockAdjustments } from "./stock-adjustments";
 import { handleStockBalances } from "./stock-balances";
 import { handleStockMovementLines } from "./stock-movement-lines";
 import { handleStockMovements } from "./stock-movements";
+import { handleStockReservations } from "./stock-reservations";
 import { handleStockTransferDocuments } from "./stock-transfer-documents";
 import { handleStockTransferLines } from "./stock-transfer-lines";
 import { handleStockWriteoffLines } from "./stock-writeoff-lines";
 import { handleStockWriteoffs } from "./stock-writeoffs";
+import { handleSuppliers } from "./suppliers";
 import { handleUnits } from "./units";
 import { handleUserRoles } from "./user-roles";
 import { handleUsers } from "./users";
-import { handleWarehousePositions } from "./warehouse-positions";
 import { handleWarehouses } from "./warehouses";
+import { handleWarehousePositions } from "./warehouse-positions";
 
 export async function routeRequest(request: Request, env: Env): Promise<Response> {
   const url = new URL(request.url);
@@ -106,6 +114,22 @@ export async function routeRequest(request: Request, env: Env): Promise<Response
       return handleStockMovementLines(request, env);
     case "/api/stock-reservations":
       return handleStockReservations(request, env);
+    case "/api/door-configurations":
+      return handleDoorConfigurations(request, env);
+    case "/api/door-configuration-variants":
+      return handleDoorConfigurationVariants(request, env);
+    case "/api/door-configuration-inputs":
+      return handleDoorConfigurationInputs(request, env);
+    case "/api/calculation-runs":
+      return handleCalculationRuns(request, env);
+    case "/api/spring-calculation-results":
+      return handleSpringCalculationResults(request, env);
+    case "/api/bom-lines":
+      return handleBomLines(request, env);
+    case "/api/bom-change-logs":
+      return handleBomChangeLogs(request, env);
+    case "/api/configuration-visuals":
+      return handleConfigurationVisuals(request, env);
     case "/api/products":
       return handleProducts(request, env);
     case "/api/product-attributes":
