@@ -219,6 +219,86 @@ const visualTypes = [
   { value: "image_render", label: "image_render" },
 ];
 
+const quoteStatuses = [
+  { value: "draft", label: "draft" },
+  { value: "active", label: "active" },
+  { value: "sent", label: "sent" },
+  { value: "accepted", label: "accepted" },
+  { value: "rejected", label: "rejected" },
+  { value: "expired", label: "expired" },
+  { value: "cancelled", label: "cancelled" },
+];
+
+const quoteVersionStatuses = [
+  { value: "draft", label: "draft" },
+  { value: "prepared", label: "prepared" },
+  { value: "sent", label: "sent" },
+  { value: "accepted", label: "accepted" },
+  { value: "rejected", label: "rejected" },
+  { value: "superseded", label: "superseded" },
+  { value: "cancelled", label: "cancelled" },
+];
+
+const commercialReservationStatuses = [
+  { value: "none", label: "none" },
+  { value: "partially_reserved", label: "partially_reserved" },
+  { value: "fully_reserved", label: "fully_reserved" },
+  { value: "released", label: "released" },
+  { value: "consumed", label: "consumed" },
+];
+
+const commercialLineTypes = [
+  { value: "product", label: "product" },
+  { value: "bundle", label: "bundle" },
+  { value: "configuration", label: "configuration" },
+  { value: "service", label: "service" },
+  { value: "custom", label: "custom" },
+];
+
+const discountTypes = [
+  { value: "amount", label: "amount" },
+  { value: "percent", label: "percent" },
+];
+
+const fulfillmentTypes = [
+  { value: "installation", label: "installation" },
+  { value: "pickup", label: "pickup" },
+  { value: "delivery_without_installation", label: "delivery_without_installation" },
+];
+
+const orderStatuses = [
+  { value: "draft", label: "draft" },
+  { value: "reserved", label: "reserved" },
+  { value: "awaiting_payment", label: "awaiting_payment" },
+  { value: "partially_paid", label: "partially_paid" },
+  { value: "ready_for_fulfillment", label: "ready_for_fulfillment" },
+  { value: "scheduled_installation", label: "scheduled_installation" },
+  { value: "fulfilled", label: "fulfilled" },
+  { value: "completed", label: "completed" },
+  { value: "cancelled", label: "cancelled" },
+];
+
+const orderPaymentStatuses = [
+  { value: "unpaid", label: "unpaid" },
+  { value: "partially_paid", label: "partially_paid" },
+  { value: "paid", label: "paid" },
+  { value: "refunded", label: "refunded" },
+];
+
+const fulfillmentStatuses = [
+  { value: "pending", label: "pending" },
+  { value: "reserved", label: "reserved" },
+  { value: "issued", label: "issued" },
+  { value: "installed", label: "installed" },
+  { value: "cancelled", label: "cancelled" },
+];
+
+const paymentRecordStatuses = [
+  { value: "recorded", label: "recorded" },
+  { value: "confirmed", label: "confirmed" },
+  { value: "cancelled", label: "cancelled" },
+];
+
 export const entityConfigs = {
   roles: {
     title: "Roles",
@@ -1236,6 +1316,168 @@ export const entityConfigs = {
       { key: "notes", label: "Notes", kind: "textarea" },
     ],
   },
+  quotes: {
+    title: "Quotes",
+    apiPath: "/api/quotes",
+    fields: [
+      { key: "deal_id", label: "Deal ID", kind: "number" },
+      { key: "quote_number", label: "Quote number", kind: "text", required: true },
+      { key: "status", label: "Status", kind: "select", options: quoteStatuses },
+      { key: "currency", label: "Currency", kind: "text" },
+      { key: "minimum_sale_total", label: "Minimum sale total", kind: "number", step: "any", min: 0 },
+      { key: "actual_sale_total", label: "Actual sale total", kind: "number", step: "any", min: 0 },
+      { key: "discount_total", label: "Discount total", kind: "number", step: "any", min: 0 },
+      { key: "grand_total", label: "Grand total", kind: "number", step: "any", min: 0 },
+      { key: "valid_until", label: "Valid until", kind: "text" },
+      { key: "created_by_user_id", label: "Created by user ID", kind: "number" },
+      { key: "approved_by_user_id", label: "Approved by user ID", kind: "number" },
+      { key: "notes", label: "Notes", kind: "textarea" },
+    ],
+  },
+  quote_versions: {
+    title: "Quote versions",
+    apiPath: "/api/quote-versions",
+    fields: [
+      { key: "quote_id", label: "Quote ID", kind: "number", required: true },
+      { key: "version_number", label: "Version number", kind: "number", required: true },
+      { key: "version_status", label: "Version status", kind: "select", options: quoteVersionStatuses },
+      { key: "is_current", label: "Current", kind: "checkbox", defaultChecked: true },
+      { key: "based_on_version_id", label: "Based on version ID", kind: "number" },
+      { key: "minimum_sale_total", label: "Minimum sale total", kind: "number", step: "any", min: 0 },
+      { key: "actual_sale_total", label: "Actual sale total", kind: "number", step: "any", min: 0 },
+      { key: "discount_total", label: "Discount total", kind: "number", step: "any", min: 0 },
+      { key: "grand_total", label: "Grand total", kind: "number", step: "any", min: 0 },
+      { key: "reservation_status", label: "Reservation status", kind: "select", options: commercialReservationStatuses },
+      { key: "notes", label: "Notes", kind: "textarea" },
+      { key: "created_by_user_id", label: "Created by user ID", kind: "number" },
+    ],
+  },
+  quote_lines: {
+    title: "Quote lines",
+    apiPath: "/api/quote-lines",
+    fields: [
+      { key: "quote_version_id", label: "Quote version ID", kind: "number", required: true },
+      { key: "line_number", label: "Line number", kind: "number", required: true },
+      { key: "line_type", label: "Line type", kind: "select", required: true, options: commercialLineTypes },
+      { key: "product_id", label: "Product ID", kind: "number" },
+      { key: "configuration_variant_id", label: "Configuration variant ID", kind: "number" },
+      { key: "quantity", label: "Quantity", kind: "number", required: true, step: "any", min: 0.000001 },
+      { key: "unit_id", label: "Unit ID", kind: "number", required: true },
+      { key: "unit_price", label: "Unit price", kind: "number", step: "any", min: 0 },
+      { key: "minimum_unit_price", label: "Minimum unit price", kind: "number", step: "any", min: 0 },
+      { key: "line_discount_type", label: "Line discount type", kind: "select", options: discountTypes },
+      { key: "line_discount_value", label: "Line discount value", kind: "number", step: "any", min: 0 },
+      { key: "line_discount_total", label: "Line discount total", kind: "number", step: "any", min: 0 },
+      { key: "line_total", label: "Line total", kind: "number", step: "any", min: 0 },
+      { key: "snapshot_product_name", label: "Snapshot product name", kind: "text", required: true },
+      { key: "snapshot_sku", label: "Snapshot SKU", kind: "text", required: true },
+      { key: "snapshot_unit_name", label: "Snapshot unit name", kind: "text", required: true },
+      { key: "snapshot_description", label: "Snapshot description", kind: "textarea" },
+      { key: "notes", label: "Notes", kind: "textarea" },
+    ],
+  },
+  quote_discounts: {
+    title: "Quote discounts",
+    apiPath: "/api/quote-discounts",
+    fields: [
+      { key: "quote_version_id", label: "Quote version ID", kind: "number", required: true },
+      { key: "discount_type", label: "Discount type", kind: "select", required: true, options: discountTypes },
+      { key: "discount_value", label: "Discount value", kind: "number", required: true, step: "any", min: 0 },
+      { key: "discount_total", label: "Discount total", kind: "number", step: "any", min: 0 },
+      { key: "reason", label: "Reason", kind: "textarea" },
+      { key: "created_by_user_id", label: "Created by user ID", kind: "number" },
+    ],
+  },
+  orders: {
+    title: "Orders",
+    apiPath: "/api/orders",
+    fields: [
+      { key: "quote_version_id", label: "Quote version ID", kind: "number" },
+      { key: "customer_id", label: "Customer ID", kind: "number" },
+      { key: "deal_id", label: "Deal ID", kind: "number" },
+      { key: "order_number", label: "Order number", kind: "text", required: true },
+      { key: "installation_required", label: "Installation required", kind: "checkbox" },
+      { key: "fulfillment_type", label: "Fulfillment type", kind: "select", options: fulfillmentTypes },
+      { key: "order_status", label: "Order status", kind: "select", options: orderStatuses },
+      { key: "payment_status", label: "Payment status", kind: "select", options: orderPaymentStatuses },
+      { key: "reservation_status", label: "Reservation status", kind: "select", options: commercialReservationStatuses },
+      { key: "currency", label: "Currency", kind: "text" },
+      { key: "minimum_sale_total", label: "Minimum sale total", kind: "number", step: "any", min: 0 },
+      { key: "actual_sale_total", label: "Actual sale total", kind: "number", step: "any", min: 0 },
+      { key: "discount_total", label: "Discount total", kind: "number", step: "any", min: 0 },
+      { key: "grand_total", label: "Grand total", kind: "number", step: "any", min: 0 },
+      { key: "paid_total", label: "Paid total", kind: "number", step: "any", min: 0 },
+      { key: "remaining_total", label: "Remaining total", kind: "number", step: "any", min: 0 },
+      { key: "order_date", label: "Order date", kind: "text" },
+      { key: "planned_installation_date", label: "Planned installation date", kind: "text" },
+      { key: "completed_at", label: "Completed at", kind: "text" },
+      { key: "created_by_user_id", label: "Created by user ID", kind: "number" },
+      { key: "approved_by_user_id", label: "Approved by user ID", kind: "number" },
+      { key: "notes", label: "Notes", kind: "textarea" },
+    ],
+  },
+  order_lines: {
+    title: "Order lines",
+    apiPath: "/api/order-lines",
+    fields: [
+      { key: "order_id", label: "Order ID", kind: "number", required: true },
+      { key: "line_number", label: "Line number", kind: "number", required: true },
+      { key: "line_type", label: "Line type", kind: "select", required: true, options: commercialLineTypes },
+      { key: "product_id", label: "Product ID", kind: "number" },
+      { key: "configuration_variant_id", label: "Configuration variant ID", kind: "number" },
+      { key: "quantity", label: "Quantity", kind: "number", required: true, step: "any", min: 0.000001 },
+      { key: "unit_id", label: "Unit ID", kind: "number", required: true },
+      { key: "unit_price", label: "Unit price", kind: "number", step: "any", min: 0 },
+      { key: "minimum_unit_price", label: "Minimum unit price", kind: "number", step: "any", min: 0 },
+      { key: "line_discount_type", label: "Line discount type", kind: "select", options: discountTypes },
+      { key: "line_discount_value", label: "Line discount value", kind: "number", step: "any", min: 0 },
+      { key: "line_discount_total", label: "Line discount total", kind: "number", step: "any", min: 0 },
+      { key: "line_total", label: "Line total", kind: "number", step: "any", min: 0 },
+      { key: "fulfillment_status", label: "Fulfillment status", kind: "select", options: fulfillmentStatuses },
+      { key: "snapshot_product_name", label: "Snapshot product name", kind: "text", required: true },
+      { key: "snapshot_sku", label: "Snapshot SKU", kind: "text", required: true },
+      { key: "snapshot_unit_name", label: "Snapshot unit name", kind: "text", required: true },
+      { key: "snapshot_description", label: "Snapshot description", kind: "textarea" },
+      { key: "notes", label: "Notes", kind: "textarea" },
+    ],
+  },
+  order_discounts: {
+    title: "Order discounts",
+    apiPath: "/api/order-discounts",
+    fields: [
+      { key: "order_id", label: "Order ID", kind: "number", required: true },
+      { key: "discount_type", label: "Discount type", kind: "select", required: true, options: discountTypes },
+      { key: "discount_value", label: "Discount value", kind: "number", required: true, step: "any", min: 0 },
+      { key: "discount_total", label: "Discount total", kind: "number", step: "any", min: 0 },
+      { key: "reason", label: "Reason", kind: "textarea" },
+      { key: "created_by_user_id", label: "Created by user ID", kind: "number" },
+    ],
+  },
+  payment_methods: {
+    title: "Payment methods",
+    apiPath: "/api/payment-methods",
+    fields: [
+      { key: "name", label: "Name", kind: "text", required: true },
+      { key: "code", label: "Code", kind: "text", required: true },
+      { key: "description", label: "Description", kind: "textarea" },
+      { key: "is_active", label: "Active", kind: "checkbox", defaultChecked: true },
+    ],
+  },
+  payments: {
+    title: "Payments",
+    apiPath: "/api/payments",
+    fields: [
+      { key: "order_id", label: "Order ID", kind: "number", required: true },
+      { key: "payment_method_id", label: "Payment method ID", kind: "number", required: true },
+      { key: "payment_date", label: "Payment date", kind: "text", required: true },
+      { key: "amount", label: "Amount", kind: "number", required: true, step: "any", min: 0.000001 },
+      { key: "currency", label: "Currency", kind: "text" },
+      { key: "reference_number", label: "Reference number", kind: "text" },
+      { key: "received_by_user_id", label: "Received by user ID", kind: "number" },
+      { key: "notes", label: "Notes", kind: "textarea" },
+      { key: "status", label: "Status", kind: "select", options: paymentRecordStatuses },
+    ],
+  },
 } as const satisfies Record<string, EntityConfig>;
 
 export type EntityKey = keyof typeof entityConfigs;
@@ -1286,6 +1528,16 @@ export const adminNav: { href: string; label: string }[] = [
   { href: "/admin/bom-lines", label: "BOM Lines" },
   { href: "/admin/bom-change-logs", label: "BOM Change Logs" },
   { href: "/admin/configuration-visuals", label: "Configuration Visuals" },
+  { href: "/admin/quotes", label: "Quotes" },
+  { href: "/admin/quote-versions", label: "Quote Versions" },
+  { href: "/admin/quote-lines", label: "Quote Lines" },
+  { href: "/admin/quote-discounts", label: "Quote Discounts" },
+  { href: "/admin/orders", label: "Orders" },
+  { href: "/admin/order-lines", label: "Order Lines" },
+  { href: "/admin/order-discounts", label: "Order Discounts" },
+  { href: "/admin/payment-methods", label: "Payment Methods" },
+  { href: "/admin/payments", label: "Payments" },
 ];
+
 
 
