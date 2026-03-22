@@ -34,6 +34,12 @@ function buildPayload(fields: EntityField[], fd: FormData): Record<string, unkno
       out[f.key] = s;
       continue;
     }
+    if (f.kind === "boolean-select") {
+      const s = String(raw ?? "").trim();
+      if (!s) continue;
+      out[f.key] = s === "true";
+      continue;
+    }
     const s = String(raw ?? "").trim();
     if (!s && !f.required) continue;
     out[f.key] = s;
@@ -102,10 +108,7 @@ export function EntityListCreate({ config }: { config: EntityConfig }) {
       const res = await apiPost<{ data: unknown }>(config.apiPath, payload);
       const created = res.data;
       if (created && typeof created === "object" && !Array.isArray(created)) {
-        setRows((prev) => [
-          ...(prev ?? []),
-          created as Record<string, unknown>,
-        ]);
+        setRows((prev) => [...(prev ?? []), created as Record<string, unknown>]);
       }
       form.reset();
       void load({ silent: true });
@@ -146,7 +149,7 @@ export function EntityListCreate({ config }: { config: EntityConfig }) {
         </h2>
         {loading && (
           <p className="text-sm text-zinc-500" role="status">
-            Loading…
+            Loading...
           </p>
         )}
         {!loading && error && (
@@ -236,14 +239,8 @@ export function EntityListCreate({ config }: { config: EntityConfig }) {
                   name={f.key}
                   type="number"
                   required={f.required}
-                  min={
-                    f.key === "sort_order"
-                      ? 0
-                      : f.required
-                        ? 1
-                        : undefined
-                  }
-                  step={1}
+                  min={f.min ?? (f.key === "sort_order" ? 0 : f.required ? 1 : undefined)}
+                  step={f.step ?? 1}
                   className="w-full rounded border border-zinc-300 px-2 py-1.5 text-zinc-900 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100"
                 />
               )}
@@ -259,17 +256,26 @@ export function EntityListCreate({ config }: { config: EntityConfig }) {
                 <select
                   name={f.key}
                   required={f.required}
-                  defaultValue={
-                    f.required ? (f.options?.[0]?.value ?? "") : ""
-                  }
+                  defaultValue={f.required ? (f.options?.[0]?.value ?? "") : ""}
                   className="w-full rounded border border-zinc-300 px-2 py-1.5 text-zinc-900 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100"
                 >
-                  {!f.required && <option value="">—</option>}
+                  {!f.required && <option value="">-</option>}
                   {(f.options ?? []).map((o) => (
                     <option key={o.value} value={o.value}>
                       {o.label}
                     </option>
                   ))}
+                </select>
+              )}
+              {f.kind === "boolean-select" && (
+                <select
+                  name={f.key}
+                  defaultValue=""
+                  className="w-full rounded border border-zinc-300 px-2 py-1.5 text-zinc-900 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100"
+                >
+                  <option value="">-</option>
+                  <option value="true">true</option>
+                  <option value="false">false</option>
                 </select>
               )}
             </label>
@@ -287,7 +293,7 @@ export function EntityListCreate({ config }: { config: EntityConfig }) {
             disabled={submitting}
             className="rounded bg-zinc-900 px-4 py-2 text-sm font-medium text-white hover:bg-zinc-800 disabled:opacity-50 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-white"
           >
-            {submitting ? "Creating…" : "Create"}
+            {submitting ? "Creating..." : "Create"}
           </button>
         </form>
       </section>
