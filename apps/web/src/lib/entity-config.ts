@@ -122,6 +122,42 @@ export const entityConfigs = {
       },
     ],
   },
+  user_roles: {
+    title: "User roles",
+    apiPath: "/api/user-roles",
+    fields: [
+      {
+        key: "user_id",
+        label: "User ID",
+        kind: "number",
+        required: true,
+      },
+      {
+        key: "role_id",
+        label: "Role ID",
+        kind: "number",
+        required: true,
+      },
+    ],
+  },
+  role_permissions: {
+    title: "Role permissions",
+    apiPath: "/api/role-permissions",
+    fields: [
+      {
+        key: "role_id",
+        label: "Role ID",
+        kind: "number",
+        required: true,
+      },
+      {
+        key: "permission_id",
+        label: "Permission ID",
+        kind: "number",
+        required: true,
+      },
+    ],
+  },
   employees: {
     title: "Employees",
     apiPath: "/api/employees",
@@ -279,6 +315,8 @@ export type EntityKey = keyof typeof entityConfigs;
 export const adminNav: { href: string; label: string }[] = [
   { href: "/admin/roles", label: "Roles" },
   { href: "/admin/permissions", label: "Permissions" },
+  { href: "/admin/user-roles", label: "User Roles" },
+  { href: "/admin/role-permissions", label: "Role Permissions" },
   { href: "/admin/departments", label: "Departments" },
   { href: "/admin/users", label: "Users" },
   { href: "/admin/employees", label: "Employees" },

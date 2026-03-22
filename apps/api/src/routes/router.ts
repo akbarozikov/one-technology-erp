@@ -7,6 +7,7 @@ import { handleEmployees } from "./employees";
 import { handleHealth } from "./health";
 import { handleLocations } from "./locations";
 import { handlePermissions } from "./permissions";
+import { handleRolePermissions } from "./role-permissions";
 import { handleProductAttributeValues } from "./product-attribute-values";
 import { handleProductAttributes } from "./product-attributes";
 import { handleProductBundleItems } from "./product-bundle-items";
@@ -17,6 +18,7 @@ import { handleProducts } from "./products";
 import { handleRoles } from "./roles";
 import { handleSuppliers } from "./suppliers";
 import { handleUnits } from "./units";
+import { handleUserRoles } from "./user-roles";
 import { handleUsers } from "./users";
 import { handleWarehousePositions } from "./warehouse-positions";
 import { handleWarehouses } from "./warehouses";
@@ -38,8 +40,12 @@ export async function routeRequest(request: Request, env: Env): Promise<Response
       return handleRoles(request, env);
     case "/api/permissions":
       return handlePermissions(request, env);
+    case "/api/role-permissions":
+      return handleRolePermissions(request, env);
     case "/api/users":
       return handleUsers(request, env);
+    case "/api/user-roles":
+      return handleUserRoles(request, env);
     case "/api/departments":
       return handleDepartments(request, env);
     case "/api/employees":
