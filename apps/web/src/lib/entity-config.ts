@@ -131,6 +131,13 @@ const writeoffReasons = [
   { value: "other", label: "other" },
 ];
 
+const reservationStatuses = [
+  { value: "active", label: "active" },
+  { value: "released", label: "released" },
+  { value: "consumed", label: "consumed" },
+  { value: "cancelled", label: "cancelled" },
+];
+
 export const entityConfigs = {
   roles: {
     title: "Roles",
@@ -975,6 +982,43 @@ export const entityConfigs = {
       { key: "line_notes", label: "Line notes", kind: "textarea" },
     ],
   },
+  stock_reservations: {
+    title: "Stock reservations",
+    apiPath: "/api/stock-reservations",
+    fields: [
+      { key: "product_id", label: "Product ID", kind: "number", required: true },
+      { key: "warehouse_id", label: "Warehouse ID", kind: "number", required: true },
+      { key: "position_id", label: "Position ID", kind: "number", required: true },
+      {
+        key: "reserved_qty",
+        label: "Reserved qty",
+        kind: "number",
+        required: true,
+        step: "any",
+        min: 0.000001,
+      },
+      {
+        key: "status",
+        label: "Status",
+        kind: "select",
+        options: reservationStatuses,
+      },
+      { key: "quote_line_id", label: "Quote line ID", kind: "number" },
+      { key: "order_line_id", label: "Order line ID", kind: "number" },
+      {
+        key: "configuration_variant_id",
+        label: "Configuration variant ID",
+        kind: "number",
+      },
+      { key: "bom_line_id", label: "BOM line ID", kind: "number" },
+      { key: "reserved_from", label: "Reserved from", kind: "text" },
+      { key: "reserved_until", label: "Reserved until", kind: "text" },
+      { key: "reservation_reason", label: "Reservation reason", kind: "textarea" },
+      { key: "created_by_user_id", label: "Created by user ID", kind: "number" },
+      { key: "released_by_user_id", label: "Released by user ID", kind: "number" },
+      { key: "release_reason", label: "Release reason", kind: "textarea" },
+    ],
+  },
 } as const satisfies Record<string, EntityConfig>;
 
 export type EntityKey = keyof typeof entityConfigs;
@@ -1016,4 +1060,6 @@ export const adminNav: { href: string; label: string }[] = [
   { href: "/admin/inventory-count-lines", label: "Inventory Count Lines" },
   { href: "/admin/stock-transfer-documents", label: "Stock Transfer Documents" },
   { href: "/admin/stock-transfer-lines", label: "Stock Transfer Lines" },
+  { href: "/admin/stock-reservations", label: "Stock Reservations" },
 ];
+
