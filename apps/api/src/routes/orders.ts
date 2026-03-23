@@ -2,15 +2,18 @@ import {
   TABLE_DOCUMENT_TEMPLATES,
   TABLE_ORDER_LINES,
   TABLE_ORDER_DISCOUNTS,
+  TABLE_PAYMENT_METHODS,
   TABLE_QUOTE_LINES,
   TABLE_QUOTE_VERSIONS,
   TABLE_USERS,
   type DocumentTemplateRow,
   type GeneratedDocumentRow,
   type OrderDiscountRow,
+  type OrderPaymentStatus,
   TABLE_STOCK_RESERVATIONS,
   type OrderLineRow,
   type OrderRow,
+  type PaymentRow,
   type QuoteLineRow,
   type QuoteVersionRow,
   type StockReservationRow,
@@ -21,7 +24,11 @@ import { rowExists } from "../lib/exists";
 import { readJsonObject, readOptionalJsonObject } from "../lib/json";
 import { badRequest, jsonOk, methodNotAllowed, notFound } from "../lib/response";
 import type { Env } from "../types/env";
-import { parseOrderCreate, parseOrderGenerateDocument } from "../validation/orders";
+import {
+  parseOrderCreate,
+  parseOrderCreatePaymentRecord,
+  parseOrderGenerateDocument,
+} from "../validation/orders";
 
 export async function handleOrders(
   request: Request,
@@ -123,7 +130,7 @@ export async function handleOrderAction(
   request: Request,
   env: Env,
   orderId: number,
-  action: "adopt-reservations" | "generate-document"
+  action: "adopt-reservations" | "generate-document" | "create-payment-record"
 ): Promise<Response> {
   if (action === "adopt-reservations") {
     return handleAdoptReservations(request, env, orderId);
@@ -133,7 +140,112 @@ export async function handleOrderAction(
     return handleGenerateOrderDocument(request, env, orderId);
   }
 
+  if (action === "create-payment-record") {
+    return handleCreatePaymentRecord(request, env, orderId);
+  }
+
   return notFound();
+}
+
+async function handleCreatePaymentRecord(
+  request: Request,
+  env: Env,
+  orderId: number
+): Promise<Response> {
+  if (request.method !== "POST") {
+    return methodNotAllowed(["POST"]);
+  }
+
+  const db = getDb(env);
+  const order = await db
+    .prepare("SELECT * FROM orders WHERE id = ? LIMIT 1")
+    .bind(orderId)
+    .first<OrderRow>();
+
+  if (!order) {
+    return notFound(`order ${orderId} not found`);
+  }
+
+  let body: Record<string, unknown>;
+  try {
+    body = await readOptionalJsonObject(request);
+  } catch {
+    return badRequest("Invalid JSON body");
+  }
+
+  const errors: string[] = [];
+  const input = parseOrderCreatePaymentRecord(body, errors);
+  if (!input || errors.length > 0) {
+    return badRequest(errors.length ? errors.join("; ") : "Validation failed");
+  }
+
+  const methodOk = await rowExists(db, TABLE_PAYMENT_METHODS, input.payment_method_id);
+  if (!methodOk) {
+    return badRequest(`payment_method_id ${input.payment_method_id} not found`);
+  }
+
+  if (input.received_by_user_id !== null) {
+    const ok = await rowExists(db, TABLE_USERS, input.received_by_user_id);
+    if (!ok) {
+      return badRequest(`received_by_user_id ${input.received_by_user_id} not found`);
+    }
+  }
+
+  const amount = input.amount ?? order.remaining_total;
+  if (amount === null || amount <= 0) {
+    return badRequest(
+      `Order ${orderId} does not have a positive remaining balance for payment creation`
+    );
+  }
+
+  try {
+    await db.exec("BEGIN TRANSACTION");
+
+    const payment = await db
+      .prepare(
+        `INSERT INTO payments (
+          order_id, payment_method_id, payment_date, amount,
+          currency, reference_number, received_by_user_id, notes, status
+        ) VALUES (?, ?, COALESCE(?, datetime('now')), ?, ?, ?, ?, ?, ?) RETURNING *`
+      )
+      .bind(
+        order.id,
+        input.payment_method_id,
+        input.payment_date,
+        amount,
+        order.currency,
+        input.reference_number,
+        input.received_by_user_id,
+        input.notes,
+        input.status
+      )
+      .first<PaymentRow>();
+
+    if (!payment) {
+      throw new Error("Insert did not return a payment row");
+    }
+
+    const refreshedOrder = await refreshOrderPaymentSummary(db, order);
+
+    await db.exec("COMMIT");
+
+    return jsonOk(
+      {
+        data: {
+          payment,
+          order: refreshedOrder,
+        },
+      },
+      { status: 201 }
+    );
+  } catch (err) {
+    try {
+      await db.exec("ROLLBACK");
+    } catch {
+      // Ignore rollback errors; preserve the original failure.
+    }
+    return asSqlFailure(err);
+  }
 }
 
 async function handleAdoptReservations(
@@ -460,6 +572,54 @@ function findMatchingOrderLines(
   return sameTypeLines.filter(
     (orderLine) => orderLine.product_id === reservation.product_id
   );
+}
+
+async function refreshOrderPaymentSummary(
+  db: D1Database,
+  order: OrderRow
+): Promise<OrderRow> {
+  const paymentTotals = await db
+    .prepare(
+      `SELECT COALESCE(SUM(amount), 0) AS paid_total
+       FROM payments
+       WHERE order_id = ? AND status != 'cancelled'`
+    )
+    .bind(order.id)
+    .first<{ paid_total: number | null }>();
+
+  const paidTotal = paymentTotals?.paid_total ?? 0;
+  const grandTotal = order.grand_total ?? 0;
+  const remainingTotal = Math.max(grandTotal - paidTotal, 0);
+  const paymentStatus = deriveOrderPaymentStatus(paidTotal, grandTotal);
+
+  const updatedOrder = await db
+    .prepare(
+      `UPDATE orders
+       SET paid_total = ?, remaining_total = ?, payment_status = ?, updated_at = datetime('now')
+       WHERE id = ?
+       RETURNING *`
+    )
+    .bind(paidTotal, remainingTotal, paymentStatus, order.id)
+    .first<OrderRow>();
+
+  if (!updatedOrder) {
+    throw new Error(`Failed to refresh payment summary for order ${order.id}`);
+  }
+
+  return updatedOrder;
+}
+
+function deriveOrderPaymentStatus(
+  paidTotal: number,
+  grandTotal: number
+): OrderPaymentStatus {
+  if (paidTotal <= 0) {
+    return "unpaid";
+  }
+  if (paidTotal < grandTotal) {
+    return "partially_paid";
+  }
+  return "paid";
 }
 
 function buildOrderDocumentNumber(

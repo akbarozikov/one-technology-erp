@@ -5,6 +5,7 @@ import type {
   FulfillmentType,
   OrderPaymentStatus,
   OrderStatus,
+  PaymentRecordStatus,
 } from "@one-technology/db";
 import type { JsonObject } from "../lib/json";
 import type { Failures } from "./helpers";
@@ -42,6 +43,12 @@ const ORDER_PAYMENT_STATUSES: readonly OrderPaymentStatus[] = [
   "partially_paid",
   "paid",
   "refunded",
+];
+
+const PAYMENT_RECORD_STATUSES: readonly PaymentRecordStatus[] = [
+  "recorded",
+  "confirmed",
+  "cancelled",
 ];
 
 const COMMERCIAL_RESERVATION_STATUSES: readonly CommercialReservationStatus[] = [
@@ -116,6 +123,16 @@ export interface OrderGenerateDocumentInput {
   title: string | null;
   generated_by_user_id: number | null;
   create_order_link: 0 | 1;
+}
+
+export interface OrderCreatePaymentRecordInput {
+  payment_method_id: number;
+  amount: number | null;
+  payment_date: string | null;
+  reference_number: string | null;
+  received_by_user_id: number | null;
+  notes: string | null;
+  status: PaymentRecordStatus;
 }
 
 export function parseOrderCreate(
@@ -260,6 +277,43 @@ export function parseOrderGenerateDocument(
     title: title === undefined ? null : title,
     generated_by_user_id,
     create_order_link,
+  };
+}
+
+export function parseOrderCreatePaymentRecord(
+  body: JsonObject,
+  errors: Failures
+): OrderCreatePaymentRecordInput | null {
+  const payment_method_id = requirePositiveInt(body, "payment_method_id", errors);
+  const amountValue = optionalNullableNumber(body, "amount", errors);
+  if (amountValue !== undefined && amountValue !== null && amountValue <= 0) {
+    push(errors, "amount must be a positive number when provided");
+  }
+
+  const payment_date = optionalTrimmedString(body, "payment_date", errors);
+  const reference_number = optionalTrimmedString(body, "reference_number", errors);
+  const received_by_user_id = optionalNullableFk(body, "received_by_user_id", errors);
+  const notes = optionalTrimmedString(body, "notes", errors);
+  const status = optionalEnum(
+    body,
+    "status",
+    PAYMENT_RECORD_STATUSES,
+    "recorded",
+    errors
+  );
+
+  if (payment_method_id === null || status === null || errors.length > 0) {
+    return null;
+  }
+
+  return {
+    payment_method_id,
+    amount: amountValue === undefined ? null : amountValue,
+    payment_date: payment_date === undefined ? null : payment_date,
+    reference_number: reference_number === undefined ? null : reference_number,
+    received_by_user_id,
+    notes: notes === undefined ? null : notes,
+    status,
   };
 }
 
