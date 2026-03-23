@@ -7,6 +7,8 @@ import { handleCalculationRuns } from "./calculation-runs";
 import { handleConfigurationVisuals } from "./configuration-visuals";
 import { handleDebugBindings } from "./debug";
 import { handleDepartments } from "./departments";
+import { handleDocumentLinks } from "./document-links";
+import { handleDocumentTemplates } from "./document-templates";
 import { handleDoorConfigurations } from "./door-configurations";
 import { handleDoorConfigurationInputs } from "./door-configuration-inputs";
 import {
@@ -14,6 +16,7 @@ import {
   handleDoorConfigurationVariants,
 } from "./door-configuration-variants";
 import { handleEmployees } from "./employees";
+import { handleGeneratedDocuments } from "./generated-documents";
 import { handleHealth } from "./health";
 import { handleInstallationAssignments } from "./installation-assignments";
 import {
@@ -25,14 +28,8 @@ import { handleInventoryCountLines } from "./inventory-count-lines";
 import { handleInventoryCounts } from "./inventory-counts";
 import { handleLocations } from "./locations";
 import { handleOrderDiscounts } from "./order-discounts";
-import {
-  handleOrderLineAction,
-  handleOrderLines,
-} from "./order-lines";
-import {
-  handleOrderAction,
-  handleOrders,
-} from "./orders";
+import { handleOrderLineAction, handleOrderLines } from "./order-lines";
+import { handleOrderAction, handleOrders } from "./orders";
 import { handlePaymentMethods } from "./payment-methods";
 import { handlePayments } from "./payments";
 import { handlePermissions } from "./permissions";
@@ -184,8 +181,14 @@ export async function routeRequest(request: Request, env: Env): Promise<Response
       return handleUserRoles(request, env);
     case "/api/departments":
       return handleDepartments(request, env);
+    case "/api/document-links":
+      return handleDocumentLinks(request, env);
+    case "/api/document-templates":
+      return handleDocumentTemplates(request, env);
     case "/api/employees":
       return handleEmployees(request, env);
+    case "/api/generated-documents":
+      return handleGeneratedDocuments(request, env);
     case "/api/branches":
       return handleBranches(request, env);
     case "/api/locations":
