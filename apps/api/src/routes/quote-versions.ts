@@ -1,10 +1,15 @@
 import {
+  TABLE_DOCUMENT_LINKS,
+  TABLE_DOCUMENT_TEMPLATES,
+  TABLE_GENERATED_DOCUMENTS,
   TABLE_ORDERS,
   TABLE_QUOTE_DISCOUNTS,
   TABLE_QUOTE_LINES,
   TABLE_QUOTES,
   TABLE_QUOTE_VERSIONS,
   TABLE_USERS,
+  type DocumentTemplateRow,
+  type GeneratedDocumentRow,
   type OrderRow,
   type QuoteDiscountRow,
   type QuoteLineRow,
@@ -20,6 +25,7 @@ import type { Env } from "../types/env";
 import {
   parseQuoteVersionCreate,
   parseQuoteVersionCreateOrderDraft,
+  parseQuoteVersionGenerateDocument,
 } from "../validation/quote-versions";
 
 export async function handleQuoteVersions(
@@ -109,12 +115,24 @@ export async function handleQuoteVersionAction(
   request: Request,
   env: Env,
   quoteVersionId: number,
-  action: "create-order-draft"
+  action: "create-order-draft" | "generate-document"
 ): Promise<Response> {
-  if (action !== "create-order-draft") {
-    return notFound();
+  if (action === "create-order-draft") {
+    return handleCreateOrderDraft(request, env, quoteVersionId);
   }
 
+  if (action === "generate-document") {
+    return handleGenerateDocument(request, env, quoteVersionId);
+  }
+
+  return notFound();
+}
+
+async function handleCreateOrderDraft(
+  request: Request,
+  env: Env,
+  quoteVersionId: number
+): Promise<Response> {
   if (request.method !== "POST") {
     return methodNotAllowed(["POST"]);
   }
@@ -255,6 +273,174 @@ export async function handleQuoteVersionAction(
   }
 }
 
+async function handleGenerateDocument(
+  request: Request,
+  env: Env,
+  quoteVersionId: number
+): Promise<Response> {
+  if (request.method !== "POST") {
+    return methodNotAllowed(["POST"]);
+  }
+
+  const db = getDb(env);
+  const quoteVersion = await db
+    .prepare("SELECT * FROM quote_versions WHERE id = ? LIMIT 1")
+    .bind(quoteVersionId)
+    .first<QuoteVersionRow>();
+
+  if (!quoteVersion) {
+    return notFound(`quote_version ${quoteVersionId} not found`);
+  }
+
+  const quote = await db
+    .prepare("SELECT * FROM quotes WHERE id = ? LIMIT 1")
+    .bind(quoteVersion.quote_id)
+    .first<QuoteRow>();
+
+  if (!quote) {
+    return notFound(`quote ${quoteVersion.quote_id} not found`);
+  }
+
+  let body: Record<string, unknown>;
+  try {
+    body = await readJsonObject(request);
+  } catch {
+    return badRequest("Invalid JSON body");
+  }
+
+  const errors: string[] = [];
+  const input = parseQuoteVersionGenerateDocument(body, errors);
+  if (!input || errors.length > 0) {
+    return badRequest(errors.length ? errors.join("; ") : "Validation failed");
+  }
+
+  const templateOk = await rowExists(db, TABLE_DOCUMENT_TEMPLATES, input.template_id);
+  if (!templateOk) {
+    return badRequest(`template_id ${input.template_id} not found`);
+  }
+
+  if (input.generated_by_user_id !== null) {
+    const ok = await rowExists(db, TABLE_USERS, input.generated_by_user_id);
+    if (!ok) {
+      return badRequest(`generated_by_user_id ${input.generated_by_user_id} not found`);
+    }
+  }
+
+  const template = await db
+    .prepare("SELECT * FROM document_templates WHERE id = ? LIMIT 1")
+    .bind(input.template_id)
+    .first<DocumentTemplateRow>();
+
+  if (!template) {
+    return notFound(`document_template ${input.template_id} not found`);
+  }
+
+  if (template.is_active !== 1) {
+    return badRequest(`document_template ${template.id} is not active`);
+  }
+
+  if (template.template_type !== "quote") {
+    return badRequest(
+      `document_template ${template.id} must have template_type quote`
+    );
+  }
+
+  if (template.entity_type !== "quote_version") {
+    return badRequest(
+      `document_template ${template.id} must have entity_type quote_version`
+    );
+  }
+
+  const { results: quoteLines } = await db
+    .prepare(
+      "SELECT * FROM quote_lines WHERE quote_version_id = ? ORDER BY line_number ASC, id ASC"
+    )
+    .bind(quoteVersionId)
+    .all<QuoteLineRow>();
+  const { results: quoteDiscounts } = await db
+    .prepare(
+      "SELECT * FROM quote_discounts WHERE quote_version_id = ? ORDER BY id ASC"
+    )
+    .bind(quoteVersionId)
+    .all<QuoteDiscountRow>();
+
+  const documentNumber = buildGeneratedDocumentNumber(
+    quote,
+    quoteVersion,
+    input.document_number
+  );
+  const title =
+    input.title ?? `Commercial Proposal ${quote.quote_number} / V${quoteVersion.version_number}`;
+  const renderedContent = buildQuoteProposalHtml(
+    template,
+    quote,
+    quoteVersion,
+    quoteLines ?? [],
+    quoteDiscounts ?? [],
+    title,
+    documentNumber
+  );
+
+  try {
+    await db.exec("BEGIN TRANSACTION");
+
+    const generatedDocument = await db
+      .prepare(
+        `INSERT INTO generated_documents (
+          template_id, document_number, title, entity_type, entity_id,
+          generation_status, rendered_content, file_url, file_name,
+          mime_type, generated_by_user_id, generated_at
+        ) VALUES (?, ?, ?, 'quote_version', ?, 'generated', ?, NULL, NULL, ?, ?, datetime('now')) RETURNING *`
+      )
+      .bind(
+        input.template_id,
+        documentNumber,
+        title,
+        quoteVersion.id,
+        renderedContent,
+        "text/html",
+        input.generated_by_user_id
+      )
+      .first<GeneratedDocumentRow>();
+
+    if (!generatedDocument) {
+      throw new Error("Insert did not return a generated document row");
+    }
+
+    if (input.create_quote_link === 1) {
+      await db
+        .prepare(
+          `INSERT INTO document_links (
+            generated_document_id, entity_type, entity_id, link_role
+          ) VALUES (?, 'quote', ?, 'derived_from')`
+        )
+        .bind(generatedDocument.id, quote.id)
+        .run();
+    }
+
+    await db.exec("COMMIT");
+
+    return jsonOk(
+      {
+        data: {
+          generated_document: generatedDocument,
+          linked_quote: input.create_quote_link === 1,
+          line_count: quoteLines?.length ?? 0,
+          discount_count: quoteDiscounts?.length ?? 0,
+        },
+      },
+      { status: 201 }
+    );
+  } catch (err) {
+    try {
+      await db.exec("ROLLBACK");
+    } catch {
+      // Ignore rollback errors; preserve the original failure.
+    }
+    return asSqlFailure(err);
+  }
+}
+
 function buildOrderNumber(
   quote: QuoteRow,
   quoteVersion: QuoteVersionRow,
@@ -265,6 +451,156 @@ function buildOrderNumber(
   }
 
   return `${quote.quote_number}-V${quoteVersion.version_number}-ORD`;
+}
+
+function buildGeneratedDocumentNumber(
+  quote: QuoteRow,
+  quoteVersion: QuoteVersionRow,
+  requestedDocumentNumber: string | null
+): string {
+  if (requestedDocumentNumber) {
+    return requestedDocumentNumber;
+  }
+
+  return `${quote.quote_number}-V${quoteVersion.version_number}-CP`;
+}
+
+function buildQuoteProposalHtml(
+  template: DocumentTemplateRow,
+  quote: QuoteRow,
+  quoteVersion: QuoteVersionRow,
+  quoteLines: QuoteLineRow[],
+  quoteDiscounts: QuoteDiscountRow[],
+  title: string,
+  documentNumber: string
+): string {
+  const lineRows = quoteLines
+    .map((line) => {
+      const description = line.snapshot_description
+        ? `<div><strong>Description:</strong> ${escapeHtml(line.snapshot_description)}</div>`
+        : "";
+
+      return `<tr>
+        <td>${line.line_number}</td>
+        <td>
+          <div><strong>${escapeHtml(line.snapshot_product_name)}</strong></div>
+          <div>SKU: ${escapeHtml(line.snapshot_sku)}</div>
+          ${description}
+        </td>
+        <td>${formatNumber(line.quantity)}</td>
+        <td>${escapeHtml(line.snapshot_unit_name)}</td>
+        <td>${formatMoney(line.unit_price)}</td>
+        <td>${formatMoney(line.line_total)}</td>
+      </tr>`;
+    })
+    .join("\n");
+
+  const discountBlock = quoteDiscounts.length
+    ? `<section>
+        <h2>Discounts</h2>
+        <ul>
+          ${quoteDiscounts
+            .map(
+              (discount) => `<li>${escapeHtml(discount.discount_type)}: ${formatMoney(
+                discount.discount_total ?? discount.discount_value
+              )}${discount.reason ? ` (${escapeHtml(discount.reason)})` : ""}</li>`
+            )
+            .join("")}
+        </ul>
+      </section>`
+    : "";
+
+  const notesBlock = [quoteVersion.notes, quote.notes]
+    .filter((note): note is string => typeof note === "string" && note.trim() !== "")
+    .map((note) => `<p>${escapeHtml(note)}</p>`)
+    .join("\n");
+
+  const templateHint = template.template_content
+    ? `<section><h2>Template Notes</h2><div>${escapeHtml(template.template_content)}</div></section>`
+    : "";
+
+  return `<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>${escapeHtml(title)}</title>
+  </head>
+  <body>
+    <header>
+      <div>Document Number: ${escapeHtml(documentNumber)}</div>
+      <div>Date: ${escapeHtml(new Date().toISOString())}</div>
+      <div>Template: ${escapeHtml(template.name)} (${escapeHtml(template.code)})</div>
+      <h1>${escapeHtml(title)}</h1>
+      <p>Commercial proposal prepared from quote version context.</p>
+    </header>
+
+    <section>
+      <h2>Quote Metadata</h2>
+      <div>Quote Number: ${escapeHtml(quote.quote_number)}</div>
+      <div>Quote Status: ${escapeHtml(quote.status)}</div>
+      <div>Quote Version: ${quoteVersion.version_number}</div>
+      <div>Version Status: ${escapeHtml(quoteVersion.version_status)}</div>
+      <div>Valid Until: ${quote.valid_until ? escapeHtml(quote.valid_until) : "-"}</div>
+    </section>
+
+    <section>
+      <h2>Line Items</h2>
+      <table border="1" cellspacing="0" cellpadding="6">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Item</th>
+            <th>Qty</th>
+            <th>Unit</th>
+            <th>Unit Price</th>
+            <th>Line Total</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${lineRows || '<tr><td colspan="6">No line items</td></tr>'}
+        </tbody>
+      </table>
+    </section>
+
+    ${discountBlock}
+
+    <section>
+      <h2>Totals</h2>
+      <div>Minimum Sale Total: ${formatMoney(quoteVersion.minimum_sale_total)}</div>
+      <div>Actual Sale Total: ${formatMoney(quoteVersion.actual_sale_total)}</div>
+      <div>Discount Total: ${formatMoney(quoteVersion.discount_total)}</div>
+      <div><strong>Grand Total: ${formatMoney(quoteVersion.grand_total)}</strong></div>
+    </section>
+
+    ${notesBlock ? `<section><h2>Notes</h2>${notesBlock}</section>` : ""}
+    ${templateHint}
+  </body>
+</html>`;
+}
+
+function formatMoney(value: number | null): string {
+  if (value === null || value === undefined) {
+    return "-";
+  }
+
+  return Number.isFinite(value) ? value.toFixed(2) : "-";
+}
+
+function formatNumber(value: number | null): string {
+  if (value === null || value === undefined) {
+    return "-";
+  }
+
+  return Number.isFinite(value) ? String(value) : "-";
+}
+
+function escapeHtml(value: string): string {
+  return value
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/\"/g, "&quot;")
+    .replace(/'/g, "&#39;");
 }
 
 async function copyQuoteLinesToOrder(

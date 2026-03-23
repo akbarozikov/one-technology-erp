@@ -125,14 +125,14 @@ export async function routeRequest(request: Request, env: Env): Promise<Response
   }
 
   const quoteVersionActionMatch = path.match(
-    /^\/api\/quote-versions\/(\d+)\/(create-order-draft)$/
+    /^\/api\/quote-versions\/(\d+)\/(create-order-draft|generate-document)$/
   );
   if (quoteVersionActionMatch) {
     return handleQuoteVersionAction(
       request,
       env,
       Number(quoteVersionActionMatch[1]),
-      quoteVersionActionMatch[2] as "create-order-draft"
+      quoteVersionActionMatch[2] as "create-order-draft" | "generate-document"
     );
   }
 

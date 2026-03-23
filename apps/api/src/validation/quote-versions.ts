@@ -1,4 +1,7 @@
 import type {
+  DocumentLinkRole,
+  DocumentTemplateType,
+  DocumentEntityType,
   FulfillmentType,
   CommercialReservationStatus,
   QuoteVersionStatus,
@@ -39,6 +42,32 @@ const FULFILLMENT_TYPES: readonly FulfillmentType[] = [
   "delivery_without_installation",
 ];
 
+const DOCUMENT_TEMPLATE_TYPES: readonly DocumentTemplateType[] = [
+  "quote",
+  "order",
+  "payment",
+  "installation",
+  "service",
+  "internal",
+];
+
+const DOCUMENT_ENTITY_TYPES: readonly DocumentEntityType[] = [
+  "quote",
+  "quote_version",
+  "order",
+  "payment",
+  "installation_job",
+  "installation_result",
+  "stock_transfer_document",
+];
+
+const DOCUMENT_LINK_ROLES: readonly DocumentLinkRole[] = [
+  "primary",
+  "supporting",
+  "derived_from",
+  "related",
+];
+
 function optionalNullableNonNegativeNumber(
   body: JsonObject,
   key: string,
@@ -77,6 +106,14 @@ export interface QuoteVersionCreateOrderDraftInput {
   installation_required: 0 | 1;
   notes: string | null;
   fulfillment_type: FulfillmentType;
+}
+
+export interface QuoteVersionGenerateDocumentInput {
+  template_id: number;
+  document_number: string | null;
+  title: string | null;
+  generated_by_user_id: number | null;
+  create_quote_link: 0 | 1;
 }
 
 export function parseQuoteVersionCreate(
@@ -194,3 +231,38 @@ export function parseQuoteVersionCreateOrderDraft(
     fulfillment_type,
   };
 }
+
+export function parseQuoteVersionGenerateDocument(
+  body: JsonObject,
+  errors: Failures
+): QuoteVersionGenerateDocumentInput | null {
+  const template_id = requirePositiveInt(body, "template_id", errors);
+  const document_number = optionalTrimmedString(body, "document_number", errors);
+  if ("document_number" in body && document_number === null) {
+    push(errors, "document_number must be a non-empty string when provided");
+  }
+
+  const title = optionalTrimmedString(body, "title", errors);
+  if ("title" in body && title === null) {
+    push(errors, "title must be a non-empty string when provided");
+  }
+
+  const generated_by_user_id = optionalNullableFk(body, "generated_by_user_id", errors);
+  const create_quote_link = optionalBoolAsInt(body, "create_quote_link", 1, errors);
+
+  if (template_id === null || errors.length > 0) {
+    return null;
+  }
+
+  return {
+    template_id,
+    document_number: document_number === undefined ? null : document_number,
+    title: title === undefined ? null : title,
+    generated_by_user_id,
+    create_quote_link,
+  };
+}
+
+void DOCUMENT_TEMPLATE_TYPES;
+void DOCUMENT_ENTITY_TYPES;
+void DOCUMENT_LINK_ROLES;
