@@ -1,7 +1,10 @@
 import type {
   DiscountType,
   FulfillmentStatus,
+  InstallationJobStatus,
   LineType,
+  ReservationStatus,
+  StockMovementStatus,
 } from "@one-technology/db";
 import type { JsonObject } from "../lib/json";
 import type { Failures } from "./helpers";
@@ -89,6 +92,11 @@ export interface OrderLineActionInput {
   stock_movement_id: number | null;
   installation_job_id: number | null;
   fulfilled_at: string | null;
+}
+
+export interface OrderLineProgressInput extends OrderLineActionInput {
+  target_status: "reserved" | "issued" | "installed";
+  notes: string | null;
 }
 
 export function parseOrderLineCreate(
@@ -223,5 +231,35 @@ export function parseOrderLineAction(
     stock_movement_id,
     installation_job_id,
     fulfilled_at: fulfilled_at === undefined ? null : fulfilled_at,
+  };
+}
+
+export function parseOrderLineProgress(
+  body: JsonObject,
+  errors: Failures
+): OrderLineProgressInput | null {
+  const target_status = requireEnum(
+    body,
+    "target_status",
+    ["reserved", "issued", "installed"] as const,
+    errors
+  );
+  const reservation_id = optionalNullableFk(body, "reservation_id", errors);
+  const stock_movement_id = optionalNullableFk(body, "stock_movement_id", errors);
+  const installation_job_id = optionalNullableFk(body, "installation_job_id", errors);
+  const fulfilled_at = optionalTrimmedString(body, "fulfilled_at", errors);
+  const notes = optionalTrimmedString(body, "notes", errors);
+
+  if (target_status === null || errors.length > 0) {
+    return null;
+  }
+
+  return {
+    target_status,
+    reservation_id,
+    stock_movement_id,
+    installation_job_id,
+    fulfilled_at: fulfilled_at === undefined ? null : fulfilled_at,
+    notes: notes === undefined ? null : notes,
   };
 }

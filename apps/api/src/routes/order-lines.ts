@@ -7,7 +7,9 @@ import {
   TABLE_STOCK_RESERVATIONS,
   TABLE_UNITS_OF_MEASURE,
   type FulfillmentStatus,
+  type InstallationJobRow,
   type OrderLineRow,
+  type StockReservationRow,
   type StockMovementRow,
 } from "@one-technology/db";
 import { getDb } from "../lib/db";
@@ -19,10 +21,16 @@ import type { Env } from "../types/env";
 import {
   parseOrderLineAction,
   parseOrderLineCreate,
+  parseOrderLineProgress,
   type OrderLineActionInput,
+  type OrderLineProgressInput,
 } from "../validation/order-lines";
 
-type OrderLineAction = "mark-reserved" | "mark-issued" | "mark-installed";
+type OrderLineAction =
+  | "mark-reserved"
+  | "mark-issued"
+  | "mark-installed"
+  | "progress-fulfillment";
 
 export async function handleOrderLines(
   request: Request,
@@ -143,6 +151,10 @@ export async function handleOrderLineAction(
 
   if (!orderLine) {
     return notFound(`order_line ${orderLineId} not found`);
+  }
+
+  if (action === "progress-fulfillment") {
+    return handleOrderLineProgress(request, db, orderLine);
   }
 
   if (orderLine.fulfillment_status === "cancelled") {
@@ -278,5 +290,140 @@ function actionToFulfillmentStatus(action: OrderLineAction): FulfillmentStatus {
       return "issued";
     case "mark-installed":
       return "installed";
+    case "progress-fulfillment":
+      return "pending";
   }
+}
+
+async function handleOrderLineProgress(
+  request: Request,
+  db: D1Database,
+  orderLine: OrderLineRow
+): Promise<Response> {
+  if (orderLine.fulfillment_status === "cancelled") {
+    return badRequest(`Order line ${orderLine.id} is cancelled and cannot be progressed`);
+  }
+
+  if (orderLine.fulfillment_status === "installed") {
+    return badRequest(`Order line ${orderLine.id} is already installed and cannot be progressed further`);
+  }
+
+  let body: Record<string, unknown>;
+  try {
+    body = await readOptionalJsonObject(request);
+  } catch {
+    return badRequest("Invalid JSON body");
+  }
+
+  const errors: string[] = [];
+  const input = parseOrderLineProgress(body, errors);
+  if (!input || errors.length > 0) {
+    return badRequest(errors.length ? errors.join("; ") : "Validation failed");
+  }
+
+  const progressionError = await validateOrderLineProgressContext(db, orderLine, input);
+  if (progressionError) {
+    return badRequest(progressionError);
+  }
+
+  if (input.target_status === "reserved" && orderLine.fulfillment_status === "issued") {
+    return badRequest(`Order line ${orderLine.id} is already issued and cannot be moved back to reserved`);
+  }
+
+  if (input.target_status === "issued" && orderLine.fulfillment_status === "issued") {
+    return badRequest(`Order line ${orderLine.id} is already issued`);
+  }
+
+  try {
+    const row = await db
+      .prepare(
+        `UPDATE order_lines
+         SET fulfillment_status = ?,
+             primary_reservation_id = CASE WHEN ? = 'reserved' THEN COALESCE(?, primary_reservation_id) ELSE primary_reservation_id END,
+             primary_stock_movement_id = CASE WHEN ? = 'issued' THEN COALESCE(?, primary_stock_movement_id) ELSE primary_stock_movement_id END,
+             primary_installation_job_id = CASE WHEN ? = 'installed' THEN COALESCE(?, primary_installation_job_id) ELSE primary_installation_job_id END,
+             fulfilled_at = CASE
+               WHEN ? = 'installed' THEN COALESCE(?, fulfilled_at, datetime('now'))
+               ELSE fulfilled_at
+             END,
+             updated_at = datetime('now')
+         WHERE id = ?
+         RETURNING *`
+      )
+      .bind(
+        input.target_status,
+        input.target_status,
+        input.reservation_id,
+        input.target_status,
+        input.stock_movement_id,
+        input.target_status,
+        input.installation_job_id,
+        input.target_status,
+        input.fulfilled_at,
+        orderLine.id
+      )
+      .first<OrderLineRow>();
+
+    if (!row) {
+      return notFound(`order_line ${orderLine.id} not found`);
+    }
+
+    return jsonOk({ data: row, meta: { notes: input.notes } });
+  } catch (err) {
+    return asSqlFailure(err);
+  }
+}
+
+async function validateOrderLineProgressContext(
+  db: D1Database,
+  orderLine: OrderLineRow,
+  input: OrderLineProgressInput
+): Promise<string | null> {
+  if (input.target_status === "reserved" && input.reservation_id !== null) {
+    const reservation = await db
+      .prepare("SELECT * FROM stock_reservations WHERE id = ? LIMIT 1")
+      .bind(input.reservation_id)
+      .first<StockReservationRow>();
+    if (!reservation) {
+      return `reservation_id ${input.reservation_id} not found`;
+    }
+    if (reservation.status === "cancelled") {
+      return `reservation_id ${input.reservation_id} is cancelled and cannot be linked`;
+    }
+    if (reservation.status === "consumed") {
+      return `reservation_id ${input.reservation_id} is consumed and cannot be linked`;
+    }
+  }
+
+  if (input.target_status === "issued" && input.stock_movement_id !== null) {
+    const movement = await db
+      .prepare("SELECT * FROM stock_movements WHERE id = ? LIMIT 1")
+      .bind(input.stock_movement_id)
+      .first<StockMovementRow>();
+    if (!movement) {
+      return `stock_movement_id ${input.stock_movement_id} not found`;
+    }
+    if (movement.status === "cancelled") {
+      return `stock_movement_id ${input.stock_movement_id} is cancelled and cannot be linked`;
+    }
+  }
+
+  if (input.target_status === "installed" && input.installation_job_id !== null) {
+    const installationJob = await db
+      .prepare("SELECT * FROM installation_jobs WHERE id = ? LIMIT 1")
+      .bind(input.installation_job_id)
+      .first<InstallationJobRow>();
+    if (!installationJob) {
+      return `installation_job_id ${input.installation_job_id} not found`;
+    }
+    if (installationJob.job_status === "cancelled") {
+      return `installation_job_id ${input.installation_job_id} is cancelled and cannot be linked`;
+    }
+  }
+
+  if (input.target_status === "issued" && orderLine.fulfillment_status === "installed") {
+    return `Order line ${orderLine.id} is already installed and cannot be marked issued`;
+  }
+
+  return null;
 }

@@ -103,6 +103,18 @@ export async function routeRequest(request: Request, env: Env): Promise<Response
     );
   }
 
+  const orderLineProgressMatch = path.match(
+    /^\/api\/order-lines\/(\d+)\/(progress-fulfillment)$/
+  );
+  if (orderLineProgressMatch) {
+    return handleOrderLineAction(
+      request,
+      env,
+      Number(orderLineProgressMatch[1]),
+      orderLineProgressMatch[2] as "progress-fulfillment"
+    );
+  }
+
   const installationJobActionMatch = path.match(
     /^\/api\/installation-jobs\/(\d+)\/(mark-completed)$/
   );
