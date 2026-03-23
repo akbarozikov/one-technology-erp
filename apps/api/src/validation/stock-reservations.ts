@@ -41,6 +41,7 @@ export interface StockReservationActionInput {
   consumed_order_line_id: number | null;
   consumed_stock_movement_id: number | null;
   consumed_installation_job_id: number | null;
+  consumed_at: string | null;
 }
 
 export function parseStockReservationCreate(
@@ -142,6 +143,7 @@ export function parseStockReservationAction(
     "consumed_installation_job_id",
     errors
   );
+  const consumed_at = optionalTrimmedString(body, "consumed_at", errors);
 
   if (errors.length > 0) {
     return null;
@@ -154,5 +156,6 @@ export function parseStockReservationAction(
     consumed_order_line_id,
     consumed_stock_movement_id,
     consumed_installation_job_id,
+    consumed_at: consumed_at === undefined ? null : consumed_at,
   };
 }

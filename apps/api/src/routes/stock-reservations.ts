@@ -10,6 +10,7 @@ import {
   TABLE_WAREHOUSES,
   TABLE_WAREHOUSE_POSITIONS,
   type ReservationStatus,
+  type StockMovementRow,
   type StockReservationRow,
 } from "@one-technology/db";
 import { getDb } from "../lib/db";
@@ -158,7 +159,10 @@ export async function handleStockReservationAction(
              consumed_order_line_id = CASE WHEN ? = 'consume' THEN COALESCE(?, consumed_order_line_id) ELSE consumed_order_line_id END,
              consumed_stock_movement_id = CASE WHEN ? = 'consume' THEN COALESCE(?, consumed_stock_movement_id) ELSE consumed_stock_movement_id END,
              consumed_installation_job_id = CASE WHEN ? = 'consume' THEN COALESCE(?, consumed_installation_job_id) ELSE consumed_installation_job_id END,
-             consumed_at = CASE WHEN ? = 'consume' THEN COALESCE(consumed_at, datetime('now')) ELSE consumed_at END,
+             consumed_at = CASE
+               WHEN ? = 'consume' THEN COALESCE(?, consumed_at, datetime('now'))
+               ELSE consumed_at
+             END,
              updated_at = datetime('now')
          WHERE id = ?
          RETURNING *`
@@ -176,6 +180,7 @@ export async function handleStockReservationAction(
         action,
         input.consumed_installation_job_id,
         action,
+        input.consumed_at,
         reservationId
       )
       .first<StockReservationRow>();
@@ -289,13 +294,15 @@ async function validateReservationActionContext(
   }
 
   if (input.consumed_stock_movement_id !== null) {
-    const movementOk = await rowExists(
-      db,
-      TABLE_STOCK_MOVEMENTS,
-      input.consumed_stock_movement_id
-    );
-    if (!movementOk) {
+    const movement = await db
+      .prepare("SELECT * FROM stock_movements WHERE id = ? LIMIT 1")
+      .bind(input.consumed_stock_movement_id)
+      .first<StockMovementRow>();
+    if (!movement) {
       return `consumed_stock_movement_id ${input.consumed_stock_movement_id} not found`;
+    }
+    if (movement.status === "cancelled") {
+      return `consumed_stock_movement_id ${input.consumed_stock_movement_id} is cancelled and cannot be linked to a consumed reservation`;
     }
   }
 
