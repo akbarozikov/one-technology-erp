@@ -42,6 +42,8 @@ export const commercialConfigs = {
   quote_versions: {
     title: "Quote versions",
     apiPath: "/api/quote-versions",
+    detailBasePath: "/admin/quote-versions",
+    detailLabelKey: "version_number",
     fields: [
       { key: "quote_id", label: "Quote", kind: "select", required: true, lookup: quoteLookup },
       { key: "version_number", label: "Version number", kind: "number", required: true },
@@ -96,6 +98,8 @@ export const commercialConfigs = {
   orders: {
     title: "Orders",
     apiPath: "/api/orders",
+    detailBasePath: "/admin/orders",
+    detailLabelKey: "order_number",
     fields: [
       { key: "quote_version_id", label: "Quote version", kind: "select", lookup: quoteVersionLookup },
       { key: "customer_id", label: "Customer ID", kind: "number" },

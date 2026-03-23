@@ -14,6 +14,8 @@ export const installationConfigs = {
   installation_jobs: {
     title: "Installation jobs",
     apiPath: "/api/installation-jobs",
+    detailBasePath: "/admin/installation-jobs",
+    detailLabelKey: "job_number",
     fields: [
       { key: "order_id", label: "Order", kind: "select", lookup: orderLookup },
       { key: "order_line_id", label: "Order line ID", kind: "number" },
