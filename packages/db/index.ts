@@ -28,3 +28,6 @@ export const PHASE7AB_COMMERCIAL_LAYER_MIGRATION =
 
 export const PHASE8D_RESERVATION_CONSUME_CONTEXT_MIGRATION =
   "0008_phase8d_reservation_consume_context.sql" as const;
+
+export const PHASE9AB_INSTALLATION_MODULE_MIGRATION =
+  "0009_phase9ab_installation_module.sql" as const;

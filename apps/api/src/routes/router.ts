@@ -12,6 +12,9 @@ import { handleDoorConfigurationInputs } from "./door-configuration-inputs";
 import { handleDoorConfigurationVariants } from "./door-configuration-variants";
 import { handleEmployees } from "./employees";
 import { handleHealth } from "./health";
+import { handleInstallationAssignments } from "./installation-assignments";
+import { handleInstallationJobs } from "./installation-jobs";
+import { handleInstallationResults } from "./installation-results";
 import { handleInventoryCountLines } from "./inventory-count-lines";
 import { handleInventoryCounts } from "./inventory-counts";
 import { handleLocations } from "./locations";
@@ -172,6 +175,12 @@ export async function routeRequest(request: Request, env: Env): Promise<Response
       return handlePaymentMethods(request, env);
     case "/api/payments":
       return handlePayments(request, env);
+    case "/api/installation-jobs":
+      return handleInstallationJobs(request, env);
+    case "/api/installation-assignments":
+      return handleInstallationAssignments(request, env);
+    case "/api/installation-results":
+      return handleInstallationResults(request, env);
     case "/api/products":
       return handleProducts(request, env);
     case "/api/product-attributes":
