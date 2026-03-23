@@ -126,8 +126,17 @@ export async function handleStockReservationAction(
   if (reservation.status === targetStatus) {
     return badRequest(`Reservation ${reservationId} is already ${targetStatus}`);
   }
+  if (action === "release" && reservation.status === "cancelled") {
+    return badRequest(`Reservation ${reservationId} is cancelled and cannot be released`);
+  }
+  if (action === "release" && reservation.status === "consumed") {
+    return badRequest(`Reservation ${reservationId} is consumed and cannot be released`);
+  }
   if (action === "consume" && reservation.status === "cancelled") {
     return badRequest(`Reservation ${reservationId} is cancelled and cannot be consumed`);
+  }
+  if (action === "cancel" && reservation.status === "consumed") {
+    return badRequest(`Reservation ${reservationId} is consumed and cannot be cancelled`);
   }
 
   let body: Record<string, unknown>;

@@ -8,6 +8,7 @@ import {
   TABLE_UNITS_OF_MEASURE,
   type FulfillmentStatus,
   type OrderLineRow,
+  type StockMovementRow,
 } from "@one-technology/db";
 import { getDb } from "../lib/db";
 import { asSqlFailure } from "../lib/d1-errors";
@@ -148,10 +149,29 @@ export async function handleOrderLineAction(
     return badRequest(`Order line ${orderLineId} is cancelled and cannot be updated operationally`);
   }
 
-  const targetStatus = actionToFulfillmentStatus(action);
+  if (
+    action === "mark-reserved" &&
+    orderLine.fulfillment_status === "installed"
+  ) {
+    return badRequest(`Order line ${orderLineId} is already installed and cannot be marked reserved`);
+  }
+  if (
+    action === "mark-reserved" &&
+    orderLine.fulfillment_status === "issued"
+  ) {
+    return badRequest(`Order line ${orderLineId} is already issued and cannot be marked reserved`);
+  }
+  if (
+    action === "mark-issued" &&
+    orderLine.fulfillment_status === "installed"
+  ) {
+    return badRequest(`Order line ${orderLineId} is already installed and cannot be marked issued`);
+  }
   if (action === "mark-installed" && orderLine.fulfillment_status === "installed") {
     return badRequest(`Order line ${orderLineId} is already installed`);
   }
+
+  const targetStatus = actionToFulfillmentStatus(action);
 
   let body: Record<string, unknown>;
   try {
@@ -224,9 +244,15 @@ async function validateOrderLineActionContext(
   }
 
   if (action === "mark-issued" && input.stock_movement_id !== null) {
-    const movementOk = await rowExists(db, TABLE_STOCK_MOVEMENTS, input.stock_movement_id);
-    if (!movementOk) {
+    const movement = await db
+      .prepare("SELECT * FROM stock_movements WHERE id = ? LIMIT 1")
+      .bind(input.stock_movement_id)
+      .first<StockMovementRow>();
+    if (!movement) {
       return `stock_movement_id ${input.stock_movement_id} not found`;
+    }
+    if (movement.status === "cancelled") {
+      return `stock_movement_id ${input.stock_movement_id} is cancelled and cannot be linked to an issued order line`;
     }
   }
 

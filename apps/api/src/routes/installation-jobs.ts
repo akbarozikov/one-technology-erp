@@ -150,6 +150,9 @@ export async function handleInstallationJobAction(
   if (job.job_status === "completed") {
     return badRequest(`Installation job ${installationJobId} is already completed`);
   }
+  if (job.job_status === "cancelled") {
+    return badRequest(`Installation job ${installationJobId} is cancelled and cannot be completed`);
+  }
 
   let body: Record<string, unknown>;
   try {
@@ -315,6 +318,9 @@ async function validateInstallationJobCompletionContext(
     }
     if (reservation.status === "cancelled") {
       return `reservation_id ${input.reservation_id} is cancelled and cannot be consumed by installation completion`;
+    }
+    if (reservation.status === "released") {
+      return `reservation_id ${input.reservation_id} is released and cannot be consumed by installation completion`;
     }
   }
 
