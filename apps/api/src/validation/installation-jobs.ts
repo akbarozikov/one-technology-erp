@@ -1,13 +1,16 @@
 import type {
+  DocumentTemplateType,
   InstallationJobStatus,
   InstallationJobType,
 } from "@one-technology/db";
 import type { JsonObject } from "../lib/json";
 import type { Failures } from "./helpers";
 import {
+  optionalBoolAsInt,
   optionalEnum,
   optionalNullableFk,
   optionalTrimmedString,
+  push,
   requireEnum,
   requireNonEmptyString,
 } from "./helpers";
@@ -26,6 +29,11 @@ const INSTALLATION_JOB_STATUSES: readonly InstallationJobStatus[] = [
   "completed",
   "cancelled",
   "failed",
+];
+
+const INSTALLATION_DOCUMENT_TEMPLATE_TYPES: readonly DocumentTemplateType[] = [
+  "installation",
+  "service",
 ];
 
 export interface InstallationJobCreateInput {
@@ -56,6 +64,15 @@ export interface InstallationJobCompletionInput {
   completed_by_user_id: number | null;
   actual_completed_at: string | null;
   notes: string | null;
+}
+
+export interface InstallationJobGenerateDocumentInput {
+  template_id: number;
+  installation_result_id: number | null;
+  document_number: string | null;
+  title: string | null;
+  generated_by_user_id: number | null;
+  create_job_link: 0 | 1;
 }
 
 export function parseInstallationJobCreate(
@@ -172,3 +189,50 @@ export function parseInstallationJobCompletion(
     notes: notes === undefined ? null : notes,
   };
 }
+
+export function parseInstallationJobGenerateDocument(
+  body: JsonObject,
+  errors: Failures
+): InstallationJobGenerateDocumentInput | null {
+  const template_id = optionalNullableFk(body, "template_id", errors);
+  if (template_id === null) {
+    push(errors, "template_id is required and must be a positive integer");
+  }
+
+  const installation_result_id = optionalNullableFk(
+    body,
+    "installation_result_id",
+    errors
+  );
+  const document_number = optionalTrimmedString(body, "document_number", errors);
+  if ("document_number" in body && document_number === null) {
+    push(errors, "document_number must be a non-empty string when provided");
+  }
+
+  const title = optionalTrimmedString(body, "title", errors);
+  if ("title" in body && title === null) {
+    push(errors, "title must be a non-empty string when provided");
+  }
+
+  const generated_by_user_id = optionalNullableFk(
+    body,
+    "generated_by_user_id",
+    errors
+  );
+  const create_job_link = optionalBoolAsInt(body, "create_job_link", 0, errors);
+
+  if (template_id === null || errors.length > 0) {
+    return null;
+  }
+
+  return {
+    template_id,
+    installation_result_id,
+    document_number: document_number === undefined ? null : document_number,
+    title: title === undefined ? null : title,
+    generated_by_user_id,
+    create_job_link,
+  };
+}
+
+void INSTALLATION_DOCUMENT_TEMPLATE_TYPES;

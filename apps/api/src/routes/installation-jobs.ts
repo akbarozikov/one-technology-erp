@@ -1,10 +1,14 @@
 import {
+  TABLE_DOCUMENT_TEMPLATES,
+  TABLE_USERS,
   TABLE_ORDER_LINES,
   TABLE_ORDERS,
-  TABLE_USERS,
+  type DocumentTemplateRow,
+  type GeneratedDocumentRow,
   type InstallationJobRow,
   type InstallationResultRow,
   type OrderLineRow,
+  type OrderRow,
   type StockReservationRow,
 } from "@one-technology/db";
 import { getDb } from "../lib/db";
@@ -16,6 +20,7 @@ import type { Env } from "../types/env";
 import {
   parseInstallationJobCompletion,
   parseInstallationJobCreate,
+  parseInstallationJobGenerateDocument,
   type InstallationJobCompletionInput,
 } from "../validation/installation-jobs";
 
@@ -127,8 +132,12 @@ export async function handleInstallationJobAction(
   request: Request,
   env: Env,
   installationJobId: number,
-  action: "mark-completed"
+  action: "mark-completed" | "generate-document"
 ): Promise<Response> {
+  if (action === "generate-document") {
+    return handleGenerateInstallationDocument(request, env, installationJobId);
+  }
+
   if (request.method !== "POST") {
     return methodNotAllowed(["POST"]);
   }
@@ -260,6 +269,180 @@ export async function handleInstallationJobAction(
   }
 }
 
+async function handleGenerateInstallationDocument(
+  request: Request,
+  env: Env,
+  installationJobId: number
+): Promise<Response> {
+  if (request.method !== "POST") {
+    return methodNotAllowed(["POST"]);
+  }
+
+  const db = getDb(env);
+  const job = await db
+    .prepare("SELECT * FROM installation_jobs WHERE id = ? LIMIT 1")
+    .bind(installationJobId)
+    .first<InstallationJobRow>();
+
+  if (!job) {
+    return notFound(`installation_job ${installationJobId} not found`);
+  }
+
+  let body: Record<string, unknown>;
+  try {
+    body = await readOptionalJsonObject(request);
+  } catch {
+    return badRequest("Invalid JSON body");
+  }
+
+  const errors: string[] = [];
+  const input = parseInstallationJobGenerateDocument(body, errors);
+  if (!input || errors.length > 0) {
+    return badRequest(errors.length ? errors.join("; ") : "Validation failed");
+  }
+
+  const templateOk = await rowExists(db, TABLE_DOCUMENT_TEMPLATES, input.template_id);
+  if (!templateOk) {
+    return badRequest(`template_id ${input.template_id} not found`);
+  }
+
+  if (input.generated_by_user_id !== null) {
+    const ok = await rowExists(db, TABLE_USERS, input.generated_by_user_id);
+    if (!ok) {
+      return badRequest(`generated_by_user_id ${input.generated_by_user_id} not found`);
+    }
+  }
+
+  const template = await db
+    .prepare("SELECT * FROM document_templates WHERE id = ? LIMIT 1")
+    .bind(input.template_id)
+    .first<DocumentTemplateRow>();
+
+  if (!template) {
+    return notFound(`document_template ${input.template_id} not found`);
+  }
+
+  if (template.is_active !== 1) {
+    return badRequest(`document_template ${template.id} is not active`);
+  }
+
+  if (template.template_type !== "installation" && template.template_type !== "service") {
+    return badRequest(
+      `document_template ${template.id} must have template_type installation or service`
+    );
+  }
+
+  if (template.entity_type !== "installation_job") {
+    return badRequest(
+      `document_template ${template.id} must have entity_type installation_job`
+    );
+  }
+
+  let installationResult: InstallationResultRow | null = null;
+  if (input.installation_result_id !== null) {
+    installationResult = await db
+      .prepare("SELECT * FROM installation_results WHERE id = ? LIMIT 1")
+      .bind(input.installation_result_id)
+      .first<InstallationResultRow>();
+    if (!installationResult) {
+      return badRequest(`installation_result_id ${input.installation_result_id} not found`);
+    }
+    if (installationResult.installation_job_id !== job.id) {
+      return badRequest(
+        `installation_result_id ${input.installation_result_id} does not belong to installation_job ${job.id}`
+      );
+    }
+  }
+
+  const order =
+    job.order_id === null
+      ? null
+      : await db
+          .prepare("SELECT * FROM orders WHERE id = ? LIMIT 1")
+          .bind(job.order_id)
+          .first<OrderRow>();
+
+  const orderLine =
+    job.order_line_id === null
+      ? null
+      : await db
+          .prepare("SELECT * FROM order_lines WHERE id = ? LIMIT 1")
+          .bind(job.order_line_id)
+          .first<OrderLineRow>();
+
+  const documentNumber = buildInstallationDocumentNumber(job, input.document_number);
+  const title =
+    input.title ??
+    `${job.job_type === "service" ? "Service" : "Installation"} Document ${job.job_number}`;
+  const renderedContent = buildInstallationDocumentHtml(
+    template,
+    job,
+    installationResult,
+    order,
+    orderLine,
+    title,
+    documentNumber
+  );
+
+  try {
+    await db.exec("BEGIN TRANSACTION");
+
+    const generatedDocument = await db
+      .prepare(
+        `INSERT INTO generated_documents (
+          template_id, document_number, title, entity_type, entity_id,
+          generation_status, rendered_content, file_url, file_name,
+          mime_type, generated_by_user_id, generated_at
+        ) VALUES (?, ?, ?, 'installation_job', ?, 'generated', ?, NULL, NULL, ?, ?, datetime('now')) RETURNING *`
+      )
+      .bind(
+        input.template_id,
+        documentNumber,
+        title,
+        job.id,
+        renderedContent,
+        "text/html",
+        input.generated_by_user_id
+      )
+      .first<GeneratedDocumentRow>();
+
+    if (!generatedDocument) {
+      throw new Error("Insert did not return a generated document row");
+    }
+
+    if (input.create_job_link === 1) {
+      await db
+        .prepare(
+          `INSERT INTO document_links (
+            generated_document_id, entity_type, entity_id, link_role
+          ) VALUES (?, 'installation_job', ?, 'primary')`
+        )
+        .bind(generatedDocument.id, job.id)
+        .run();
+    }
+
+    await db.exec("COMMIT");
+
+    return jsonOk(
+      {
+        data: {
+          generated_document: generatedDocument,
+          linked_installation_job: input.create_job_link === 1,
+          installation_result_id: installationResult?.id ?? null,
+        },
+      },
+      { status: 201 }
+    );
+  } catch (err) {
+    try {
+      await db.exec("ROLLBACK");
+    } catch {
+      // Ignore rollback errors and preserve the original failure.
+    }
+    return asSqlFailure(err);
+  }
+}
+
 async function validateInstallationJobCompletionContext(
   db: D1Database,
   job: InstallationJobRow,
@@ -329,4 +512,100 @@ async function validateInstallationJobCompletionContext(
     orderLine,
     reservation,
   };
+}
+
+function buildInstallationDocumentNumber(
+  job: InstallationJobRow,
+  requestedDocumentNumber: string | null
+): string {
+  if (requestedDocumentNumber) {
+    return requestedDocumentNumber;
+  }
+
+  return `${job.job_number}-DOC`;
+}
+
+function buildInstallationDocumentHtml(
+  template: DocumentTemplateRow,
+  job: InstallationJobRow,
+  installationResult: InstallationResultRow | null,
+  order: OrderRow | null,
+  orderLine: OrderLineRow | null,
+  title: string,
+  documentNumber: string
+): string {
+  const orderBlock = order
+    ? `<div>Order Number: ${escapeHtml(order.order_number)}</div>`
+    : "";
+  const orderLineBlock = orderLine
+    ? `<div>Order Line: ${orderLine.line_number}</div>`
+    : "";
+  const jobNotesBlock = job.notes
+    ? `<section><h2>Job Notes</h2><p>${escapeHtml(job.notes)}</p></section>`
+    : "";
+  const resultBlock = installationResult
+    ? `<section>
+        <h2>Result</h2>
+        <div>Result Status: ${escapeHtml(installationResult.result_status)}</div>
+        <div>Completion Date: ${installationResult.completion_date ? escapeHtml(installationResult.completion_date) : "-"}</div>
+        <div>Work Summary: ${installationResult.work_summary ? escapeHtml(installationResult.work_summary) : "-"}</div>
+        <div>Issues Found: ${installationResult.issues_found ? escapeHtml(installationResult.issues_found) : "-"}</div>
+        <div>Materials Used: ${installationResult.materials_used_notes ? escapeHtml(installationResult.materials_used_notes) : "-"}</div>
+        <div>Customer Feedback: ${installationResult.customer_feedback ? escapeHtml(installationResult.customer_feedback) : "-"}</div>
+        <div>Customer Signoff: ${installationResult.customer_signoff_text ? escapeHtml(installationResult.customer_signoff_text) : "-"}</div>
+        <div>Followup Required: ${installationResult.followup_required === 1 ? "Yes" : "No"}</div>
+        <div>Followup Notes: ${installationResult.followup_notes ? escapeHtml(installationResult.followup_notes) : "-"}</div>
+      </section>`
+    : "";
+  const templateHint = template.template_content
+    ? `<section><h2>Template Notes</h2><div>${escapeHtml(template.template_content)}</div></section>`
+    : "";
+
+  return `<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>${escapeHtml(title)}</title>
+  </head>
+  <body>
+    <header>
+      <div>Document Number: ${escapeHtml(documentNumber)}</div>
+      <div>Template: ${escapeHtml(template.name)} (${escapeHtml(template.code)})</div>
+      <h1>${escapeHtml(title)}</h1>
+      <p>Installation/service document generated from installation job context.</p>
+    </header>
+
+    <section>
+      <h2>Job Metadata</h2>
+      <div>Job Number: ${escapeHtml(job.job_number)}</div>
+      <div>Job Type: ${escapeHtml(job.job_type)}</div>
+      <div>Job Status: ${escapeHtml(job.job_status)}</div>
+      <div>Planned Date: ${job.planned_date ? escapeHtml(job.planned_date) : "-"}</div>
+      <div>Actual Completed At: ${job.actual_completed_at ? escapeHtml(job.actual_completed_at) : "-"}</div>
+    </section>
+
+    <section>
+      <h2>Address & Contact</h2>
+      <div>Address: ${job.address_text ? escapeHtml(job.address_text) : "-"}</div>
+      <div>City: ${job.city ? escapeHtml(job.city) : "-"}</div>
+      <div>Contact Name: ${job.contact_name ? escapeHtml(job.contact_name) : "-"}</div>
+      <div>Contact Phone: ${job.contact_phone ? escapeHtml(job.contact_phone) : "-"}</div>
+    </section>
+
+    ${(orderBlock || orderLineBlock) ? `<section><h2>Linked Commercial Context</h2>${orderBlock}${orderLineBlock}</section>` : ""}
+
+    ${resultBlock}
+    ${jobNotesBlock}
+    ${templateHint}
+  </body>
+</html>`;
+}
+
+function escapeHtml(value: string): string {
+  return value
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
 }
