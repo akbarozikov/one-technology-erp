@@ -45,6 +45,10 @@ type Props = {
   summaryFields: SummaryField[];
   templateTypes: string[];
   templateEntityType: string;
+  showSummary?: boolean;
+  panelTitle?: string;
+  panelDescription?: string;
+  showConfigHint?: boolean;
 };
 
 export function DocumentGenerationPanel({
@@ -55,6 +59,10 @@ export function DocumentGenerationPanel({
   summaryFields,
   templateTypes,
   templateEntityType,
+  showSummary = true,
+  panelTitle = "Generate Document",
+  panelDescription,
+  showConfigHint = true,
 }: Props) {
   const templateTypeKey = templateTypes.join("|");
   const [entity, setEntity] = useState<Record<string, unknown> | null>(null);
@@ -194,7 +202,7 @@ export function DocumentGenerationPanel({
 
   return (
     <div className="space-y-6">
-      {configHint && (
+      {showConfigHint && configHint && (
         <div
           className="rounded border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-950 dark:border-amber-700 dark:bg-amber-950/40 dark:text-amber-100"
           role="status"
@@ -218,28 +226,35 @@ export function DocumentGenerationPanel({
 
       {!loading && !error && entity && (
         <>
-          <section className="rounded border border-zinc-200 bg-white p-4 shadow-sm dark:border-zinc-700 dark:bg-zinc-900">
-            <h2 className="mb-3 text-lg font-semibold text-zinc-900 dark:text-zinc-50">
-              {entityLabel} Summary
-            </h2>
-            <dl className="grid gap-3 sm:grid-cols-2">
-              {summaryFields.map((field) => (
-                <div key={field.key}>
-                  <dt className="text-xs uppercase tracking-wide text-zinc-500">
-                    {field.label}
-                  </dt>
-                  <dd className="text-sm text-zinc-900 dark:text-zinc-100">
-                    {displayValue(entity[field.key])}
-                  </dd>
-                </div>
-              ))}
-            </dl>
-          </section>
+          {showSummary && (
+            <section className="rounded border border-zinc-200 bg-white p-4 shadow-sm dark:border-zinc-700 dark:bg-zinc-900">
+              <h2 className="mb-3 text-lg font-semibold text-zinc-900 dark:text-zinc-50">
+                {entityLabel} Summary
+              </h2>
+              <dl className="grid gap-3 sm:grid-cols-2">
+                {summaryFields.map((field) => (
+                  <div key={field.key}>
+                    <dt className="text-xs uppercase tracking-wide text-zinc-500">
+                      {field.label}
+                    </dt>
+                    <dd className="text-sm text-zinc-900 dark:text-zinc-100">
+                      {displayValue(entity[field.key])}
+                    </dd>
+                  </div>
+                ))}
+              </dl>
+            </section>
+          )}
 
           <section className="rounded border border-zinc-200 bg-white p-4 shadow-sm dark:border-zinc-700 dark:bg-zinc-900">
             <h2 className="mb-3 text-lg font-semibold text-zinc-900 dark:text-zinc-50">
-              Generate Document
+              {panelTitle}
             </h2>
+            {panelDescription && (
+              <p className="mb-3 text-sm text-zinc-500 dark:text-zinc-400">
+                {panelDescription}
+              </p>
+            )}
 
             {templates.length === 0 ? (
               <p className="text-sm text-zinc-500 dark:text-zinc-400">
