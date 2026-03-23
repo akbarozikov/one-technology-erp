@@ -4,7 +4,16 @@ export type FieldKind =
   | "number"
   | "checkbox"
   | "select"
+  | "date"
+  | "datetime-local"
   | "boolean-select";
+
+export type EntityLookup = {
+  apiPath: string;
+  labelKeys: string[];
+  valueKey?: string;
+  includeIdInLabel?: boolean;
+};
 
 export type EntityField = {
   key: string;
@@ -16,6 +25,7 @@ export type EntityField = {
   /** For checkboxes: initial checked when creating a new row */
   defaultChecked?: boolean;
   options?: { value: string; label: string }[];
+  lookup?: EntityLookup;
 };
 
 export type EntityConfig = {
@@ -329,6 +339,39 @@ const installationResultStatuses = [
   { value: "revisit_required", label: "revisit_required" },
 ];
 
+const userLookup = {
+  apiPath: "/api/users",
+  labelKeys: ["email", "phone"],
+  includeIdInLabel: true,
+} as const satisfies EntityLookup;
+
+const unitLookup = {
+  apiPath: "/api/units",
+  labelKeys: ["name", "symbol", "code"],
+  includeIdInLabel: true,
+} as const satisfies EntityLookup;
+
+const warehouseLookup = {
+  apiPath: "/api/warehouses",
+  labelKeys: ["name", "code"],
+  includeIdInLabel: true,
+} as const satisfies EntityLookup;
+
+const employeeLookup = {
+  apiPath: "/api/employees",
+  labelKeys: ["full_name", "job_title"],
+  includeIdInLabel: true,
+} as const satisfies EntityLookup;
+
+const paymentMethodLookup = {
+  apiPath: "/api/payment-methods",
+  labelKeys: ["name", "code"],
+  includeIdInLabel: true,
+} as const satisfies EntityLookup;
+
+export type AdminNavItem = { href: string; label: string };
+export type AdminNavGroup = { label: string; items: AdminNavItem[] };
+
 export const entityConfigs = {
   roles: {
     title: "Roles",
@@ -445,7 +488,7 @@ export const entityConfigs = {
         required: true,
         options: employeeTypes,
       },
-      { key: "hire_date", label: "Hire date", kind: "text" },
+      { key: "hire_date", label: "Hire date", kind: "date" },
       {
         key: "is_active",
         label: "Active",
@@ -856,12 +899,12 @@ export const entityConfigs = {
     createEnabled: false,
     fields: [
       { key: "product_id", label: "Product ID", kind: "number", required: true },
-      { key: "warehouse_id", label: "Warehouse ID", kind: "number", required: true },
+      { key: "warehouse_id", label: "Warehouse", kind: "select", required: true, lookup: warehouseLookup },
       { key: "position_id", label: "Position ID", kind: "number", required: true },
       { key: "on_hand_qty", label: "On hand qty", kind: "number", required: true, step: "any", min: 0 },
       { key: "reserved_qty", label: "Reserved qty", kind: "number", required: true, step: "any", min: 0 },
       { key: "available_qty", label: "Available qty", kind: "number", required: true, step: "any", min: 0 },
-      { key: "last_recalculated_at", label: "Last recalculated at", kind: "text" },
+      { key: "last_recalculated_at", label: "Last recalculated at", kind: "datetime-local" },
     ],
   },
   stock_movements: {
@@ -876,9 +919,9 @@ export const entityConfigs = {
         options: stockMovementTypes,
       },
       { key: "reference_code", label: "Reference code", kind: "text" },
-      { key: "warehouse_id", label: "Warehouse ID", kind: "number" },
-      { key: "source_warehouse_id", label: "Source warehouse ID", kind: "number" },
-      { key: "destination_warehouse_id", label: "Destination warehouse ID", kind: "number" },
+        { key: "warehouse_id", label: "Warehouse", kind: "select", lookup: warehouseLookup },
+        { key: "source_warehouse_id", label: "Source warehouse", kind: "select", lookup: warehouseLookup },
+        { key: "destination_warehouse_id", label: "Destination warehouse", kind: "select", lookup: warehouseLookup },
       { key: "related_entity_type", label: "Related entity type", kind: "text" },
       { key: "related_entity_id", label: "Related entity ID", kind: "text" },
       {
@@ -887,9 +930,9 @@ export const entityConfigs = {
         kind: "select",
         options: stockMovementStatuses,
       },
-      { key: "movement_date", label: "Movement date", kind: "text", required: true },
-      { key: "performed_by_user_id", label: "Performed by user ID", kind: "number" },
-      { key: "approved_by_user_id", label: "Approved by user ID", kind: "number" },
+        { key: "movement_date", label: "Movement date", kind: "datetime-local", required: true },
+        { key: "performed_by_user_id", label: "Performed by user", kind: "select", lookup: userLookup },
+        { key: "approved_by_user_id", label: "Approved by user", kind: "select", lookup: userLookup },
       { key: "notes", label: "Notes", kind: "textarea" },
     ],
   },
@@ -930,7 +973,7 @@ export const entityConfigs = {
         kind: "number",
         required: true,
       },
-      { key: "receipt_date", label: "Receipt date", kind: "text", required: true },
+        { key: "receipt_date", label: "Receipt date", kind: "date", required: true },
       {
         key: "status",
         label: "Status",
@@ -941,8 +984,8 @@ export const entityConfigs = {
       { key: "source_document_number", label: "Source document number", kind: "text" },
       { key: "currency", label: "Currency", kind: "text" },
       { key: "total_amount", label: "Total amount", kind: "number", step: "any", min: 0 },
-      { key: "received_by_user_id", label: "Received by user ID", kind: "number" },
-      { key: "approved_by_user_id", label: "Approved by user ID", kind: "number" },
+        { key: "received_by_user_id", label: "Received by user", kind: "select", lookup: userLookup },
+        { key: "approved_by_user_id", label: "Approved by user", kind: "select", lookup: userLookup },
       { key: "notes", label: "Notes", kind: "textarea" },
     ],
   },
@@ -977,8 +1020,8 @@ export const entityConfigs = {
       { key: "line_total", label: "Line total", kind: "number", step: "any", min: 0 },
       {
         key: "snapshot_product_name",
-        label: "Snapshot product name",
-        kind: "text",
+          label: "Snapshot product name",
+          kind: "text",
         required: true,
       },
       { key: "snapshot_sku", label: "Snapshot SKU", kind: "text", required: true },
@@ -995,7 +1038,7 @@ export const entityConfigs = {
     title: "Stock adjustments",
     apiPath: "/api/stock-adjustments",
     fields: [
-      { key: "warehouse_id", label: "Warehouse ID", kind: "number", required: true },
+      { key: "warehouse_id", label: "Warehouse", kind: "select", required: true, lookup: warehouseLookup },
       {
         key: "adjustment_date",
         label: "Adjustment date",
@@ -1010,8 +1053,8 @@ export const entityConfigs = {
         options: warehouseDocumentStatuses,
       },
       { key: "reference_code", label: "Reference code", kind: "text" },
-      { key: "performed_by_user_id", label: "Performed by user ID", kind: "number" },
-      { key: "approved_by_user_id", label: "Approved by user ID", kind: "number" },
+      { key: "performed_by_user_id", label: "Performed by user", kind: "select", lookup: userLookup },
+      { key: "approved_by_user_id", label: "Approved by user", kind: "select", lookup: userLookup },
       { key: "notes", label: "Notes", kind: "textarea" },
     ],
   },
@@ -1039,7 +1082,7 @@ export const entityConfigs = {
     apiPath: "/api/stock-writeoffs",
     fields: [
       { key: "warehouse_id", label: "Warehouse ID", kind: "number", required: true },
-      { key: "writeoff_date", label: "Writeoff date", kind: "text", required: true },
+      { key: "writeoff_date", label: "Writeoff date", kind: "date", required: true },
       {
         key: "writeoff_reason",
         label: "Writeoff reason",
@@ -1054,8 +1097,8 @@ export const entityConfigs = {
         options: warehouseDocumentStatuses,
       },
       { key: "reference_code", label: "Reference code", kind: "text" },
-      { key: "performed_by_user_id", label: "Performed by user ID", kind: "number" },
-      { key: "approved_by_user_id", label: "Approved by user ID", kind: "number" },
+      { key: "performed_by_user_id", label: "Performed by user", kind: "select", lookup: userLookup },
+      { key: "approved_by_user_id", label: "Approved by user", kind: "select", lookup: userLookup },
       { key: "notes", label: "Notes", kind: "textarea" },
     ],
   },
@@ -1087,8 +1130,8 @@ export const entityConfigs = {
     title: "Inventory counts",
     apiPath: "/api/inventory-counts",
     fields: [
-      { key: "warehouse_id", label: "Warehouse ID", kind: "number", required: true },
-      { key: "count_date", label: "Count date", kind: "text", required: true },
+      { key: "warehouse_id", label: "Warehouse", kind: "select", required: true, lookup: warehouseLookup },
+      { key: "count_date", label: "Count date", kind: "date", required: true },
       {
         key: "status",
         label: "Status",
@@ -1096,7 +1139,7 @@ export const entityConfigs = {
         options: inventoryCountStatuses,
       },
       { key: "reference_code", label: "Reference code", kind: "text" },
-      { key: "performed_by_user_id", label: "Performed by user ID", kind: "number" },
+      { key: "performed_by_user_id", label: "Performed by user", kind: "select", lookup: userLookup },
       { key: "notes", label: "Notes", kind: "textarea" },
     ],
   },
@@ -1135,7 +1178,7 @@ export const entityConfigs = {
         kind: "number",
         required: true,
       },
-      { key: "transfer_date", label: "Transfer date", kind: "text", required: true },
+      { key: "transfer_date", label: "Transfer date", kind: "date", required: true },
       {
         key: "status",
         label: "Status",
@@ -1143,8 +1186,8 @@ export const entityConfigs = {
         options: warehouseDocumentStatuses,
       },
       { key: "reference_code", label: "Reference code", kind: "text" },
-      { key: "requested_by_user_id", label: "Requested by user ID", kind: "number" },
-      { key: "confirmed_by_user_id", label: "Confirmed by user ID", kind: "number" },
+      { key: "requested_by_user_id", label: "Requested by user", kind: "select", lookup: userLookup },
+      { key: "confirmed_by_user_id", label: "Confirmed by user", kind: "select", lookup: userLookup },
       { key: "notes", label: "Notes", kind: "textarea" },
     ],
   },
@@ -1178,7 +1221,7 @@ export const entityConfigs = {
     apiPath: "/api/stock-reservations",
     fields: [
       { key: "product_id", label: "Product ID", kind: "number", required: true },
-      { key: "warehouse_id", label: "Warehouse ID", kind: "number", required: true },
+      { key: "warehouse_id", label: "Warehouse", kind: "select", required: true, lookup: warehouseLookup },
       { key: "position_id", label: "Position ID", kind: "number", required: true },
       {
         key: "reserved_qty",
@@ -1202,11 +1245,11 @@ export const entityConfigs = {
         kind: "number",
       },
       { key: "bom_line_id", label: "BOM line ID", kind: "number" },
-      { key: "reserved_from", label: "Reserved from", kind: "text" },
-      { key: "reserved_until", label: "Reserved until", kind: "text" },
+      { key: "reserved_from", label: "Reserved from", kind: "datetime-local" },
+      { key: "reserved_until", label: "Reserved until", kind: "datetime-local" },
       { key: "reservation_reason", label: "Reservation reason", kind: "textarea" },
-      { key: "created_by_user_id", label: "Created by user ID", kind: "number" },
-      { key: "released_by_user_id", label: "Released by user ID", kind: "number" },
+      { key: "created_by_user_id", label: "Created by user", kind: "select", lookup: userLookup },
+      { key: "released_by_user_id", label: "Released by user", kind: "select", lookup: userLookup },
       { key: "release_reason", label: "Release reason", kind: "textarea" },
     ],
   },
@@ -1218,7 +1261,7 @@ export const entityConfigs = {
       { key: "title", label: "Title", kind: "text", required: true },
       { key: "customer_id", label: "Customer ID", kind: "number" },
       { key: "deal_id", label: "Deal ID", kind: "number" },
-      { key: "created_by_user_id", label: "Created by user ID", kind: "number" },
+      { key: "created_by_user_id", label: "Created by user", kind: "select", lookup: userLookup },
       { key: "status", label: "Status", kind: "select", options: configurationStatuses },
       { key: "is_attached_to_quote", label: "Attached to quote", kind: "checkbox" },
       { key: "is_attached_to_order", label: "Attached to order", kind: "checkbox" },
@@ -1243,7 +1286,7 @@ export const entityConfigs = {
       { key: "actual_sale_total", label: "Actual sale total", kind: "number", step: "any", min: 0 },
       { key: "bom_total_cost", label: "BOM total cost", kind: "number", step: "any", min: 0 },
       { key: "bom_total_items", label: "BOM total items", kind: "number", min: 0 },
-      { key: "created_by_user_id", label: "Created by user ID", kind: "number" },
+      { key: "created_by_user_id", label: "Created by user", kind: "select", lookup: userLookup },
     ],
   },
   door_configuration_inputs: {
@@ -1273,8 +1316,8 @@ export const entityConfigs = {
       { key: "output_snapshot_json", label: "Output snapshot JSON", kind: "textarea" },
       { key: "warnings_json", label: "Warnings JSON", kind: "textarea" },
       { key: "errors_json", label: "Errors JSON", kind: "textarea" },
-      { key: "executed_by_user_id", label: "Executed by user ID", kind: "number" },
-      { key: "executed_at", label: "Executed at", kind: "text" },
+        { key: "executed_by_user_id", label: "Executed by user", kind: "select", lookup: userLookup },
+        { key: "executed_at", label: "Executed at", kind: "datetime-local" },
     ],
   },
   spring_calculation_results: {
@@ -1305,7 +1348,7 @@ export const entityConfigs = {
       { key: "source_reference", label: "Source reference", kind: "text" },
       { key: "line_number", label: "Line number", kind: "number", required: true },
       { key: "quantity", label: "Quantity", kind: "number", required: true, step: "any", min: 0.000001 },
-      { key: "unit_id", label: "Unit ID", kind: "number", required: true },
+        { key: "unit_id", label: "Unit", kind: "select", required: true, lookup: unitLookup },
       { key: "waste_factor", label: "Waste factor", kind: "number", step: "any", min: 0 },
       { key: "unit_cost_snapshot", label: "Unit cost snapshot", kind: "number", step: "any", min: 0 },
       { key: "unit_price_snapshot", label: "Unit price snapshot", kind: "number", step: "any", min: 0 },
@@ -1331,7 +1374,7 @@ export const entityConfigs = {
       { key: "old_values_json", label: "Old values JSON", kind: "textarea" },
       { key: "new_values_json", label: "New values JSON", kind: "textarea" },
       { key: "reason", label: "Reason", kind: "textarea" },
-      { key: "changed_by_user_id", label: "Changed by user ID", kind: "number" },
+        { key: "changed_by_user_id", label: "Changed by user", kind: "select", lookup: userLookup },
     ],
   },
   configuration_visuals: {
@@ -1358,9 +1401,9 @@ export const entityConfigs = {
       { key: "actual_sale_total", label: "Actual sale total", kind: "number", step: "any", min: 0 },
       { key: "discount_total", label: "Discount total", kind: "number", step: "any", min: 0 },
       { key: "grand_total", label: "Grand total", kind: "number", step: "any", min: 0 },
-      { key: "valid_until", label: "Valid until", kind: "text" },
-      { key: "created_by_user_id", label: "Created by user ID", kind: "number" },
-      { key: "approved_by_user_id", label: "Approved by user ID", kind: "number" },
+        { key: "valid_until", label: "Valid until", kind: "date" },
+        { key: "created_by_user_id", label: "Created by user", kind: "select", lookup: userLookup },
+        { key: "approved_by_user_id", label: "Approved by user", kind: "select", lookup: userLookup },
       { key: "notes", label: "Notes", kind: "textarea" },
     ],
   },
@@ -1379,7 +1422,7 @@ export const entityConfigs = {
       { key: "grand_total", label: "Grand total", kind: "number", step: "any", min: 0 },
       { key: "reservation_status", label: "Reservation status", kind: "select", options: commercialReservationStatuses },
       { key: "notes", label: "Notes", kind: "textarea" },
-      { key: "created_by_user_id", label: "Created by user ID", kind: "number" },
+      { key: "created_by_user_id", label: "Created by user", kind: "select", lookup: userLookup },
     ],
   },
   quote_lines: {
@@ -1392,7 +1435,7 @@ export const entityConfigs = {
       { key: "product_id", label: "Product ID", kind: "number" },
       { key: "configuration_variant_id", label: "Configuration variant ID", kind: "number" },
       { key: "quantity", label: "Quantity", kind: "number", required: true, step: "any", min: 0.000001 },
-      { key: "unit_id", label: "Unit ID", kind: "number", required: true },
+      { key: "unit_id", label: "Unit", kind: "select", required: true, lookup: unitLookup },
       { key: "unit_price", label: "Unit price", kind: "number", step: "any", min: 0 },
       { key: "minimum_unit_price", label: "Minimum unit price", kind: "number", step: "any", min: 0 },
       { key: "line_discount_type", label: "Line discount type", kind: "select", options: discountTypes },
@@ -1415,7 +1458,7 @@ export const entityConfigs = {
       { key: "discount_value", label: "Discount value", kind: "number", required: true, step: "any", min: 0 },
       { key: "discount_total", label: "Discount total", kind: "number", step: "any", min: 0 },
       { key: "reason", label: "Reason", kind: "textarea" },
-      { key: "created_by_user_id", label: "Created by user ID", kind: "number" },
+      { key: "created_by_user_id", label: "Created by user", kind: "select", lookup: userLookup },
     ],
   },
   orders: {
@@ -1438,11 +1481,11 @@ export const entityConfigs = {
       { key: "grand_total", label: "Grand total", kind: "number", step: "any", min: 0 },
       { key: "paid_total", label: "Paid total", kind: "number", step: "any", min: 0 },
       { key: "remaining_total", label: "Remaining total", kind: "number", step: "any", min: 0 },
-      { key: "order_date", label: "Order date", kind: "text" },
-      { key: "planned_installation_date", label: "Planned installation date", kind: "text" },
-      { key: "completed_at", label: "Completed at", kind: "text" },
-      { key: "created_by_user_id", label: "Created by user ID", kind: "number" },
-      { key: "approved_by_user_id", label: "Approved by user ID", kind: "number" },
+      { key: "order_date", label: "Order date", kind: "date" },
+      { key: "planned_installation_date", label: "Planned installation date", kind: "date" },
+      { key: "completed_at", label: "Completed at", kind: "datetime-local" },
+      { key: "created_by_user_id", label: "Created by user", kind: "select", lookup: userLookup },
+      { key: "approved_by_user_id", label: "Approved by user", kind: "select", lookup: userLookup },
       { key: "notes", label: "Notes", kind: "textarea" },
     ],
   },
@@ -1456,7 +1499,7 @@ export const entityConfigs = {
       { key: "product_id", label: "Product ID", kind: "number" },
       { key: "configuration_variant_id", label: "Configuration variant ID", kind: "number" },
       { key: "quantity", label: "Quantity", kind: "number", required: true, step: "any", min: 0.000001 },
-      { key: "unit_id", label: "Unit ID", kind: "number", required: true },
+      { key: "unit_id", label: "Unit", kind: "select", required: true, lookup: unitLookup },
       { key: "unit_price", label: "Unit price", kind: "number", step: "any", min: 0 },
       { key: "minimum_unit_price", label: "Minimum unit price", kind: "number", step: "any", min: 0 },
       { key: "line_discount_type", label: "Line discount type", kind: "select", options: discountTypes },
@@ -1480,7 +1523,7 @@ export const entityConfigs = {
       { key: "discount_value", label: "Discount value", kind: "number", required: true, step: "any", min: 0 },
       { key: "discount_total", label: "Discount total", kind: "number", step: "any", min: 0 },
       { key: "reason", label: "Reason", kind: "textarea" },
-      { key: "created_by_user_id", label: "Created by user ID", kind: "number" },
+      { key: "created_by_user_id", label: "Created by user", kind: "select", lookup: userLookup },
     ],
   },
   payment_methods: {
@@ -1498,12 +1541,12 @@ export const entityConfigs = {
     apiPath: "/api/payments",
     fields: [
       { key: "order_id", label: "Order ID", kind: "number", required: true },
-      { key: "payment_method_id", label: "Payment method ID", kind: "number", required: true },
-      { key: "payment_date", label: "Payment date", kind: "text", required: true },
+      { key: "payment_method_id", label: "Payment method", kind: "select", required: true, lookup: paymentMethodLookup },
+      { key: "payment_date", label: "Payment date", kind: "date", required: true },
       { key: "amount", label: "Amount", kind: "number", required: true, step: "any", min: 0.000001 },
       { key: "currency", label: "Currency", kind: "text" },
       { key: "reference_number", label: "Reference number", kind: "text" },
-      { key: "received_by_user_id", label: "Received by user ID", kind: "number" },
+      { key: "received_by_user_id", label: "Received by user", kind: "select", lookup: userLookup },
       { key: "notes", label: "Notes", kind: "textarea" },
       { key: "status", label: "Status", kind: "select", options: paymentRecordStatuses },
     ],
@@ -1517,19 +1560,19 @@ export const entityConfigs = {
       { key: "job_number", label: "Job number", kind: "text", required: true },
       { key: "job_type", label: "Job type", kind: "select", required: true, options: installationJobTypes },
       { key: "job_status", label: "Job status", kind: "select", options: installationJobStatuses },
-      { key: "planned_date", label: "Planned date", kind: "text" },
+      { key: "planned_date", label: "Planned date", kind: "date" },
       { key: "scheduled_time_from", label: "Scheduled time from", kind: "text" },
       { key: "scheduled_time_to", label: "Scheduled time to", kind: "text" },
-      { key: "actual_started_at", label: "Actual started at", kind: "text" },
-      { key: "actual_completed_at", label: "Actual completed at", kind: "text" },
+      { key: "actual_started_at", label: "Actual started at", kind: "datetime-local" },
+      { key: "actual_completed_at", label: "Actual completed at", kind: "datetime-local" },
       { key: "address_text", label: "Address", kind: "textarea" },
       { key: "city", label: "City", kind: "text" },
       { key: "contact_name", label: "Contact name", kind: "text" },
       { key: "contact_phone", label: "Contact phone", kind: "text" },
       { key: "notes", label: "Notes", kind: "textarea" },
-      { key: "created_by_user_id", label: "Created by user ID", kind: "number" },
-      { key: "approved_by_user_id", label: "Approved by user ID", kind: "number" },
-      { key: "completed_by_user_id", label: "Completed by user ID", kind: "number" },
+      { key: "created_by_user_id", label: "Created by user", kind: "select", lookup: userLookup },
+      { key: "approved_by_user_id", label: "Approved by user", kind: "select", lookup: userLookup },
+      { key: "completed_by_user_id", label: "Completed by user", kind: "select", lookup: userLookup },
     ],
   },
   installation_assignments: {
@@ -1537,9 +1580,9 @@ export const entityConfigs = {
     apiPath: "/api/installation-assignments",
     fields: [
       { key: "installation_job_id", label: "Installation job ID", kind: "number", required: true },
-      { key: "employee_id", label: "Employee ID", kind: "number", required: true },
+        { key: "employee_id", label: "Employee", kind: "select", required: true, lookup: employeeLookup },
       { key: "assignment_role", label: "Assignment role", kind: "select", required: true, options: installationAssignmentRoles },
-      { key: "assigned_at", label: "Assigned at", kind: "text" },
+        { key: "assigned_at", label: "Assigned at", kind: "datetime-local" },
       { key: "notes", label: "Notes", kind: "textarea" },
     ],
   },
@@ -1549,7 +1592,7 @@ export const entityConfigs = {
     fields: [
       { key: "installation_job_id", label: "Installation job ID", kind: "number", required: true },
       { key: "result_status", label: "Result status", kind: "select", required: true, options: installationResultStatuses },
-      { key: "completion_date", label: "Completion date", kind: "text" },
+        { key: "completion_date", label: "Completion date", kind: "date" },
       { key: "work_summary", label: "Work summary", kind: "textarea" },
       { key: "issues_found", label: "Issues found", kind: "textarea" },
       { key: "materials_used_notes", label: "Materials used notes", kind: "textarea" },
@@ -1557,71 +1600,98 @@ export const entityConfigs = {
       { key: "customer_signoff_text", label: "Customer signoff text", kind: "textarea" },
       { key: "followup_required", label: "Followup required", kind: "checkbox" },
       { key: "followup_notes", label: "Followup notes", kind: "textarea" },
-      { key: "created_by_user_id", label: "Created by user ID", kind: "number" },
+        { key: "created_by_user_id", label: "Created by user", kind: "select", lookup: userLookup },
     ],
   },
 } as const satisfies Record<string, EntityConfig>;
 
 export type EntityKey = keyof typeof entityConfigs;
 
-export const adminNav: { href: string; label: string }[] = [
-  { href: "/admin/roles", label: "Roles" },
-  { href: "/admin/permissions", label: "Permissions" },
-  { href: "/admin/user-roles", label: "User Roles" },
-  { href: "/admin/role-permissions", label: "Role Permissions" },
-  { href: "/admin/departments", label: "Departments" },
-  { href: "/admin/users", label: "Users" },
-  { href: "/admin/employees", label: "Employees" },
-  { href: "/admin/branches", label: "Branches" },
-  { href: "/admin/locations", label: "Locations" },
-  { href: "/admin/warehouses", label: "Warehouses" },
-  { href: "/admin/warehouse-positions", label: "Warehouse positions" },
-  { href: "/admin/product-categories", label: "Product Categories" },
-  { href: "/admin/units", label: "Units" },
-  { href: "/admin/suppliers", label: "Suppliers" },
-  { href: "/admin/products", label: "Products" },
-  { href: "/admin/product-attributes", label: "Product Attributes" },
+export const adminNavGroups: AdminNavGroup[] = [
   {
-    href: "/admin/product-attribute-values",
-    label: "Product Attribute Values",
+    label: "Access & Company",
+    items: [
+      { href: "/admin/roles", label: "Roles" },
+      { href: "/admin/permissions", label: "Permissions" },
+      { href: "/admin/user-roles", label: "User Roles" },
+      { href: "/admin/role-permissions", label: "Role Permissions" },
+      { href: "/admin/departments", label: "Departments" },
+      { href: "/admin/users", label: "Users" },
+      { href: "/admin/employees", label: "Employees" },
+      { href: "/admin/branches", label: "Branches" },
+      { href: "/admin/locations", label: "Locations" },
+    ],
   },
-  { href: "/admin/product-suppliers", label: "Product Suppliers" },
-  { href: "/admin/product-bundles", label: "Product Bundles" },
-  { href: "/admin/product-bundle-items", label: "Product Bundle Items" },
-  { href: "/admin/stock-balances", label: "Stock Balances" },
-  { href: "/admin/stock-movements", label: "Stock Movements" },
-  { href: "/admin/stock-movement-lines", label: "Stock Movement Lines" },
-  { href: "/admin/purchase-receipts", label: "Purchase Receipts" },
-  { href: "/admin/purchase-receipt-lines", label: "Purchase Receipt Lines" },
-  { href: "/admin/stock-adjustments", label: "Stock Adjustments" },
-  { href: "/admin/stock-adjustment-lines", label: "Stock Adjustment Lines" },
-  { href: "/admin/stock-writeoffs", label: "Stock Writeoffs" },
-  { href: "/admin/stock-writeoff-lines", label: "Stock Writeoff Lines" },
-  { href: "/admin/inventory-counts", label: "Inventory Counts" },
-  { href: "/admin/inventory-count-lines", label: "Inventory Count Lines" },
-  { href: "/admin/stock-transfer-documents", label: "Stock Transfer Documents" },
-  { href: "/admin/stock-transfer-lines", label: "Stock Transfer Lines" },
-  { href: "/admin/stock-reservations", label: "Stock Reservations" },
-  { href: "/admin/door-configurations", label: "Door Configurations" },
-  { href: "/admin/door-configuration-variants", label: "Door Configuration Variants" },
-  { href: "/admin/door-configuration-inputs", label: "Door Configuration Inputs" },
-  { href: "/admin/calculation-runs", label: "Calculation Runs" },
-  { href: "/admin/spring-calculation-results", label: "Spring Calculation Results" },
-  { href: "/admin/bom-lines", label: "BOM Lines" },
-  { href: "/admin/bom-change-logs", label: "BOM Change Logs" },
-  { href: "/admin/configuration-visuals", label: "Configuration Visuals" },
-  { href: "/admin/quotes", label: "Quotes" },
-  { href: "/admin/quote-versions", label: "Quote Versions" },
-  { href: "/admin/quote-lines", label: "Quote Lines" },
-  { href: "/admin/quote-discounts", label: "Quote Discounts" },
-  { href: "/admin/orders", label: "Orders" },
-  { href: "/admin/order-lines", label: "Order Lines" },
-  { href: "/admin/order-discounts", label: "Order Discounts" },
-  { href: "/admin/payment-methods", label: "Payment Methods" },
-  { href: "/admin/payments", label: "Payments" },
-  { href: "/admin/installation-jobs", label: "Installation Jobs" },
-  { href: "/admin/installation-assignments", label: "Installation Assignments" },
-  { href: "/admin/installation-results", label: "Installation Results" },
+  {
+    label: "Catalog",
+    items: [
+      { href: "/admin/product-categories", label: "Product Categories" },
+      { href: "/admin/units", label: "Units" },
+      { href: "/admin/suppliers", label: "Suppliers" },
+      { href: "/admin/products", label: "Products" },
+      { href: "/admin/product-attributes", label: "Product Attributes" },
+      { href: "/admin/product-attribute-values", label: "Product Attribute Values" },
+      { href: "/admin/product-suppliers", label: "Product Suppliers" },
+      { href: "/admin/product-bundles", label: "Product Bundles" },
+      { href: "/admin/product-bundle-items", label: "Product Bundle Items" },
+    ],
+  },
+  {
+    label: "Warehouse",
+    items: [
+      { href: "/admin/warehouses", label: "Warehouses" },
+      { href: "/admin/warehouse-positions", label: "Warehouse Positions" },
+      { href: "/admin/stock-balances", label: "Stock Balances" },
+      { href: "/admin/stock-movements", label: "Stock Movements" },
+      { href: "/admin/stock-movement-lines", label: "Stock Movement Lines" },
+      { href: "/admin/purchase-receipts", label: "Purchase Receipts" },
+      { href: "/admin/purchase-receipt-lines", label: "Purchase Receipt Lines" },
+      { href: "/admin/stock-adjustments", label: "Stock Adjustments" },
+      { href: "/admin/stock-adjustment-lines", label: "Stock Adjustment Lines" },
+      { href: "/admin/stock-writeoffs", label: "Stock Writeoffs" },
+      { href: "/admin/stock-writeoff-lines", label: "Stock Writeoff Lines" },
+      { href: "/admin/inventory-counts", label: "Inventory Counts" },
+      { href: "/admin/inventory-count-lines", label: "Inventory Count Lines" },
+      { href: "/admin/stock-transfer-documents", label: "Stock Transfer Documents" },
+      { href: "/admin/stock-transfer-lines", label: "Stock Transfer Lines" },
+      { href: "/admin/stock-reservations", label: "Stock Reservations" },
+    ],
+  },
+  {
+    label: "Commercial",
+    items: [
+      { href: "/admin/quotes", label: "Quotes" },
+      { href: "/admin/quote-versions", label: "Quote Versions" },
+      { href: "/admin/quote-lines", label: "Quote Lines" },
+      { href: "/admin/quote-discounts", label: "Quote Discounts" },
+      { href: "/admin/orders", label: "Orders" },
+      { href: "/admin/order-lines", label: "Order Lines" },
+      { href: "/admin/order-discounts", label: "Order Discounts" },
+      { href: "/admin/payment-methods", label: "Payment Methods" },
+      { href: "/admin/payments", label: "Payments" },
+    ],
+  },
+  {
+    label: "Constructor",
+    items: [
+      { href: "/admin/door-configurations", label: "Door Configurations" },
+      { href: "/admin/door-configuration-variants", label: "Door Configuration Variants" },
+      { href: "/admin/door-configuration-inputs", label: "Door Configuration Inputs" },
+      { href: "/admin/calculation-runs", label: "Calculation Runs" },
+      { href: "/admin/spring-calculation-results", label: "Spring Calculation Results" },
+      { href: "/admin/bom-lines", label: "BOM Lines" },
+      { href: "/admin/bom-change-logs", label: "BOM Change Logs" },
+      { href: "/admin/configuration-visuals", label: "Configuration Visuals" },
+    ],
+  },
+  {
+    label: "Installation",
+    items: [
+      { href: "/admin/installation-jobs", label: "Installation Jobs" },
+      { href: "/admin/installation-assignments", label: "Installation Assignments" },
+      { href: "/admin/installation-results", label: "Installation Results" },
+    ],
+  },
 ];
 
 

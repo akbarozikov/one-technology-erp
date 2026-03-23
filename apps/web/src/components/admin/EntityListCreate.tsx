@@ -10,6 +10,11 @@ import {
 } from "@/lib/api";
 import type { EntityConfig, EntityField } from "@/lib/entity-config";
 
+type LookupOption = {
+  value: string;
+  label: string;
+};
+
 function buildPayload(fields: EntityField[], fd: FormData): Record<string, unknown> {
   const out: Record<string, unknown> = {};
   for (const f of fields) {
@@ -53,6 +58,30 @@ function cellValue(v: unknown): string {
   return String(v);
 }
 
+function buildLookupLabel(
+  row: Record<string, unknown>,
+  field: EntityField
+): string {
+  const lookup = field.lookup;
+  if (!lookup) {
+    return String(row.id ?? "");
+  }
+
+  const parts = lookup.labelKeys
+    .map((key) => row[key])
+    .filter((value): value is string | number => {
+      if (typeof value === "number") return true;
+      return typeof value === "string" && value.trim().length > 0;
+    })
+    .map((value) => String(value).trim());
+
+  const main = parts.length > 0 ? parts.join(" · ") : String(row.id ?? "");
+  if (lookup.includeIdInLabel === false || row.id === undefined) {
+    return main;
+  }
+  return `${row.id} · ${main}`;
+}
+
 export function EntityListCreate({ config }: { config: EntityConfig }) {
   const createEnabled = config.createEnabled ?? true;
   const [rows, setRows] = useState<Record<string, unknown>[] | null>(null);
@@ -61,6 +90,9 @@ export function EntityListCreate({ config }: { config: EntityConfig }) {
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [configHint, setConfigHint] = useState(false);
+  const [lookupOptions, setLookupOptions] = useState<Record<string, LookupOption[]>>(
+    {}
+  );
 
   const load = useCallback(
     async (options?: { silent?: boolean }) => {
@@ -96,6 +128,57 @@ export function EntityListCreate({ config }: { config: EntityConfig }) {
   useEffect(() => {
     load();
   }, [load]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const fieldsWithLookup = config.fields.filter((field) => field.lookup);
+    if (fieldsWithLookup.length === 0) {
+      setLookupOptions({});
+      return;
+    }
+
+    async function loadLookups() {
+      try {
+        const entries = await Promise.all(
+          fieldsWithLookup.map(async (field) => {
+            const res = await apiGet<{ data: unknown[] }>(field.lookup!.apiPath);
+            const list = Array.isArray(res.data)
+              ? (res.data as Record<string, unknown>[])
+              : [];
+            const options = list
+              .map((row) => {
+                const valueKey = field.lookup?.valueKey ?? "id";
+                const value = row[valueKey];
+                if (value === null || value === undefined) {
+                  return null;
+                }
+                return {
+                  value: String(value),
+                  label: buildLookupLabel(row, field),
+                } satisfies LookupOption;
+              })
+              .filter((option): option is LookupOption => option !== null);
+            return [field.key, options] as const;
+          })
+        );
+
+        if (!cancelled) {
+          setLookupOptions(Object.fromEntries(entries));
+        }
+      } catch {
+        if (!cancelled) {
+          setLookupOptions({});
+        }
+      }
+    }
+
+    void loadLookups();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [config.fields]);
 
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -240,6 +323,22 @@ export function EntityListCreate({ config }: { config: EntityConfig }) {
                     className="w-full rounded border border-zinc-300 px-2 py-1.5 text-zinc-900 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100"
                   />
                 )}
+                {f.kind === "date" && (
+                  <input
+                    name={f.key}
+                    type="date"
+                    required={f.required}
+                    className="w-full rounded border border-zinc-300 px-2 py-1.5 text-zinc-900 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100"
+                  />
+                )}
+                {f.kind === "datetime-local" && (
+                  <input
+                    name={f.key}
+                    type="datetime-local"
+                    required={f.required}
+                    className="w-full rounded border border-zinc-300 px-2 py-1.5 text-zinc-900 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100"
+                  />
+                )}
                 {f.kind === "number" && (
                   <input
                     name={f.key}
@@ -262,11 +361,17 @@ export function EntityListCreate({ config }: { config: EntityConfig }) {
                   <select
                     name={f.key}
                     required={f.required}
-                    defaultValue={f.required ? (f.options?.[0]?.value ?? "") : ""}
+                    defaultValue={
+                      f.required
+                        ? (f.lookup
+                            ? (lookupOptions[f.key]?.[0]?.value ?? "")
+                            : (f.options?.[0]?.value ?? ""))
+                        : ""
+                    }
                     className="w-full rounded border border-zinc-300 px-2 py-1.5 text-zinc-900 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100"
                   >
                     {!f.required && <option value="">-</option>}
-                    {(f.options ?? []).map((o) => (
+                    {(f.lookup ? (lookupOptions[f.key] ?? []) : (f.options ?? [])).map((o) => (
                       <option key={o.value} value={o.value}>
                         {o.label}
                       </option>
