@@ -18,7 +18,7 @@ export function AdminSidebar() {
               : "text-zinc-700 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-900"
           }`}
         >
-          Overview
+          Dashboard
         </Link>
         {adminNavGroups.map((group) => (
           <div key={group.label}>

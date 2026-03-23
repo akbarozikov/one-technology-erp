@@ -7,6 +7,7 @@ import { handleCalculationRuns } from "./calculation-runs";
 import { handleConfigurationVisuals } from "./configuration-visuals";
 import { handleDebugBindings } from "./debug";
 import { handleDepartments } from "./departments";
+import { handleDashboardOverview } from "./dashboard";
 import { handleDocumentLinks } from "./document-links";
 import { handleDocumentTemplates } from "./document-templates";
 import { handleDoorConfigurations } from "./door-configurations";
@@ -169,6 +170,8 @@ export async function routeRequest(request: Request, env: Env): Promise<Response
       return handleHealth(request);
     case "/debug/bindings":
       return handleDebugBindings(request, env);
+    case "/api/dashboard/overview":
+      return handleDashboardOverview(request, env);
     case "/api/roles":
       return handleRoles(request, env);
     case "/api/permissions":
