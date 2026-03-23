@@ -7,7 +7,7 @@ Cloudflare D1 (SQLite) schema types and migrations for **One Technology ERP**.
 | Path | Purpose |
 |------|---------|
 | `schema/types/` | Row interfaces, domain unions, and `TABLE_*` constants |
-| `migrations/` | SQL migrations applied via Wrangler (`0001` Phase 1, `0002` product catalog, `0003` warehouse core foundation, `0004` warehouse operational documents, `0005` reservations foundation, `0006` constructor core foundation, `0007` commercial layer foundation) |
+| `migrations/` | SQL migrations applied via Wrangler (`0001` Phase 1, `0002` product catalog, `0003` warehouse core foundation, `0004` warehouse operational documents, `0005` reservations foundation, `0006` constructor core foundation, `0007` commercial layer foundation, `0008` reservation consume context refinement) |
 
 ## Applying migrations
 
@@ -53,3 +53,7 @@ Constructor core tables store configuration headers, variants, flexible input va
 ### Phase 7AB (commercial layer foundation)
 
 Commercial tables store quote headers, version history, line and document discounts, orders, payment methods, and payment records with snapshot fields. Future quote-to-order workflows, reservation linkage, and constructor/commercial integration can attach to this structure without changing the core commercial history model.
+
+### Phase 8D (reservation consume context refinement)
+
+Consumed reservations can now optionally store operational context pointing at an order, order line, stock movement, and future installation-job identifier, plus a `consumed_at` timestamp. This keeps fulfillment/install linkage explicit without introducing stock automation or a full installation module.

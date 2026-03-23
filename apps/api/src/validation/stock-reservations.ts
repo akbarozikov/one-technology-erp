@@ -37,6 +37,10 @@ export interface StockReservationCreateInput {
 export interface StockReservationActionInput {
   released_by_user_id: number | null;
   release_reason: string | null;
+  consumed_order_id: number | null;
+  consumed_order_line_id: number | null;
+  consumed_stock_movement_id: number | null;
+  consumed_installation_job_id: number | null;
 }
 
 export function parseStockReservationCreate(
@@ -122,6 +126,22 @@ export function parseStockReservationAction(
     errors
   );
   const release_reason = optionalTrimmedString(body, "release_reason", errors);
+  const consumed_order_id = optionalNullableFk(body, "consumed_order_id", errors);
+  const consumed_order_line_id = optionalNullableFk(
+    body,
+    "consumed_order_line_id",
+    errors
+  );
+  const consumed_stock_movement_id = optionalNullableFk(
+    body,
+    "consumed_stock_movement_id",
+    errors
+  );
+  const consumed_installation_job_id = optionalNullableFk(
+    body,
+    "consumed_installation_job_id",
+    errors
+  );
 
   if (errors.length > 0) {
     return null;
@@ -130,5 +150,9 @@ export function parseStockReservationAction(
   return {
     released_by_user_id,
     release_reason: release_reason === undefined ? null : release_reason,
+    consumed_order_id,
+    consumed_order_line_id,
+    consumed_stock_movement_id,
+    consumed_installation_job_id,
   };
 }

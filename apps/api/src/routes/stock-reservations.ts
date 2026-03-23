@@ -2,8 +2,10 @@ import {
   TABLE_BOM_LINES,
   TABLE_DOOR_CONFIGURATION_VARIANTS,
   TABLE_ORDER_LINES,
+  TABLE_ORDERS,
   TABLE_PRODUCTS,
   TABLE_QUOTE_LINES,
+  TABLE_STOCK_MOVEMENTS,
   TABLE_USERS,
   TABLE_WAREHOUSES,
   TABLE_WAREHOUSE_POSITIONS,
@@ -19,6 +21,8 @@ import type { Env } from "../types/env";
 import {
   parseStockReservationAction,
   parseStockReservationCreate,
+  type StockReservationActionInput,
+  type StockReservationCreateInput,
 } from "../validation/stock-reservations";
 
 type ReservationAction = "release" | "consume" | "cancel";
@@ -121,6 +125,9 @@ export async function handleStockReservationAction(
   if (reservation.status === targetStatus) {
     return badRequest(`Reservation ${reservationId} is already ${targetStatus}`);
   }
+  if (action === "consume" && reservation.status === "cancelled") {
+    return badRequest(`Reservation ${reservationId} is cancelled and cannot be consumed`);
+  }
 
   let body: Record<string, unknown>;
   try {
@@ -135,11 +142,9 @@ export async function handleStockReservationAction(
     return badRequest(errors.length ? errors.join("; ") : "Validation failed");
   }
 
-  if (input.released_by_user_id !== null) {
-    const userOk = await rowExists(db, TABLE_USERS, input.released_by_user_id);
-    if (!userOk) {
-      return badRequest(`released_by_user_id ${input.released_by_user_id} not found`);
-    }
+  const actionError = await validateReservationActionContext(db, input, action);
+  if (actionError) {
+    return badRequest(actionError);
   }
 
   try {
@@ -149,11 +154,30 @@ export async function handleStockReservationAction(
          SET status = ?,
              released_by_user_id = COALESCE(?, released_by_user_id),
              release_reason = COALESCE(?, release_reason),
+             consumed_order_id = CASE WHEN ? = 'consume' THEN COALESCE(?, consumed_order_id) ELSE consumed_order_id END,
+             consumed_order_line_id = CASE WHEN ? = 'consume' THEN COALESCE(?, consumed_order_line_id) ELSE consumed_order_line_id END,
+             consumed_stock_movement_id = CASE WHEN ? = 'consume' THEN COALESCE(?, consumed_stock_movement_id) ELSE consumed_stock_movement_id END,
+             consumed_installation_job_id = CASE WHEN ? = 'consume' THEN COALESCE(?, consumed_installation_job_id) ELSE consumed_installation_job_id END,
+             consumed_at = CASE WHEN ? = 'consume' THEN COALESCE(consumed_at, datetime('now')) ELSE consumed_at END,
              updated_at = datetime('now')
          WHERE id = ?
          RETURNING *`
       )
-      .bind(targetStatus, input.released_by_user_id, input.release_reason, reservationId)
+      .bind(
+        targetStatus,
+        input.released_by_user_id,
+        input.release_reason,
+        action,
+        input.consumed_order_id,
+        action,
+        input.consumed_order_line_id,
+        action,
+        input.consumed_stock_movement_id,
+        action,
+        input.consumed_installation_job_id,
+        action,
+        reservationId
+      )
       .first<StockReservationRow>();
 
     if (!row) {
@@ -168,9 +192,7 @@ export async function handleStockReservationAction(
 
 async function validateReservationCreateContext(
   db: D1Database,
-  input: ReturnType<typeof parseStockReservationCreate> extends infer T
-    ? Exclude<T, null>
-    : never
+  input: StockReservationCreateInput
 ): Promise<string | null> {
   const productOk = await rowExists(db, TABLE_PRODUCTS, input.product_id);
   if (!productOk) {
@@ -230,6 +252,50 @@ async function validateReservationCreateContext(
     const releasedByOk = await rowExists(db, TABLE_USERS, input.released_by_user_id);
     if (!releasedByOk) {
       return `released_by_user_id ${input.released_by_user_id} not found`;
+    }
+  }
+
+  return null;
+}
+
+async function validateReservationActionContext(
+  db: D1Database,
+  input: StockReservationActionInput,
+  action: ReservationAction
+): Promise<string | null> {
+  if (input.released_by_user_id !== null) {
+    const userOk = await rowExists(db, TABLE_USERS, input.released_by_user_id);
+    if (!userOk) {
+      return `released_by_user_id ${input.released_by_user_id} not found`;
+    }
+  }
+
+  if (action !== "consume") {
+    return null;
+  }
+
+  if (input.consumed_order_id !== null) {
+    const orderOk = await rowExists(db, TABLE_ORDERS, input.consumed_order_id);
+    if (!orderOk) {
+      return `consumed_order_id ${input.consumed_order_id} not found`;
+    }
+  }
+
+  if (input.consumed_order_line_id !== null) {
+    const orderLineOk = await rowExists(db, TABLE_ORDER_LINES, input.consumed_order_line_id);
+    if (!orderLineOk) {
+      return `consumed_order_line_id ${input.consumed_order_line_id} not found`;
+    }
+  }
+
+  if (input.consumed_stock_movement_id !== null) {
+    const movementOk = await rowExists(
+      db,
+      TABLE_STOCK_MOVEMENTS,
+      input.consumed_stock_movement_id
+    );
+    if (!movementOk) {
+      return `consumed_stock_movement_id ${input.consumed_stock_movement_id} not found`;
     }
   }
 

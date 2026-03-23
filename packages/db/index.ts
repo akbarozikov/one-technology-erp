@@ -25,3 +25,6 @@ export const PHASE6AB_CONSTRUCTOR_CORE_MIGRATION =
 
 export const PHASE7AB_COMMERCIAL_LAYER_MIGRATION =
   "0007_phase7ab_commercial_layer.sql" as const;
+
+export const PHASE8D_RESERVATION_CONSUME_CONTEXT_MIGRATION =
+  "0008_phase8d_reservation_consume_context.sql" as const;

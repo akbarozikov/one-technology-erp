@@ -28,6 +28,11 @@ export interface StockReservationRow {
   created_by_user_id: number | null;
   released_by_user_id: number | null;
   release_reason: string | null;
+  consumed_order_id: number | null;
+  consumed_order_line_id: number | null;
+  consumed_stock_movement_id: number | null;
+  consumed_installation_job_id: number | null;
+  consumed_at: string | null;
   created_at: string;
   updated_at: string;
 }
