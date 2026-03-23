@@ -13,7 +13,10 @@ import { handleDoorConfigurationVariants } from "./door-configuration-variants";
 import { handleEmployees } from "./employees";
 import { handleHealth } from "./health";
 import { handleInstallationAssignments } from "./installation-assignments";
-import { handleInstallationJobs } from "./installation-jobs";
+import {
+  handleInstallationJobAction,
+  handleInstallationJobs,
+} from "./installation-jobs";
 import { handleInstallationResults } from "./installation-results";
 import { handleInventoryCountLines } from "./inventory-count-lines";
 import { handleInventoryCounts } from "./inventory-counts";
@@ -88,6 +91,18 @@ export async function routeRequest(request: Request, env: Env): Promise<Response
       env,
       Number(orderLineActionMatch[1]),
       orderLineActionMatch[2] as "mark-reserved" | "mark-issued" | "mark-installed"
+    );
+  }
+
+  const installationJobActionMatch = path.match(
+    /^\/api\/installation-jobs\/(\d+)\/(mark-completed)$/
+  );
+  if (installationJobActionMatch) {
+    return handleInstallationJobAction(
+      request,
+      env,
+      Number(installationJobActionMatch[1]),
+      installationJobActionMatch[2] as "mark-completed"
     );
   }
 

@@ -49,6 +49,15 @@ export interface InstallationJobCreateInput {
   completed_by_user_id: number | null;
 }
 
+export interface InstallationJobCompletionInput {
+  installation_result_id: number | null;
+  order_line_id: number | null;
+  reservation_id: number | null;
+  completed_by_user_id: number | null;
+  actual_completed_at: string | null;
+  notes: string | null;
+}
+
 export function parseInstallationJobCreate(
   body: JsonObject,
   errors: Failures
@@ -124,5 +133,42 @@ export function parseInstallationJobCreate(
     created_by_user_id,
     approved_by_user_id,
     completed_by_user_id,
+  };
+}
+
+export function parseInstallationJobCompletion(
+  body: JsonObject,
+  errors: Failures
+): InstallationJobCompletionInput | null {
+  const installation_result_id = optionalNullableFk(
+    body,
+    "installation_result_id",
+    errors
+  );
+  const order_line_id = optionalNullableFk(body, "order_line_id", errors);
+  const reservation_id = optionalNullableFk(body, "reservation_id", errors);
+  const completed_by_user_id = optionalNullableFk(
+    body,
+    "completed_by_user_id",
+    errors
+  );
+  const actual_completed_at = optionalTrimmedString(
+    body,
+    "actual_completed_at",
+    errors
+  );
+  const notes = optionalTrimmedString(body, "notes", errors);
+
+  if (errors.length > 0) {
+    return null;
+  }
+
+  return {
+    installation_result_id,
+    order_line_id,
+    reservation_id,
+    completed_by_user_id,
+    actual_completed_at: actual_completed_at === undefined ? null : actual_completed_at,
+    notes: notes === undefined ? null : notes,
   };
 }
