@@ -1,4 +1,5 @@
 import type {
+  FulfillmentType,
   CommercialReservationStatus,
   QuoteVersionStatus,
 } from "@one-technology/db";
@@ -32,6 +33,12 @@ const COMMERCIAL_RESERVATION_STATUSES: readonly CommercialReservationStatus[] = 
   "consumed",
 ];
 
+const FULFILLMENT_TYPES: readonly FulfillmentType[] = [
+  "installation",
+  "pickup",
+  "delivery_without_installation",
+];
+
 function optionalNullableNonNegativeNumber(
   body: JsonObject,
   key: string,
@@ -59,6 +66,17 @@ export interface QuoteVersionCreateInput {
   reservation_status: CommercialReservationStatus;
   notes: string | null;
   created_by_user_id: number | null;
+}
+
+export interface QuoteVersionCreateOrderDraftInput {
+  order_number: string | null;
+  created_by_user_id: number | null;
+  approved_by_user_id: number | null;
+  order_date: string | null;
+  planned_installation_date: string | null;
+  installation_required: 0 | 1;
+  notes: string | null;
+  fulfillment_type: FulfillmentType;
 }
 
 export function parseQuoteVersionCreate(
@@ -125,5 +143,54 @@ export function parseQuoteVersionCreate(
     reservation_status,
     notes: notes === undefined ? null : notes,
     created_by_user_id,
+  };
+}
+
+export function parseQuoteVersionCreateOrderDraft(
+  body: JsonObject,
+  errors: Failures
+): QuoteVersionCreateOrderDraftInput | null {
+  const order_number = optionalTrimmedString(body, "order_number", errors);
+  if ("order_number" in body && order_number === null) {
+    push(errors, "order_number must be a non-empty string when provided");
+  }
+
+  const created_by_user_id = optionalNullableFk(body, "created_by_user_id", errors);
+  const approved_by_user_id = optionalNullableFk(body, "approved_by_user_id", errors);
+  const order_date = optionalTrimmedString(body, "order_date", errors);
+  const planned_installation_date = optionalTrimmedString(
+    body,
+    "planned_installation_date",
+    errors
+  );
+  const installation_required = optionalBoolAsInt(
+    body,
+    "installation_required",
+    0,
+    errors
+  );
+  const notes = optionalTrimmedString(body, "notes", errors);
+  const fulfillment_type = optionalEnum(
+    body,
+    "fulfillment_type",
+    FULFILLMENT_TYPES,
+    "installation",
+    errors
+  );
+
+  if (fulfillment_type === null || errors.length > 0) {
+    return null;
+  }
+
+  return {
+    order_number: order_number === undefined ? null : order_number,
+    created_by_user_id,
+    approved_by_user_id,
+    order_date: order_date === undefined ? null : order_date,
+    planned_installation_date:
+      planned_installation_date === undefined ? null : planned_installation_date,
+    installation_required,
+    notes: notes === undefined ? null : notes,
+    fulfillment_type,
   };
 }

@@ -42,7 +42,10 @@ import { handlePurchaseReceipts } from "./purchase-receipts";
 import { handleQuoteDiscounts } from "./quote-discounts";
 import { handleQuoteLines } from "./quote-lines";
 import { handleQuotes } from "./quotes";
-import { handleQuoteVersions } from "./quote-versions";
+import {
+  handleQuoteVersionAction,
+  handleQuoteVersions,
+} from "./quote-versions";
 import { handleRolePermissions } from "./role-permissions";
 import { handleRoles } from "./roles";
 import { handleSpringCalculationResults } from "./spring-calculation-results";
@@ -103,6 +106,18 @@ export async function routeRequest(request: Request, env: Env): Promise<Response
       env,
       Number(installationJobActionMatch[1]),
       installationJobActionMatch[2] as "mark-completed"
+    );
+  }
+
+  const quoteVersionActionMatch = path.match(
+    /^\/api\/quote-versions\/(\d+)\/(create-order-draft)$/
+  );
+  if (quoteVersionActionMatch) {
+    return handleQuoteVersionAction(
+      request,
+      env,
+      Number(quoteVersionActionMatch[1]),
+      quoteVersionActionMatch[2] as "create-order-draft"
     );
   }
 
