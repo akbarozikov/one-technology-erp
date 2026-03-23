@@ -1,6 +1,7 @@
 import {
+  TABLE_BOM_LINES,
+  TABLE_DOOR_CONFIGURATION_VARIANTS,
   TABLE_PRODUCTS,
-  TABLE_STOCK_RESERVATIONS,
   TABLE_USERS,
   TABLE_WAREHOUSES,
   TABLE_WAREHOUSE_POSITIONS,
@@ -57,6 +58,26 @@ export async function handleStockReservations(
   const positionOk = await rowExists(db, TABLE_WAREHOUSE_POSITIONS, input.position_id);
   if (!positionOk) {
     return badRequest(`position_id ${input.position_id} not found`);
+  }
+
+  if (input.configuration_variant_id !== null) {
+    const variantOk = await rowExists(
+      db,
+      TABLE_DOOR_CONFIGURATION_VARIANTS,
+      input.configuration_variant_id
+    );
+    if (!variantOk) {
+      return badRequest(
+        `configuration_variant_id ${input.configuration_variant_id} not found`
+      );
+    }
+  }
+
+  if (input.bom_line_id !== null) {
+    const bomLineOk = await rowExists(db, TABLE_BOM_LINES, input.bom_line_id);
+    if (!bomLineOk) {
+      return badRequest(`bom_line_id ${input.bom_line_id} not found`);
+    }
   }
 
   if (input.created_by_user_id !== null) {
