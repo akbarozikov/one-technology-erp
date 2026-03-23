@@ -29,6 +29,8 @@ export const documentConfigs = {
   generated_documents: {
     title: "Generated documents",
     apiPath: "/api/generated-documents",
+    detailBasePath: "/admin/generated-documents",
+    detailLabelKey: "title",
     fields: [
       { key: "template_id", label: "Template", kind: "select", required: true, lookup: documentTemplateLookup },
       { key: "document_number", label: "Document number", kind: "text" },

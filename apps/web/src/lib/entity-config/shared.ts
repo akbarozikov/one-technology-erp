@@ -32,6 +32,8 @@ export type EntityConfig = {
   apiPath: string;
   fields: EntityField[];
   createEnabled?: boolean;
+  detailBasePath?: string;
+  detailLabelKey?: string;
 };
 
 export type EntityConfigMap = Record<string, EntityConfig>;

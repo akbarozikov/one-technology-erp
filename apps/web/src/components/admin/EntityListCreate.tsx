@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import {
   ApiError,
@@ -56,6 +57,19 @@ function cellValue(v: unknown): string {
   if (v === null || v === undefined) return "";
   if (typeof v === "object") return JSON.stringify(v);
   return String(v);
+}
+
+function isDetailCell(
+  config: EntityConfig,
+  row: Record<string, unknown>,
+  key: string
+): boolean {
+  if (!config.detailBasePath) return false;
+  if (typeof row.id !== "number") return false;
+  const preferredKey = config.detailLabelKey ?? "id";
+  if (key !== preferredKey) return false;
+  const value = row[key];
+  return value !== null && value !== undefined && String(value).trim() !== "";
 }
 
 function buildLookupLabel(
@@ -279,7 +293,16 @@ export function EntityListCreate({ config }: { config: EntityConfig }) {
                         className="max-w-xs truncate px-2 py-2 font-mono text-xs text-zinc-800 dark:text-zinc-200"
                         title={cellValue((row as Record<string, unknown>)[k])}
                       >
-                        {cellValue((row as Record<string, unknown>)[k])}
+                        {isDetailCell(config, row as Record<string, unknown>, k) ? (
+                          <Link
+                            href={`${config.detailBasePath}/${(row as { id: number }).id}`}
+                            className="font-medium text-blue-700 underline decoration-blue-300 underline-offset-2 hover:text-blue-900 dark:text-blue-300 dark:decoration-blue-700 dark:hover:text-blue-200"
+                          >
+                            {cellValue((row as Record<string, unknown>)[k])}
+                          </Link>
+                        ) : (
+                          cellValue((row as Record<string, unknown>)[k])
+                        )}
                       </td>
                     ))}
                   </tr>
