@@ -44,6 +44,10 @@ export const commercialConfigs = {
     apiPath: "/api/quote-versions",
     detailBasePath: "/admin/quote-versions",
     detailLabelKey: "version_number",
+    searchKeys: ["version_number", "quote_id", "notes"],
+    filters: [
+      { key: "version_status", label: "Version status", options: quoteVersionStatuses },
+    ],
     fields: [
       { key: "quote_id", label: "Quote", kind: "select", required: true, lookup: quoteLookup },
       { key: "version_number", label: "Version number", kind: "number", required: true },
@@ -100,6 +104,11 @@ export const commercialConfigs = {
     apiPath: "/api/orders",
     detailBasePath: "/admin/orders",
     detailLabelKey: "order_number",
+    searchKeys: ["order_number", "notes"],
+    filters: [
+      { key: "order_status", label: "Order status", options: orderStatuses },
+      { key: "payment_status", label: "Payment status", options: orderPaymentStatuses },
+    ],
     fields: [
       { key: "quote_version_id", label: "Quote version", kind: "select", lookup: quoteVersionLookup },
       { key: "customer_id", label: "Customer ID", kind: "number" },
@@ -175,6 +184,10 @@ export const commercialConfigs = {
   payments: {
     title: "Payments",
     apiPath: "/api/payments",
+    searchKeys: ["reference_number", "notes"],
+    filters: [
+      { key: "status", label: "Status", options: paymentRecordStatuses },
+    ],
     fields: [
       { key: "order_id", label: "Order", kind: "select", required: true, lookup: orderLookup },
       { key: "payment_method_id", label: "Payment method", kind: "select", required: true, lookup: paymentMethodLookup },

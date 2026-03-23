@@ -16,6 +16,11 @@ export const installationConfigs = {
     apiPath: "/api/installation-jobs",
     detailBasePath: "/admin/installation-jobs",
     detailLabelKey: "job_number",
+    searchKeys: ["job_number", "contact_name", "contact_phone", "notes"],
+    filters: [
+      { key: "job_status", label: "Job status", options: installationJobStatuses },
+      { key: "job_type", label: "Job type", options: installationJobTypes },
+    ],
     fields: [
       { key: "order_id", label: "Order", kind: "select", lookup: orderLookup },
       { key: "order_line_id", label: "Order line ID", kind: "number" },

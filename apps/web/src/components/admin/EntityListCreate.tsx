@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   ApiError,
   apiGet,
@@ -104,6 +104,8 @@ export function EntityListCreate({ config }: { config: EntityConfig }) {
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [configHint, setConfigHint] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [filterValues, setFilterValues] = useState<Record<string, string>>({});
   const [lookupOptions, setLookupOptions] = useState<Record<string, LookupOption[]>>(
     {}
   );
@@ -223,6 +225,40 @@ export function EntityListCreate({ config }: { config: EntityConfig }) {
     }
   }
 
+  const filteredRows = useMemo(() => {
+    const currentRows = rows ?? [];
+    if (currentRows.length === 0) {
+      return currentRows;
+    }
+
+    const normalizedSearch = searchTerm.trim().toLowerCase();
+
+    return currentRows.filter((row) => {
+      const matchesSearch =
+        !normalizedSearch ||
+        !(config.searchKeys && config.searchKeys.length > 0) ||
+        config.searchKeys.some((key) =>
+          cellValue(row[key]).toLowerCase().includes(normalizedSearch)
+        );
+
+      if (!matchesSearch) {
+        return false;
+      }
+
+      if (!config.filters || config.filters.length === 0) {
+        return true;
+      }
+
+      return config.filters.every((filter) => {
+        const selected = filterValues[filter.key] ?? "";
+        if (!selected) {
+          return true;
+        }
+        return cellValue(row[filter.key]) === selected;
+      });
+    });
+  }, [config.filters, config.searchKeys, filterValues, rows, searchTerm]);
+
   const columnKeys =
     rows && rows.length > 0
       ? Object.keys(rows[0] as object)
@@ -263,52 +299,109 @@ export function EntityListCreate({ config }: { config: EntityConfig }) {
           <p className="text-sm text-zinc-500">No rows yet.</p>
         )}
         {!loading && rows && rows.length > 0 && (
-          <div className="overflow-x-auto">
-            <table className="min-w-full border-collapse text-left text-sm">
-              <thead>
-                <tr className="border-b border-zinc-200 dark:border-zinc-600">
-                  {columnKeys.map((k) => (
-                    <th
-                      key={k}
-                      className="whitespace-nowrap px-2 py-2 font-medium text-zinc-700 dark:text-zinc-300"
-                    >
-                      {k}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {rows.map((row, i) => (
-                  <tr
-                    key={
-                      typeof (row as { id?: unknown }).id === "number"
-                        ? (row as { id: number }).id
-                        : i
-                    }
-                    className="border-b border-zinc-100 dark:border-zinc-800"
-                  >
-                    {columnKeys.map((k) => (
-                      <td
-                        key={k}
-                        className="max-w-xs truncate px-2 py-2 font-mono text-xs text-zinc-800 dark:text-zinc-200"
-                        title={cellValue((row as Record<string, unknown>)[k])}
-                      >
-                        {isDetailCell(config, row as Record<string, unknown>, k) ? (
-                          <Link
-                            href={`${config.detailBasePath}/${(row as { id: number }).id}`}
-                            className="font-medium text-blue-700 underline decoration-blue-300 underline-offset-2 hover:text-blue-900 dark:text-blue-300 dark:decoration-blue-700 dark:hover:text-blue-200"
-                          >
-                            {cellValue((row as Record<string, unknown>)[k])}
-                          </Link>
-                        ) : (
-                          cellValue((row as Record<string, unknown>)[k])
-                        )}
-                      </td>
+          <div className="space-y-4">
+            {((config.searchKeys && config.searchKeys.length > 0) ||
+              (config.filters && config.filters.length > 0)) && (
+              <div className="flex flex-col gap-3 rounded border border-zinc-100 bg-zinc-50 p-3 dark:border-zinc-800 dark:bg-zinc-950/40">
+                {config.searchKeys && config.searchKeys.length > 0 && (
+                  <label className="block text-sm">
+                    <span className="mb-1 block font-medium text-zinc-700 dark:text-zinc-300">
+                      Search
+                    </span>
+                    <input
+                      type="text"
+                      value={searchTerm}
+                      onChange={(event) => setSearchTerm(event.target.value)}
+                      placeholder={`Search ${config.title.toLowerCase()}...`}
+                      className="w-full rounded border border-zinc-300 px-2 py-1.5 text-zinc-900 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100"
+                    />
+                  </label>
+                )}
+                {config.filters && config.filters.length > 0 && (
+                  <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+                    {config.filters.map((filter) => (
+                      <label key={filter.key} className="block text-sm">
+                        <span className="mb-1 block font-medium text-zinc-700 dark:text-zinc-300">
+                          {filter.label}
+                        </span>
+                        <select
+                          value={filterValues[filter.key] ?? ""}
+                          onChange={(event) =>
+                            setFilterValues((current) => ({
+                              ...current,
+                              [filter.key]: event.target.value,
+                            }))
+                          }
+                          className="w-full rounded border border-zinc-300 px-2 py-1.5 text-zinc-900 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100"
+                        >
+                          <option value="">All</option>
+                          {filter.options.map((option) => (
+                            <option key={option.value} value={option.value}>
+                              {option.label}
+                            </option>
+                          ))}
+                        </select>
+                      </label>
                     ))}
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+                  </div>
+                )}
+                <p className="text-xs text-zinc-500 dark:text-zinc-400">
+                  Showing {filteredRows.length} of {rows.length} rows.
+                </p>
+              </div>
+            )}
+
+            {filteredRows.length === 0 ? (
+              <p className="text-sm text-zinc-500">No rows match the current filters.</p>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="min-w-full border-collapse text-left text-sm">
+                  <thead>
+                    <tr className="border-b border-zinc-200 dark:border-zinc-600">
+                      {columnKeys.map((k) => (
+                        <th
+                          key={k}
+                          className="whitespace-nowrap px-2 py-2 font-medium text-zinc-700 dark:text-zinc-300"
+                        >
+                          {k}
+                        </th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {filteredRows.map((row, i) => (
+                      <tr
+                        key={
+                          typeof (row as { id?: unknown }).id === "number"
+                            ? (row as { id: number }).id
+                            : i
+                        }
+                        className="border-b border-zinc-100 dark:border-zinc-800"
+                      >
+                        {columnKeys.map((k) => (
+                          <td
+                            key={k}
+                            className="max-w-xs truncate px-2 py-2 font-mono text-xs text-zinc-800 dark:text-zinc-200"
+                            title={cellValue((row as Record<string, unknown>)[k])}
+                          >
+                            {isDetailCell(config, row as Record<string, unknown>, k) ? (
+                              <Link
+                                href={`${config.detailBasePath}/${(row as { id: number }).id}`}
+                                className="font-medium text-blue-700 underline decoration-blue-300 underline-offset-2 hover:text-blue-900 dark:text-blue-300 dark:decoration-blue-700 dark:hover:text-blue-200"
+                              >
+                                {cellValue((row as Record<string, unknown>)[k])}
+                              </Link>
+                            ) : (
+                              cellValue((row as Record<string, unknown>)[k])
+                            )}
+                          </td>
+                        ))}
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
           </div>
         )}
       </section>

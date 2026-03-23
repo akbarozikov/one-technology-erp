@@ -34,6 +34,12 @@ export type EntityConfig = {
   createEnabled?: boolean;
   detailBasePath?: string;
   detailLabelKey?: string;
+  searchKeys?: string[];
+  filters?: Array<{
+    key: string;
+    label: string;
+    options: { value: string; label: string }[];
+  }>;
 };
 
 export type EntityConfigMap = Record<string, EntityConfig>;

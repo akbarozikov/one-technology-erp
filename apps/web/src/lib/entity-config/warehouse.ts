@@ -59,6 +59,11 @@ export const warehouseConfigs = {
   stock_movements: {
     title: "Stock movements",
     apiPath: "/api/stock-movements",
+    searchKeys: ["reference_code", "related_entity_type", "related_entity_id", "notes"],
+    filters: [
+      { key: "movement_type", label: "Movement type", options: stockMovementTypes },
+      { key: "status", label: "Status", options: stockMovementStatuses },
+    ],
     fields: [
       { key: "movement_type", label: "Movement type", kind: "select", required: true, options: stockMovementTypes },
       { key: "reference_code", label: "Reference code", kind: "text" },
@@ -233,6 +238,10 @@ export const warehouseConfigs = {
   stock_reservations: {
     title: "Stock reservations",
     apiPath: "/api/stock-reservations",
+    searchKeys: ["reservation_reason", "release_reason"],
+    filters: [
+      { key: "status", label: "Status", options: reservationStatuses },
+    ],
     fields: [
       { key: "product_id", label: "Product", kind: "select", required: true, lookup: productLookup },
       { key: "warehouse_id", label: "Warehouse", kind: "select", required: true, lookup: warehouseLookup },

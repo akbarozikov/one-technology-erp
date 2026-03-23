@@ -1,5 +1,5 @@
 import type { AdminNavGroup, EntityConfigMap } from "./shared";
-import { productAttributeDataTypes, productStatuses, productTypes } from "./shared";
+import { productAttributeDataTypes, productStatuses, productTypes, unitLookup } from "./shared";
 
 export const catalogConfigs = {
   product_categories: {
@@ -44,9 +44,14 @@ export const catalogConfigs = {
   products: {
     title: "Products",
     apiPath: "/api/products",
+    searchKeys: ["name", "sku", "code", "brand"],
+    filters: [
+      { key: "product_type", label: "Product type", options: productTypes },
+      { key: "status", label: "Status", options: productStatuses },
+    ],
     fields: [
       { key: "category_id", label: "Category ID", kind: "number" },
-      { key: "default_unit_id", label: "Default unit ID", kind: "number", required: true },
+      { key: "default_unit_id", label: "Default unit", kind: "select", required: true, lookup: unitLookup },
       { key: "name", label: "Name", kind: "text", required: true },
       { key: "sku", label: "SKU", kind: "text", required: true },
       { key: "barcode", label: "Barcode", kind: "text" },
