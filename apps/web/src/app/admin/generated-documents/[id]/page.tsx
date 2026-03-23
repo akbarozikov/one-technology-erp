@@ -41,6 +41,35 @@ function metadataValue(value: unknown): string {
   return String(value);
 }
 
+function sanitizeFilenamePart(value: string): string {
+  const trimmed = value.trim();
+  if (!trimmed) return "";
+  return trimmed.replace(/[<>:"/\\|?*\x00-\x1f]+/g, "-").replace(/\s+/g, " ");
+}
+
+function buildHtmlFilename(document: GeneratedDocument): string {
+  const fileName =
+    typeof document.file_name === "string" ? sanitizeFilenamePart(document.file_name) : "";
+  if (fileName) {
+    return fileName.toLowerCase().endsWith(".html") ? fileName : `${fileName}.html`;
+  }
+
+  const documentNumber =
+    typeof document.document_number === "string"
+      ? sanitizeFilenamePart(document.document_number)
+      : "";
+  if (documentNumber) {
+    return `${documentNumber}.html`;
+  }
+
+  const title = typeof document.title === "string" ? sanitizeFilenamePart(document.title) : "";
+  if (title) {
+    return `${title}.html`;
+  }
+
+  return `generated-document-${document.id}.html`;
+}
+
 export default function GeneratedDocumentDetailPage() {
   const params = useParams<{ id: string }>();
   const id = Number(params?.id);
@@ -49,6 +78,7 @@ export default function GeneratedDocumentDetailPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [configHint, setConfigHint] = useState(false);
+  const [showSource, setShowSource] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -123,6 +153,35 @@ export default function GeneratedDocumentDetailPage() {
     () => (renderedContent && looksLikeHtml(renderedContent) ? renderedContent : null),
     [renderedContent]
   );
+  const hasRenderedContent = typeof renderedContent === "string" && renderedContent.length > 0;
+
+  function createHtmlBlobUrl(): string | null {
+    if (!hasRenderedContent || !renderedContent) {
+      return null;
+    }
+    return URL.createObjectURL(new Blob([renderedContent], { type: "text/html;charset=utf-8" }));
+  }
+
+  function handleOpenDocument() {
+    const blobUrl = createHtmlBlobUrl();
+    if (!blobUrl) return;
+    window.open(blobUrl, "_blank", "noopener,noreferrer");
+    window.setTimeout(() => URL.revokeObjectURL(blobUrl), 60_000);
+  }
+
+  function handleDownloadHtml() {
+    if (!document) return;
+    const blobUrl = createHtmlBlobUrl();
+    if (!blobUrl) return;
+
+    const anchor = window.document.createElement("a");
+    anchor.href = blobUrl;
+    anchor.download = buildHtmlFilename(document);
+    window.document.body.appendChild(anchor);
+    anchor.click();
+    anchor.remove();
+    window.setTimeout(() => URL.revokeObjectURL(blobUrl), 1_000);
+  }
 
   return (
     <div className="space-y-6">
@@ -285,6 +344,33 @@ export default function GeneratedDocumentDetailPage() {
             <h2 className="mb-3 text-lg font-semibold text-zinc-900 dark:text-zinc-50">
               Rendered Content Preview
             </h2>
+            <div className="mb-3 flex flex-wrap gap-2">
+              <button
+                type="button"
+                onClick={handleOpenDocument}
+                disabled={!hasRenderedContent}
+                className="rounded border border-zinc-300 px-3 py-1.5 text-sm text-zinc-700 hover:bg-zinc-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-zinc-700 dark:text-zinc-200 dark:hover:bg-zinc-800"
+              >
+                Open Document
+              </button>
+              <button
+                type="button"
+                onClick={handleDownloadHtml}
+                disabled={!hasRenderedContent}
+                className="rounded border border-zinc-300 px-3 py-1.5 text-sm text-zinc-700 hover:bg-zinc-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-zinc-700 dark:text-zinc-200 dark:hover:bg-zinc-800"
+              >
+                Download HTML
+              </button>
+              {hasRenderedContent && (
+                <button
+                  type="button"
+                  onClick={() => setShowSource((current) => !current)}
+                  className="rounded border border-zinc-300 px-3 py-1.5 text-sm text-zinc-700 hover:bg-zinc-50 dark:border-zinc-700 dark:text-zinc-200 dark:hover:bg-zinc-800"
+                >
+                  {showSource ? "Hide Source" : "View Raw HTML"}
+                </button>
+              )}
+            </div>
             {!renderedContent && (
               <p className="text-sm text-zinc-500 dark:text-zinc-400">
                 No rendered content is stored for this generated document.
@@ -304,6 +390,16 @@ export default function GeneratedDocumentDetailPage() {
               <pre className="overflow-x-auto whitespace-pre-wrap rounded border border-zinc-200 bg-zinc-50 p-3 text-sm text-zinc-800 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-100">
                 {renderedContent}
               </pre>
+            )}
+            {hasRenderedContent && showSource && (
+              <div className="mt-4">
+                <h3 className="mb-2 text-sm font-semibold text-zinc-900 dark:text-zinc-50">
+                  Raw Source
+                </h3>
+                <pre className="max-h-[360px] overflow-auto whitespace-pre-wrap rounded border border-zinc-200 bg-zinc-50 p-3 text-sm text-zinc-800 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-100">
+                  {renderedContent}
+                </pre>
+              </div>
             )}
           </section>
 
