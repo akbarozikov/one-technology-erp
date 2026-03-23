@@ -369,6 +369,48 @@ const paymentMethodLookup = {
   includeIdInLabel: true,
 } as const satisfies EntityLookup;
 
+const productLookup = {
+  apiPath: "/api/products",
+  labelKeys: ["name", "sku"],
+  includeIdInLabel: true,
+} as const satisfies EntityLookup;
+
+const quoteLookup = {
+  apiPath: "/api/quotes",
+  labelKeys: ["quote_number", "status"],
+  includeIdInLabel: true,
+} as const satisfies EntityLookup;
+
+const quoteVersionLookup = {
+  apiPath: "/api/quote-versions",
+  labelKeys: ["version_number", "version_status"],
+  includeIdInLabel: true,
+} as const satisfies EntityLookup;
+
+const orderLookup = {
+  apiPath: "/api/orders",
+  labelKeys: ["order_number", "order_status"],
+  includeIdInLabel: true,
+} as const satisfies EntityLookup;
+
+const configurationLookup = {
+  apiPath: "/api/door-configurations",
+  labelKeys: ["configuration_code", "title"],
+  includeIdInLabel: true,
+} as const satisfies EntityLookup;
+
+const variantLookup = {
+  apiPath: "/api/door-configuration-variants",
+  labelKeys: ["name", "variant_number"],
+  includeIdInLabel: true,
+} as const satisfies EntityLookup;
+
+const installationJobLookup = {
+  apiPath: "/api/installation-jobs",
+  labelKeys: ["job_number", "job_status"],
+  includeIdInLabel: true,
+} as const satisfies EntityLookup;
+
 export type AdminNavItem = { href: string; label: string };
 export type AdminNavGroup = { label: string; items: AdminNavItem[] };
 
@@ -898,7 +940,7 @@ export const entityConfigs = {
     apiPath: "/api/stock-balances",
     createEnabled: false,
     fields: [
-      { key: "product_id", label: "Product ID", kind: "number", required: true },
+      { key: "product_id", label: "Product", kind: "select", required: true, lookup: productLookup },
       { key: "warehouse_id", label: "Warehouse", kind: "select", required: true, lookup: warehouseLookup },
       { key: "position_id", label: "Position ID", kind: "number", required: true },
       { key: "on_hand_qty", label: "On hand qty", kind: "number", required: true, step: "any", min: 0 },
@@ -946,7 +988,7 @@ export const entityConfigs = {
         kind: "number",
         required: true,
       },
-      { key: "product_id", label: "Product ID", kind: "number", required: true },
+      { key: "product_id", label: "Product", kind: "select", required: true, lookup: productLookup },
       { key: "from_position_id", label: "From position ID", kind: "number" },
       { key: "to_position_id", label: "To position ID", kind: "number" },
       {
@@ -969,9 +1011,10 @@ export const entityConfigs = {
       { key: "supplier_id", label: "Supplier ID", kind: "number", required: true },
       {
         key: "destination_warehouse_id",
-        label: "Destination warehouse ID",
-        kind: "number",
+        label: "Destination warehouse",
+        kind: "select",
         required: true,
+        lookup: warehouseLookup,
       },
         { key: "receipt_date", label: "Receipt date", kind: "date", required: true },
       {
@@ -1000,7 +1043,7 @@ export const entityConfigs = {
         required: true,
       },
       { key: "line_number", label: "Line number", kind: "number", required: true },
-      { key: "product_id", label: "Product ID", kind: "number", required: true },
+      { key: "product_id", label: "Product", kind: "select", required: true, lookup: productLookup },
       {
         key: "destination_position_id",
         label: "Destination position ID",
@@ -1042,7 +1085,7 @@ export const entityConfigs = {
       {
         key: "adjustment_date",
         label: "Adjustment date",
-        kind: "text",
+        kind: "date",
         required: true,
       },
       { key: "reason", label: "Reason", kind: "text" },
@@ -1068,7 +1111,7 @@ export const entityConfigs = {
         kind: "number",
         required: true,
       },
-      { key: "product_id", label: "Product ID", kind: "number", required: true },
+      { key: "product_id", label: "Product", kind: "select", required: true, lookup: productLookup },
       { key: "position_id", label: "Position ID", kind: "number", required: true },
       { key: "old_qty", label: "Old qty", kind: "number", required: true, step: "any", min: 0 },
       { key: "new_qty", label: "New qty", kind: "number", required: true, step: "any", min: 0 },
@@ -1081,7 +1124,7 @@ export const entityConfigs = {
     title: "Stock writeoffs",
     apiPath: "/api/stock-writeoffs",
     fields: [
-      { key: "warehouse_id", label: "Warehouse ID", kind: "number", required: true },
+      { key: "warehouse_id", label: "Warehouse", kind: "select", required: true, lookup: warehouseLookup },
       { key: "writeoff_date", label: "Writeoff date", kind: "date", required: true },
       {
         key: "writeoff_reason",
@@ -1112,7 +1155,7 @@ export const entityConfigs = {
         kind: "number",
         required: true,
       },
-      { key: "product_id", label: "Product ID", kind: "number", required: true },
+      { key: "product_id", label: "Product", kind: "select", required: true, lookup: productLookup },
       { key: "position_id", label: "Position ID", kind: "number", required: true },
       {
         key: "quantity",
@@ -1153,7 +1196,7 @@ export const entityConfigs = {
         kind: "number",
         required: true,
       },
-      { key: "product_id", label: "Product ID", kind: "number", required: true },
+      { key: "product_id", label: "Product", kind: "select", required: true, lookup: productLookup },
       { key: "position_id", label: "Position ID", kind: "number", required: true },
       { key: "system_qty", label: "System qty", kind: "number", required: true, step: "any", min: 0 },
       { key: "counted_qty", label: "Counted qty", kind: "number", required: true, step: "any", min: 0 },
@@ -1168,15 +1211,17 @@ export const entityConfigs = {
     fields: [
       {
         key: "source_warehouse_id",
-        label: "Source warehouse ID",
-        kind: "number",
+        label: "Source warehouse",
+        kind: "select",
         required: true,
+        lookup: warehouseLookup,
       },
       {
         key: "destination_warehouse_id",
-        label: "Destination warehouse ID",
-        kind: "number",
+        label: "Destination warehouse",
+        kind: "select",
         required: true,
+        lookup: warehouseLookup,
       },
       { key: "transfer_date", label: "Transfer date", kind: "date", required: true },
       {
@@ -1201,7 +1246,7 @@ export const entityConfigs = {
         kind: "number",
         required: true,
       },
-      { key: "product_id", label: "Product ID", kind: "number", required: true },
+      { key: "product_id", label: "Product", kind: "select", required: true, lookup: productLookup },
       { key: "from_position_id", label: "From position ID", kind: "number", required: true },
       { key: "to_position_id", label: "To position ID", kind: "number", required: true },
       {
@@ -1220,7 +1265,7 @@ export const entityConfigs = {
     title: "Stock reservations",
     apiPath: "/api/stock-reservations",
     fields: [
-      { key: "product_id", label: "Product ID", kind: "number", required: true },
+      { key: "product_id", label: "Product", kind: "select", required: true, lookup: productLookup },
       { key: "warehouse_id", label: "Warehouse", kind: "select", required: true, lookup: warehouseLookup },
       { key: "position_id", label: "Position ID", kind: "number", required: true },
       {
@@ -1241,8 +1286,9 @@ export const entityConfigs = {
       { key: "order_line_id", label: "Order line ID", kind: "number" },
       {
         key: "configuration_variant_id",
-        label: "Configuration variant ID",
-        kind: "number",
+        label: "Configuration variant",
+        kind: "select",
+        lookup: variantLookup,
       },
       { key: "bom_line_id", label: "BOM line ID", kind: "number" },
       { key: "reserved_from", label: "Reserved from", kind: "datetime-local" },
@@ -1265,7 +1311,7 @@ export const entityConfigs = {
       { key: "status", label: "Status", kind: "select", options: configurationStatuses },
       { key: "is_attached_to_quote", label: "Attached to quote", kind: "checkbox" },
       { key: "is_attached_to_order", label: "Attached to order", kind: "checkbox" },
-      { key: "selected_variant_id", label: "Selected variant ID", kind: "number" },
+      { key: "selected_variant_id", label: "Selected variant", kind: "select", lookup: variantLookup },
       { key: "notes", label: "Notes", kind: "textarea" },
     ],
   },
@@ -1273,7 +1319,7 @@ export const entityConfigs = {
     title: "Door configuration variants",
     apiPath: "/api/door-configuration-variants",
     fields: [
-      { key: "configuration_id", label: "Configuration ID", kind: "number", required: true },
+      { key: "configuration_id", label: "Configuration", kind: "select", required: true, lookup: configurationLookup },
       { key: "variant_number", label: "Variant number", kind: "number", required: true },
       { key: "name", label: "Name", kind: "text", required: true },
       { key: "description", label: "Description", kind: "textarea" },
@@ -1293,7 +1339,7 @@ export const entityConfigs = {
     title: "Door configuration inputs",
     apiPath: "/api/door-configuration-inputs",
     fields: [
-      { key: "variant_id", label: "Variant ID", kind: "number", required: true },
+      { key: "variant_id", label: "Variant", kind: "select", required: true, lookup: variantLookup },
       { key: "input_key", label: "Input key", kind: "text", required: true },
       { key: "input_label", label: "Input label", kind: "text", required: true },
       { key: "input_type", label: "Input type", kind: "select", required: true, options: constructorInputTypes },
@@ -1309,7 +1355,7 @@ export const entityConfigs = {
     title: "Calculation runs",
     apiPath: "/api/calculation-runs",
     fields: [
-      { key: "variant_id", label: "Variant ID", kind: "number", required: true },
+      { key: "variant_id", label: "Variant", kind: "select", required: true, lookup: variantLookup },
       { key: "run_type", label: "Run type", kind: "select", required: true, options: calculationRunTypes },
       { key: "run_status", label: "Run status", kind: "select", options: calculationRunStatuses },
       { key: "input_snapshot_json", label: "Input snapshot JSON", kind: "textarea" },
@@ -1342,8 +1388,8 @@ export const entityConfigs = {
     title: "BOM lines",
     apiPath: "/api/bom-lines",
     fields: [
-      { key: "variant_id", label: "Variant ID", kind: "number", required: true },
-      { key: "product_id", label: "Product ID", kind: "number", required: true },
+      { key: "variant_id", label: "Variant", kind: "select", required: true, lookup: variantLookup },
+      { key: "product_id", label: "Product", kind: "select", required: true, lookup: productLookup },
       { key: "source_type", label: "Source type", kind: "select", required: true, options: bomSourceTypes },
       { key: "source_reference", label: "Source reference", kind: "text" },
       { key: "line_number", label: "Line number", kind: "number", required: true },
@@ -1368,7 +1414,7 @@ export const entityConfigs = {
     title: "BOM change logs",
     apiPath: "/api/bom-change-logs",
     fields: [
-      { key: "variant_id", label: "Variant ID", kind: "number", required: true },
+      { key: "variant_id", label: "Variant", kind: "select", required: true, lookup: variantLookup },
       { key: "bom_line_id", label: "BOM line ID", kind: "number" },
       { key: "change_type", label: "Change type", kind: "select", required: true, options: bomChangeTypes },
       { key: "old_values_json", label: "Old values JSON", kind: "textarea" },
@@ -1381,7 +1427,7 @@ export const entityConfigs = {
     title: "Configuration visuals",
     apiPath: "/api/configuration-visuals",
     fields: [
-      { key: "variant_id", label: "Variant ID", kind: "number", required: true },
+      { key: "variant_id", label: "Variant", kind: "select", required: true, lookup: variantLookup },
       { key: "visual_type", label: "Visual type", kind: "select", required: true, options: visualTypes },
       { key: "file_url", label: "File URL", kind: "text", required: true },
       { key: "preview_url", label: "Preview URL", kind: "text" },
@@ -1411,7 +1457,7 @@ export const entityConfigs = {
     title: "Quote versions",
     apiPath: "/api/quote-versions",
     fields: [
-      { key: "quote_id", label: "Quote ID", kind: "number", required: true },
+      { key: "quote_id", label: "Quote", kind: "select", required: true, lookup: quoteLookup },
       { key: "version_number", label: "Version number", kind: "number", required: true },
       { key: "version_status", label: "Version status", kind: "select", options: quoteVersionStatuses },
       { key: "is_current", label: "Current", kind: "checkbox", defaultChecked: true },
@@ -1429,11 +1475,11 @@ export const entityConfigs = {
     title: "Quote lines",
     apiPath: "/api/quote-lines",
     fields: [
-      { key: "quote_version_id", label: "Quote version ID", kind: "number", required: true },
+      { key: "quote_version_id", label: "Quote version", kind: "select", required: true, lookup: quoteVersionLookup },
       { key: "line_number", label: "Line number", kind: "number", required: true },
       { key: "line_type", label: "Line type", kind: "select", required: true, options: commercialLineTypes },
-      { key: "product_id", label: "Product ID", kind: "number" },
-      { key: "configuration_variant_id", label: "Configuration variant ID", kind: "number" },
+      { key: "product_id", label: "Product", kind: "select", lookup: productLookup },
+      { key: "configuration_variant_id", label: "Configuration variant", kind: "select", lookup: variantLookup },
       { key: "quantity", label: "Quantity", kind: "number", required: true, step: "any", min: 0.000001 },
       { key: "unit_id", label: "Unit", kind: "select", required: true, lookup: unitLookup },
       { key: "unit_price", label: "Unit price", kind: "number", step: "any", min: 0 },
@@ -1453,7 +1499,7 @@ export const entityConfigs = {
     title: "Quote discounts",
     apiPath: "/api/quote-discounts",
     fields: [
-      { key: "quote_version_id", label: "Quote version ID", kind: "number", required: true },
+      { key: "quote_version_id", label: "Quote version", kind: "select", required: true, lookup: quoteVersionLookup },
       { key: "discount_type", label: "Discount type", kind: "select", required: true, options: discountTypes },
       { key: "discount_value", label: "Discount value", kind: "number", required: true, step: "any", min: 0 },
       { key: "discount_total", label: "Discount total", kind: "number", step: "any", min: 0 },
@@ -1465,7 +1511,7 @@ export const entityConfigs = {
     title: "Orders",
     apiPath: "/api/orders",
     fields: [
-      { key: "quote_version_id", label: "Quote version ID", kind: "number" },
+      { key: "quote_version_id", label: "Quote version", kind: "select", lookup: quoteVersionLookup },
       { key: "customer_id", label: "Customer ID", kind: "number" },
       { key: "deal_id", label: "Deal ID", kind: "number" },
       { key: "order_number", label: "Order number", kind: "text", required: true },
@@ -1493,11 +1539,11 @@ export const entityConfigs = {
     title: "Order lines",
     apiPath: "/api/order-lines",
     fields: [
-      { key: "order_id", label: "Order ID", kind: "number", required: true },
+      { key: "order_id", label: "Order", kind: "select", required: true, lookup: orderLookup },
       { key: "line_number", label: "Line number", kind: "number", required: true },
       { key: "line_type", label: "Line type", kind: "select", required: true, options: commercialLineTypes },
-      { key: "product_id", label: "Product ID", kind: "number" },
-      { key: "configuration_variant_id", label: "Configuration variant ID", kind: "number" },
+      { key: "product_id", label: "Product", kind: "select", lookup: productLookup },
+      { key: "configuration_variant_id", label: "Configuration variant", kind: "select", lookup: variantLookup },
       { key: "quantity", label: "Quantity", kind: "number", required: true, step: "any", min: 0.000001 },
       { key: "unit_id", label: "Unit", kind: "select", required: true, lookup: unitLookup },
       { key: "unit_price", label: "Unit price", kind: "number", step: "any", min: 0 },
@@ -1518,7 +1564,7 @@ export const entityConfigs = {
     title: "Order discounts",
     apiPath: "/api/order-discounts",
     fields: [
-      { key: "order_id", label: "Order ID", kind: "number", required: true },
+      { key: "order_id", label: "Order", kind: "select", required: true, lookup: orderLookup },
       { key: "discount_type", label: "Discount type", kind: "select", required: true, options: discountTypes },
       { key: "discount_value", label: "Discount value", kind: "number", required: true, step: "any", min: 0 },
       { key: "discount_total", label: "Discount total", kind: "number", step: "any", min: 0 },
@@ -1540,7 +1586,7 @@ export const entityConfigs = {
     title: "Payments",
     apiPath: "/api/payments",
     fields: [
-      { key: "order_id", label: "Order ID", kind: "number", required: true },
+      { key: "order_id", label: "Order", kind: "select", required: true, lookup: orderLookup },
       { key: "payment_method_id", label: "Payment method", kind: "select", required: true, lookup: paymentMethodLookup },
       { key: "payment_date", label: "Payment date", kind: "date", required: true },
       { key: "amount", label: "Amount", kind: "number", required: true, step: "any", min: 0.000001 },
@@ -1555,7 +1601,7 @@ export const entityConfigs = {
     title: "Installation jobs",
     apiPath: "/api/installation-jobs",
     fields: [
-      { key: "order_id", label: "Order ID", kind: "number" },
+      { key: "order_id", label: "Order", kind: "select", lookup: orderLookup },
       { key: "order_line_id", label: "Order line ID", kind: "number" },
       { key: "job_number", label: "Job number", kind: "text", required: true },
       { key: "job_type", label: "Job type", kind: "select", required: true, options: installationJobTypes },
@@ -1579,7 +1625,7 @@ export const entityConfigs = {
     title: "Installation assignments",
     apiPath: "/api/installation-assignments",
     fields: [
-      { key: "installation_job_id", label: "Installation job ID", kind: "number", required: true },
+      { key: "installation_job_id", label: "Installation job", kind: "select", required: true, lookup: installationJobLookup },
         { key: "employee_id", label: "Employee", kind: "select", required: true, lookup: employeeLookup },
       { key: "assignment_role", label: "Assignment role", kind: "select", required: true, options: installationAssignmentRoles },
         { key: "assigned_at", label: "Assigned at", kind: "datetime-local" },
@@ -1590,7 +1636,7 @@ export const entityConfigs = {
     title: "Installation results",
     apiPath: "/api/installation-results",
     fields: [
-      { key: "installation_job_id", label: "Installation job ID", kind: "number", required: true },
+      { key: "installation_job_id", label: "Installation job", kind: "select", required: true, lookup: installationJobLookup },
       { key: "result_status", label: "Result status", kind: "select", required: true, options: installationResultStatuses },
         { key: "completion_date", label: "Completion date", kind: "date" },
       { key: "work_summary", label: "Work summary", kind: "textarea" },
