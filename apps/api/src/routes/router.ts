@@ -42,7 +42,10 @@ import { handleStockAdjustments } from "./stock-adjustments";
 import { handleStockBalances } from "./stock-balances";
 import { handleStockMovementLines } from "./stock-movement-lines";
 import { handleStockMovements } from "./stock-movements";
-import { handleStockReservations } from "./stock-reservations";
+import {
+  handleStockReservationAction,
+  handleStockReservations,
+} from "./stock-reservations";
 import { handleStockTransferDocuments } from "./stock-transfer-documents";
 import { handleStockTransferLines } from "./stock-transfer-lines";
 import { handleStockWriteoffLines } from "./stock-writeoff-lines";
@@ -57,6 +60,18 @@ import { handleWarehousePositions } from "./warehouse-positions";
 export async function routeRequest(request: Request, env: Env): Promise<Response> {
   const url = new URL(request.url);
   const path = url.pathname;
+
+  const stockReservationActionMatch = path.match(
+    /^\/api\/stock-reservations\/(\d+)\/(release|consume|cancel)$/
+  );
+  if (stockReservationActionMatch) {
+    return handleStockReservationAction(
+      request,
+      env,
+      Number(stockReservationActionMatch[1]),
+      stockReservationActionMatch[2] as "release" | "consume" | "cancel"
+    );
+  }
 
   switch (path) {
     case "/":

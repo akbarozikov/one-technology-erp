@@ -34,6 +34,11 @@ export interface StockReservationCreateInput {
   release_reason: string | null;
 }
 
+export interface StockReservationActionInput {
+  released_by_user_id: number | null;
+  release_reason: string | null;
+}
+
 export function parseStockReservationCreate(
   body: JsonObject,
   errors: Failures
@@ -102,6 +107,27 @@ export function parseStockReservationCreate(
     reservation_reason:
       reservation_reason === undefined ? null : reservation_reason,
     created_by_user_id,
+    released_by_user_id,
+    release_reason: release_reason === undefined ? null : release_reason,
+  };
+}
+
+export function parseStockReservationAction(
+  body: JsonObject,
+  errors: Failures
+): StockReservationActionInput | null {
+  const released_by_user_id = optionalNullableFk(
+    body,
+    "released_by_user_id",
+    errors
+  );
+  const release_reason = optionalTrimmedString(body, "release_reason", errors);
+
+  if (errors.length > 0) {
+    return null;
+  }
+
+  return {
     released_by_user_id,
     release_reason: release_reason === undefined ? null : release_reason,
   };
