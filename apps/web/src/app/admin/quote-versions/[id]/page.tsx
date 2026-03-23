@@ -6,6 +6,8 @@ import { useEffect, useMemo, useState } from "react";
 import { ApiError, apiGet, apiPost, formatApiError, getApiBaseUrl } from "@/lib/api";
 import { DocumentGenerationPanel } from "@/components/admin/DocumentGenerationPanel";
 import {
+  ActionGroup,
+  AttentionList,
   DetailSection,
   RelatedList,
   SummaryGrid,
@@ -150,6 +152,39 @@ export default function QuoteVersionDetailPage() {
     [documents]
   );
 
+  const attentionItems = useMemo(() => {
+    if (!quoteVersion) return [];
+
+    const items: Array<{ key: string; title: string; description: string }> = [];
+
+    if (documents.length === 0) {
+      items.push({
+        key: "proposal",
+        title: "Proposal document has not been generated yet",
+        description:
+          "Generate a commercial proposal when this version is ready to be shared or stored as a formal quote snapshot.",
+      });
+    }
+
+    if (!linkedOrder) {
+      items.push({
+        key: "order-draft",
+        title: "No linked order exists yet",
+        description:
+          "If this version is approved for follow-through, creating an order draft is the clearest next commercial step.",
+      });
+    } else {
+      items.push({
+        key: "linked-order",
+        title: "Workflow can continue in the linked order",
+        description:
+          "This quote version already has an order draft, so payment and fulfillment work can continue from that order page.",
+      });
+    }
+
+    return items;
+  }, [documents.length, linkedOrder, quoteVersion]);
+
   async function handleCreateOrderDraft() {
     if (creatingOrder || !quoteVersion) return;
 
@@ -241,32 +276,57 @@ export default function QuoteVersionDetailPage() {
             />
           </DetailSection>
 
+          <DetailSection
+            title="Next Steps"
+            description="Lightweight guidance based on the current quote-version state."
+          >
+            <AttentionList items={attentionItems} />
+          </DetailSection>
+
           <div className="grid gap-6 xl:grid-cols-[1.3fr_0.9fr]">
             <DetailSection
               title="Key Actions"
               description="Generate a proposal document here, or create the first order draft when this version is ready to move forward."
             >
-              <div className="mb-4 flex flex-wrap gap-2">
-                <button
-                  type="button"
-                  onClick={handleCreateOrderDraft}
-                  disabled={creatingOrder || linkedOrder !== null}
-                  className="rounded bg-zinc-900 px-4 py-2 text-sm font-medium text-white hover:bg-zinc-800 disabled:opacity-50 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-white"
-                >
-                  {creatingOrder ? "Creating order..." : linkedOrder ? "Order already exists" : "Create Order Draft"}
-                </button>
-                <Link
-                  href="/admin/quotes"
-                  className="rounded border border-zinc-300 px-3 py-1.5 text-sm text-zinc-700 hover:bg-zinc-50 dark:border-zinc-700 dark:text-zinc-200 dark:hover:bg-zinc-800"
-                >
-                  Open Quotes
-                </Link>
-                <Link
-                  href="/admin/orders"
-                  className="rounded border border-zinc-300 px-3 py-1.5 text-sm text-zinc-700 hover:bg-zinc-50 dark:border-zinc-700 dark:text-zinc-200 dark:hover:bg-zinc-800"
-                >
-                  Open Orders
-                </Link>
+              <div className="mb-4 space-y-4">
+                <ActionGroup
+                  title="Primary Actions"
+                  description="These are the most likely next commercial steps from this quote version."
+                  items={[
+                    {
+                      key: "create-order",
+                      label: creatingOrder
+                        ? "Creating order..."
+                        : linkedOrder
+                          ? "Order Already Exists"
+                          : "Create Order Draft",
+                      onClick: handleCreateOrderDraft,
+                      disabled: creatingOrder || linkedOrder !== null,
+                      primary: true,
+                      helperText: linkedOrder
+                        ? "This quote version already has a linked order."
+                        : "Create a draft order without manually re-entering the quote version details.",
+                    },
+                  ]}
+                />
+                <ActionGroup
+                  title="Supporting Actions"
+                  description="Open the surrounding commercial records when you need more context."
+                  items={[
+                    {
+                      key: "quotes",
+                      label: "Open Quotes",
+                      href: "/admin/quotes",
+                      helperText: "Review the quote header and earlier commercial context.",
+                    },
+                    {
+                      key: "orders",
+                      label: "Open Orders",
+                      href: "/admin/orders",
+                      helperText: "Move into downstream order follow-through when an order exists.",
+                    },
+                  ]}
+                />
               </div>
 
               {orderActionError && (
@@ -329,9 +389,15 @@ export default function QuoteVersionDetailPage() {
                     emptyMessage=""
                   />
                 ) : (
-                  <p className="text-sm text-zinc-500 dark:text-zinc-400">
-                    No order draft has been created from this quote version yet.
-                  </p>
+                  <RelatedList
+                    items={[]}
+                    emptyMessage="No order draft has been created from this quote version yet."
+                    emptyAction={
+                      <p className="text-sm text-zinc-500 dark:text-zinc-400">
+                        Use the primary action above when this version is ready to move into order follow-through.
+                      </p>
+                    }
+                  />
                 )}
               </DetailSection>
 
@@ -350,6 +416,11 @@ export default function QuoteVersionDetailPage() {
                 <RelatedList
                   items={relatedDocumentItems}
                   emptyMessage="No generated documents are linked directly to this quote version yet."
+                  emptyAction={
+                    <p className="text-sm text-zinc-500 dark:text-zinc-400">
+                      Generate a commercial proposal from the action area on this page.
+                    </p>
+                  }
                 />
               </DetailSection>
             </div>

@@ -6,6 +6,8 @@ import { useEffect, useMemo, useState } from "react";
 import { ApiError, apiGet, getApiBaseUrl } from "@/lib/api";
 import { DocumentGenerationPanel } from "@/components/admin/DocumentGenerationPanel";
 import {
+  ActionGroup,
+  AttentionList,
   DetailSection,
   RelatedList,
   SummaryGrid,
@@ -149,6 +151,43 @@ export default function OrderDetailPage() {
     [documents]
   );
 
+  const attentionItems = useMemo(() => {
+    if (!order) return [];
+
+    const items: Array<{ key: string; title: string; description: string }> = [];
+
+    if (order.payment_status === "unpaid" || order.payment_status === "partially_paid") {
+      items.push({
+        key: "payment",
+        title: "Payment follow-through is still open",
+        description:
+          order.remaining_total && order.remaining_total > 0
+            ? `There is still ${money(order.remaining_total)} remaining on this order, so recording a payment is likely the next business step.`
+            : "Payment status is not closed yet, so review recorded payments and add a payment if needed.",
+      });
+    }
+
+    if (documents.length === 0) {
+      items.push({
+        key: "document",
+        title: "No order document has been generated yet",
+        description:
+          "Generate an order document when this record is ready to be shared or stored as a formal commercial snapshot.",
+      });
+    }
+
+    if (order.reservation_status === "none") {
+      items.push({
+        key: "fulfillment",
+        title: "Operational fulfillment context still looks early",
+        description:
+          "This order does not show reservation progress yet, so review order lines and warehouse follow-through before operational execution.",
+      });
+    }
+
+    return items;
+  }, [documents.length, order]);
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between gap-3">
@@ -214,30 +253,53 @@ export default function OrderDetailPage() {
             />
           </DetailSection>
 
+          <DetailSection
+            title="Next Steps"
+            description="Lightweight guidance based on the current order state."
+          >
+            <AttentionList items={attentionItems} />
+          </DetailSection>
+
           <div className="grid gap-6 xl:grid-cols-[1.3fr_0.9fr]">
             <DetailSection
               title="Key Actions"
               description="Generate order documents here, then move into payments or supporting records as the order progresses."
             >
-              <div className="mb-4 flex flex-wrap gap-2">
-                <Link
-                  href="/admin/payments"
-                  className="rounded border border-zinc-300 px-3 py-1.5 text-sm text-zinc-700 hover:bg-zinc-50 dark:border-zinc-700 dark:text-zinc-200 dark:hover:bg-zinc-800"
-                >
-                  Open Payments
-                </Link>
-                <Link
-                  href="/admin/order-lines"
-                  className="rounded border border-zinc-300 px-3 py-1.5 text-sm text-zinc-700 hover:bg-zinc-50 dark:border-zinc-700 dark:text-zinc-200 dark:hover:bg-zinc-800"
-                >
-                  Open Order Lines
-                </Link>
-                <Link
-                  href="/admin/generated-documents"
-                  className="rounded border border-zinc-300 px-3 py-1.5 text-sm text-zinc-700 hover:bg-zinc-50 dark:border-zinc-700 dark:text-zinc-200 dark:hover:bg-zinc-800"
-                >
-                  Open Documents
-                </Link>
+              <div className="mb-4 space-y-4">
+                <ActionGroup
+                  title="Primary Actions"
+                  description="These are the most common next moves when an order is still progressing."
+                  items={[
+                    {
+                      key: "payments",
+                      label: "Review Payments",
+                      href: "/admin/payments",
+                      primary: true,
+                      helperText:
+                        order.payment_status === "unpaid" || order.payment_status === "partially_paid"
+                          ? "Payment follow-through is still open on this order."
+                          : "Payments are already further along, but you can still review or add records.",
+                    },
+                  ]}
+                />
+                <ActionGroup
+                  title="Supporting Actions"
+                  description="Open related operational areas or generate supporting documents."
+                  items={[
+                    {
+                      key: "order-lines",
+                      label: "Open Order Lines",
+                      href: "/admin/order-lines",
+                      helperText: "Review fulfillment context and line-level progress.",
+                    },
+                    {
+                      key: "documents",
+                      label: "Open Documents",
+                      href: "/admin/generated-documents",
+                      helperText: "Review existing generated documents across the ERP.",
+                    },
+                  ]}
+                />
               </div>
               <DocumentGenerationPanel
                 entityLabel="Order"
@@ -278,6 +340,14 @@ export default function OrderDetailPage() {
                 <RelatedList
                   items={recentPaymentItems}
                   emptyMessage="No payments have been recorded for this order yet."
+                  emptyAction={
+                    <Link
+                      href="/admin/payments"
+                      className="text-sm text-blue-700 underline underline-offset-2 hover:text-blue-900 dark:text-blue-300 dark:hover:text-blue-200"
+                    >
+                      Go to payments
+                    </Link>
+                  }
                 />
               </DetailSection>
 
@@ -296,6 +366,11 @@ export default function OrderDetailPage() {
                 <RelatedList
                   items={relatedDocumentItems}
                   emptyMessage="No generated documents are linked directly to this order yet."
+                  emptyAction={
+                    <p className="text-sm text-zinc-500 dark:text-zinc-400">
+                      Use the document action on this page to create the first order document.
+                    </p>
+                  }
                 />
               </DetailSection>
             </div>

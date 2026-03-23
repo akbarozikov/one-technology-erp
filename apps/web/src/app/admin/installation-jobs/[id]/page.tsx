@@ -6,6 +6,8 @@ import { useEffect, useMemo, useState } from "react";
 import { ApiError, apiGet, apiPost, formatApiError, getApiBaseUrl } from "@/lib/api";
 import { DocumentGenerationPanel } from "@/components/admin/DocumentGenerationPanel";
 import {
+  ActionGroup,
+  AttentionList,
   DetailSection,
   RelatedList,
   SummaryGrid,
@@ -176,6 +178,41 @@ export default function InstallationJobDetailPage() {
     [documents]
   );
 
+  const attentionItems = useMemo(() => {
+    if (!job) return [];
+
+    const items: Array<{ key: string; title: string; description: string }> = [];
+
+    if (results.length === 0) {
+      items.push({
+        key: "result",
+        title: "No installation result has been captured yet",
+        description:
+          "Creating a result draft is the clearest next step when field work has started or needs structured follow-through notes.",
+      });
+    }
+
+    if (job.job_status !== "completed") {
+      items.push({
+        key: "completion",
+        title: "Job is not marked completed yet",
+        description:
+          "If the work is finished, marking the job completed will make the operational status clearer for downstream follow-through.",
+      });
+    }
+
+    if (documents.length === 0) {
+      items.push({
+        key: "document",
+        title: "No installation/service document has been generated yet",
+        description:
+          "Generate a service or installation document when the job needs a stored output for review or handoff.",
+      });
+    }
+
+    return items;
+  }, [documents.length, job, results.length]);
+
   async function handleCreateResultDraft() {
     if (!job || resultDraftState.loading) return;
 
@@ -298,42 +335,73 @@ export default function InstallationJobDetailPage() {
             />
           </DetailSection>
 
+          <DetailSection
+            title="Next Steps"
+            description="Lightweight guidance based on the current installation-job state."
+          >
+            <AttentionList items={attentionItems} />
+          </DetailSection>
+
           <div className="grid gap-6 xl:grid-cols-[1.3fr_0.9fr]">
             <DetailSection
               title="Key Actions"
               description="Use these lightweight actions to capture field follow-through and keep document output close to the job."
             >
-              <div className="mb-4 flex flex-wrap gap-2">
-                <button
-                  type="button"
-                  onClick={handleCreateResultDraft}
-                  disabled={resultDraftState.loading}
-                  className="rounded bg-zinc-900 px-4 py-2 text-sm font-medium text-white hover:bg-zinc-800 disabled:opacity-50 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-white"
-                >
-                  {resultDraftState.loading ? "Creating result..." : "Create Result Draft"}
-                </button>
-                <button
-                  type="button"
-                  onClick={handleMarkCompleted}
-                  disabled={completionState.loading || job.job_status === "completed"}
-                  className="rounded border border-zinc-300 px-4 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-50 disabled:opacity-50 dark:border-zinc-700 dark:text-zinc-200 dark:hover:bg-zinc-800"
-                >
-                  {completionState.loading ? "Marking completed..." : "Mark Completed"}
-                </button>
-                <Link
-                  href="/admin/installation-results"
-                  className="rounded border border-zinc-300 px-3 py-1.5 text-sm text-zinc-700 hover:bg-zinc-50 dark:border-zinc-700 dark:text-zinc-200 dark:hover:bg-zinc-800"
-                >
-                  Open Results
-                </Link>
-                {linkedOrder && (
-                  <Link
-                    href={`/admin/orders/${linkedOrder.id}`}
-                    className="rounded border border-zinc-300 px-3 py-1.5 text-sm text-zinc-700 hover:bg-zinc-50 dark:border-zinc-700 dark:text-zinc-200 dark:hover:bg-zinc-800"
-                  >
-                    Open Linked Order
-                  </Link>
-                )}
+              <div className="mb-4 space-y-4">
+                <ActionGroup
+                  title="Primary Actions"
+                  description="These are the most common next operational steps from this job page."
+                  items={[
+                    {
+                      key: "result-draft",
+                      label: resultDraftState.loading ? "Creating result..." : "Create Result Draft",
+                      onClick: handleCreateResultDraft,
+                      disabled: resultDraftState.loading,
+                      primary: true,
+                      helperText:
+                        results.length === 0
+                          ? "No result records exist yet for this job."
+                          : "Create another result record when you need additional field-history detail.",
+                    },
+                    {
+                      key: "mark-completed",
+                      label:
+                        completionState.loading
+                          ? "Marking completed..."
+                          : job.job_status === "completed"
+                            ? "Already Completed"
+                            : "Mark Completed",
+                      onClick: handleMarkCompleted,
+                      disabled: completionState.loading || job.job_status === "completed",
+                      helperText:
+                        job.job_status === "completed"
+                          ? "This job is already marked completed."
+                          : "Use when the operational work is finished and the status should be closed out.",
+                    },
+                  ]}
+                />
+                <ActionGroup
+                  title="Supporting Actions"
+                  description="Open related operational and commercial areas when you need more context."
+                  items={[
+                    {
+                      key: "results",
+                      label: "Open Results",
+                      href: "/admin/installation-results",
+                      helperText: "Review or add result records outside this page.",
+                    },
+                    ...(linkedOrder
+                      ? [
+                          {
+                            key: "linked-order",
+                            label: "Open Linked Order",
+                            href: `/admin/orders/${linkedOrder.id}`,
+                            helperText: "Continue the broader commercial workflow from the related order.",
+                          },
+                        ]
+                      : []),
+                  ]}
+                />
               </div>
 
               {resultDraftState.error && (
@@ -433,6 +501,11 @@ export default function InstallationJobDetailPage() {
                 <RelatedList
                   items={resultItems}
                   emptyMessage="No installation results have been recorded for this job yet."
+                  emptyAction={
+                    <p className="text-sm text-zinc-500 dark:text-zinc-400">
+                      Use the primary action above to create the first result draft.
+                    </p>
+                  }
                 />
               </DetailSection>
 
@@ -451,6 +524,11 @@ export default function InstallationJobDetailPage() {
                 <RelatedList
                   items={documentItems}
                   emptyMessage="No generated documents are linked directly to this installation job yet."
+                  emptyAction={
+                    <p className="text-sm text-zinc-500 dark:text-zinc-400">
+                      Generate an installation or service document from the action area on this page.
+                    </p>
+                  }
                 />
               </DetailSection>
             </div>

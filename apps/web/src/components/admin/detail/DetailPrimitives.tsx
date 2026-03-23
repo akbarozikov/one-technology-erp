@@ -17,6 +17,16 @@ export type RelatedItem = {
   href?: string;
 };
 
+export type ActionItem = {
+  key: string;
+  label: string;
+  href?: string;
+  onClick?: () => void;
+  disabled?: boolean;
+  primary?: boolean;
+  helperText?: string;
+};
+
 export function DetailSection({
   title,
   description,
@@ -74,12 +84,19 @@ export function SummaryGrid({ items }: { items: SummaryItem[] }) {
 export function RelatedList({
   items,
   emptyMessage,
+  emptyAction,
 }: {
   items: RelatedItem[];
   emptyMessage: string;
+  emptyAction?: ReactNode;
 }) {
   if (items.length === 0) {
-    return <p className="text-sm text-zinc-500 dark:text-zinc-400">{emptyMessage}</p>;
+    return (
+      <div className="rounded border border-dashed border-zinc-200 px-4 py-4 dark:border-zinc-700">
+        <p className="text-sm text-zinc-500 dark:text-zinc-400">{emptyMessage}</p>
+        {emptyAction && <div className="mt-3">{emptyAction}</div>}
+      </div>
+    );
   }
 
   return (
@@ -120,6 +137,93 @@ export function RelatedList({
           </div>
         );
       })}
+    </div>
+  );
+}
+
+export function AttentionList({
+  items,
+}: {
+  items: Array<{ key: string; title: string; description: string }>;
+}) {
+  if (items.length === 0) {
+    return (
+      <div className="rounded border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-900 dark:border-emerald-900 dark:bg-emerald-950/40 dark:text-emerald-100">
+        No immediate follow-up is standing out right now.
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-3">
+      {items.map((item) => (
+        <div
+          key={item.key}
+          className="rounded border border-amber-200 bg-amber-50 px-4 py-3 dark:border-amber-900 dark:bg-amber-950/40"
+        >
+          <div className="font-medium text-amber-950 dark:text-amber-100">
+            {item.title}
+          </div>
+          <p className="mt-1 text-sm text-amber-900 dark:text-amber-200">
+            {item.description}
+          </p>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+export function ActionGroup({
+  title,
+  description,
+  items,
+}: {
+  title: string;
+  description?: string;
+  items: ActionItem[];
+}) {
+  return (
+    <div className="rounded border border-zinc-100 p-4 dark:border-zinc-800">
+      <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">{title}</h3>
+      {description && (
+        <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">{description}</p>
+      )}
+      <div className="mt-3 flex flex-wrap gap-2">
+        {items.map((item) => {
+          const className = item.primary
+            ? "rounded bg-zinc-900 px-4 py-2 text-sm font-medium text-white hover:bg-zinc-800 disabled:opacity-50 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-white"
+            : "rounded border border-zinc-300 px-3 py-1.5 text-sm text-zinc-700 hover:bg-zinc-50 disabled:opacity-50 dark:border-zinc-700 dark:text-zinc-200 dark:hover:bg-zinc-800";
+
+          const helper = item.helperText ? (
+            <p className="mt-2 text-xs text-zinc-500 dark:text-zinc-400">{item.helperText}</p>
+          ) : null;
+
+          if (item.href) {
+            return (
+              <div key={item.key}>
+                <Link href={item.href} className={className} aria-disabled={item.disabled}>
+                  {item.label}
+                </Link>
+                {helper}
+              </div>
+            );
+          }
+
+          return (
+            <div key={item.key}>
+              <button
+                type="button"
+                onClick={item.onClick}
+                disabled={item.disabled}
+                className={className}
+              >
+                {item.label}
+              </button>
+              {helper}
+            </div>
+          );
+        })}
+      </div>
     </div>
   );
 }
