@@ -204,15 +204,16 @@ export const commercialConfigs = {
 
 export const commercialNavGroup: AdminNavGroup = {
   label: "Commercial",
+  href: "/admin/commercial",
   items: [
     { href: "/admin/quotes", label: "Quotes" },
     { href: "/admin/quote-versions", label: "Quote Versions" },
+    { href: "/admin/orders", label: "Orders" },
+    { href: "/admin/payments", label: "Payments" },
+    { href: "/admin/payment-methods", label: "Payment Methods" },
     { href: "/admin/quote-lines", label: "Quote Lines" },
     { href: "/admin/quote-discounts", label: "Quote Discounts" },
-    { href: "/admin/orders", label: "Orders" },
     { href: "/admin/order-lines", label: "Order Lines" },
     { href: "/admin/order-discounts", label: "Order Discounts" },
-    { href: "/admin/payment-methods", label: "Payment Methods" },
-    { href: "/admin/payments", label: "Payments" },
   ],
 };

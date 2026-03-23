@@ -65,9 +65,10 @@ export const documentConfigs = {
 
 export const documentNavGroup: AdminNavGroup = {
   label: "Documents",
+  href: "/admin/documents",
   items: [
-    { href: "/admin/document-templates", label: "Document Templates" },
     { href: "/admin/generated-documents", label: "Generated Documents" },
+    { href: "/admin/document-templates", label: "Document Templates" },
     { href: "/admin/document-links", label: "Document Links" },
   ],
 };

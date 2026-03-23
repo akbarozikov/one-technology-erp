@@ -45,7 +45,11 @@ export type EntityConfig = {
 export type EntityConfigMap = Record<string, EntityConfig>;
 
 export type AdminNavItem = { href: string; label: string };
-export type AdminNavGroup = { label: string; items: AdminNavItem[] };
+export type AdminNavGroup = {
+  label: string;
+  href?: string;
+  items: AdminNavItem[];
+};
 
 export const userStatuses = [
   { value: "active", label: "active" },

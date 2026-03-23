@@ -162,10 +162,10 @@ export const constructorNavGroup: AdminNavGroup = {
   items: [
     { href: "/admin/door-configurations", label: "Door Configurations" },
     { href: "/admin/door-configuration-variants", label: "Door Configuration Variants" },
-    { href: "/admin/door-configuration-inputs", label: "Door Configuration Inputs" },
-    { href: "/admin/calculation-runs", label: "Calculation Runs" },
-    { href: "/admin/spring-calculation-results", label: "Spring Calculation Results" },
     { href: "/admin/bom-lines", label: "BOM Lines" },
+    { href: "/admin/calculation-runs", label: "Calculation Runs" },
+    { href: "/admin/door-configuration-inputs", label: "Door Configuration Inputs" },
+    { href: "/admin/spring-calculation-results", label: "Spring Calculation Results" },
     { href: "/admin/bom-change-logs", label: "BOM Change Logs" },
     { href: "/admin/configuration-visuals", label: "Configuration Visuals" },
   ],

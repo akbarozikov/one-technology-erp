@@ -110,16 +110,16 @@ export const accessCompanyConfigs = {
 } as const satisfies EntityConfigMap;
 
 export const accessCompanyNavGroup: AdminNavGroup = {
-  label: "Access & Company",
+  label: "Admin / Settings",
   items: [
+    { href: "/admin/users", label: "Users" },
+    { href: "/admin/employees", label: "Employees" },
+    { href: "/admin/departments", label: "Departments" },
+    { href: "/admin/branches", label: "Branches" },
+    { href: "/admin/locations", label: "Locations" },
     { href: "/admin/roles", label: "Roles" },
     { href: "/admin/permissions", label: "Permissions" },
     { href: "/admin/user-roles", label: "User Roles" },
     { href: "/admin/role-permissions", label: "Role Permissions" },
-    { href: "/admin/departments", label: "Departments" },
-    { href: "/admin/users", label: "Users" },
-    { href: "/admin/employees", label: "Employees" },
-    { href: "/admin/branches", label: "Branches" },
-    { href: "/admin/locations", label: "Locations" },
   ],
 };

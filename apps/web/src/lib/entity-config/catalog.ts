@@ -135,11 +135,12 @@ export const catalogConfigs = {
 
 export const catalogNavGroup: AdminNavGroup = {
   label: "Catalog",
+  href: "/admin/catalog",
   items: [
+    { href: "/admin/products", label: "Products" },
     { href: "/admin/product-categories", label: "Product Categories" },
     { href: "/admin/units", label: "Units" },
     { href: "/admin/suppliers", label: "Suppliers" },
-    { href: "/admin/products", label: "Products" },
     { href: "/admin/product-attributes", label: "Product Attributes" },
     { href: "/admin/product-attribute-values", label: "Product Attribute Values" },
     { href: "/admin/product-suppliers", label: "Product Suppliers" },

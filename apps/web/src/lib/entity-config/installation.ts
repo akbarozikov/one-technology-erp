@@ -74,9 +74,10 @@ export const installationConfigs = {
 
 export const installationNavGroup: AdminNavGroup = {
   label: "Installation",
+  href: "/admin/installation",
   items: [
     { href: "/admin/installation-jobs", label: "Installation Jobs" },
-    { href: "/admin/installation-assignments", label: "Installation Assignments" },
     { href: "/admin/installation-results", label: "Installation Results" },
+    { href: "/admin/installation-assignments", label: "Installation Assignments" },
   ],
 };

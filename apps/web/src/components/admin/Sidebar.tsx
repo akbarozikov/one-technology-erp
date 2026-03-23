@@ -4,6 +4,10 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { adminNavGroups } from "@/lib/entity-config";
 
+function isActivePath(pathname: string, href: string): boolean {
+  return pathname === href || pathname.startsWith(`${href}/`);
+}
+
 export function AdminSidebar() {
   const pathname = usePathname();
 
@@ -22,16 +26,29 @@ export function AdminSidebar() {
         </Link>
         {adminNavGroups.map((group) => (
           <div key={group.label}>
-            <div className="mb-1 px-3 text-[11px] font-semibold uppercase tracking-wide text-zinc-500">
-              {group.label}
-            </div>
+            {group.href ? (
+              <Link
+                href={group.href}
+                className={`mb-1 block rounded px-3 py-1 text-[11px] font-semibold uppercase tracking-wide ${
+                  isActivePath(pathname, group.href)
+                    ? "bg-zinc-200 text-zinc-900 dark:bg-zinc-800 dark:text-zinc-100"
+                    : "text-zinc-500 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-900"
+                }`}
+              >
+                {group.label}
+              </Link>
+            ) : (
+              <div className="mb-1 px-3 text-[11px] font-semibold uppercase tracking-wide text-zinc-500">
+                {group.label}
+              </div>
+            )}
             <div className="flex flex-col gap-1">
               {group.items.map((item) => (
                 <Link
                   key={item.href}
                   href={item.href}
                   className={`rounded px-3 py-2 text-sm ${
-                    pathname === item.href
+                    isActivePath(pathname, item.href)
                       ? "bg-zinc-200 font-medium dark:bg-zinc-800"
                       : "text-zinc-700 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-900"
                   }`}

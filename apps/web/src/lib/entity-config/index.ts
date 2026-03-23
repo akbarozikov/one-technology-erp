@@ -21,11 +21,11 @@ export const entityConfigs = {
 export type EntityKey = keyof typeof entityConfigs;
 
 export const adminNavGroups = [
-  accessCompanyNavGroup,
-  catalogNavGroup,
-  warehouseNavGroup,
   commercialNavGroup,
-  constructorNavGroup,
-  documentNavGroup,
+  warehouseNavGroup,
   installationNavGroup,
+  documentNavGroup,
+  catalogNavGroup,
+  constructorNavGroup,
+  accessCompanyNavGroup,
 ];
