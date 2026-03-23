@@ -1,5 +1,7 @@
 import type {
   CommercialReservationStatus,
+  DocumentEntityType,
+  DocumentTemplateType,
   FulfillmentType,
   OrderPaymentStatus,
   OrderStatus,
@@ -14,6 +16,7 @@ import {
   optionalTrimmedString,
   push,
   requireNonEmptyString,
+  requirePositiveInt,
 } from "./helpers";
 
 const FULFILLMENT_TYPES: readonly FulfillmentType[] = [
@@ -47,6 +50,25 @@ const COMMERCIAL_RESERVATION_STATUSES: readonly CommercialReservationStatus[] = 
   "fully_reserved",
   "released",
   "consumed",
+];
+
+const DOCUMENT_TEMPLATE_TYPES: readonly DocumentTemplateType[] = [
+  "quote",
+  "order",
+  "payment",
+  "installation",
+  "service",
+  "internal",
+];
+
+const DOCUMENT_ENTITY_TYPES: readonly DocumentEntityType[] = [
+  "quote",
+  "quote_version",
+  "order",
+  "payment",
+  "installation_job",
+  "installation_result",
+  "stock_transfer_document",
 ];
 
 function optionalNullableNonNegativeNumber(
@@ -86,6 +108,14 @@ export interface OrderCreateInput {
   created_by_user_id: number | null;
   approved_by_user_id: number | null;
   notes: string | null;
+}
+
+export interface OrderGenerateDocumentInput {
+  template_id: number;
+  document_number: string | null;
+  title: string | null;
+  generated_by_user_id: number | null;
+  create_order_link: 0 | 1;
 }
 
 export function parseOrderCreate(
@@ -201,3 +231,37 @@ export function parseOrderCreate(
     notes: notes === undefined ? null : notes,
   };
 }
+
+export function parseOrderGenerateDocument(
+  body: JsonObject,
+  errors: Failures
+): OrderGenerateDocumentInput | null {
+  const template_id = requirePositiveInt(body, "template_id", errors);
+  const document_number = optionalTrimmedString(body, "document_number", errors);
+  if ("document_number" in body && document_number === null) {
+    push(errors, "document_number must be a non-empty string when provided");
+  }
+
+  const title = optionalTrimmedString(body, "title", errors);
+  if ("title" in body && title === null) {
+    push(errors, "title must be a non-empty string when provided");
+  }
+
+  const generated_by_user_id = optionalNullableFk(body, "generated_by_user_id", errors);
+  const create_order_link = optionalBoolAsInt(body, "create_order_link", 0, errors);
+
+  if (template_id === null || errors.length > 0) {
+    return null;
+  }
+
+  return {
+    template_id,
+    document_number: document_number === undefined ? null : document_number,
+    title: title === undefined ? null : title,
+    generated_by_user_id,
+    create_order_link,
+  };
+}
+
+void DOCUMENT_TEMPLATE_TYPES;
+void DOCUMENT_ENTITY_TYPES;

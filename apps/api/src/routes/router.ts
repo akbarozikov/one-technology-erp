@@ -137,14 +137,14 @@ export async function routeRequest(request: Request, env: Env): Promise<Response
   }
 
   const orderActionMatch = path.match(
-    /^\/api\/orders\/(\d+)\/(adopt-reservations)$/
+    /^\/api\/orders\/(\d+)\/(adopt-reservations|generate-document)$/
   );
   if (orderActionMatch) {
     return handleOrderAction(
       request,
       env,
       Number(orderActionMatch[1]),
-      orderActionMatch[2] as "adopt-reservations"
+      orderActionMatch[2] as "adopt-reservations" | "generate-document"
     );
   }
 

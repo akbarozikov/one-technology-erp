@@ -1,21 +1,27 @@
 import {
+  TABLE_DOCUMENT_TEMPLATES,
   TABLE_ORDER_LINES,
+  TABLE_ORDER_DISCOUNTS,
   TABLE_QUOTE_LINES,
-  TABLE_STOCK_RESERVATIONS,
   TABLE_QUOTE_VERSIONS,
   TABLE_USERS,
+  type DocumentTemplateRow,
+  type GeneratedDocumentRow,
+  type OrderDiscountRow,
+  TABLE_STOCK_RESERVATIONS,
   type OrderLineRow,
   type OrderRow,
   type QuoteLineRow,
+  type QuoteVersionRow,
   type StockReservationRow,
 } from "@one-technology/db";
 import { getDb } from "../lib/db";
 import { asSqlFailure } from "../lib/d1-errors";
 import { rowExists } from "../lib/exists";
-import { readJsonObject } from "../lib/json";
+import { readJsonObject, readOptionalJsonObject } from "../lib/json";
 import { badRequest, jsonOk, methodNotAllowed, notFound } from "../lib/response";
 import type { Env } from "../types/env";
-import { parseOrderCreate } from "../validation/orders";
+import { parseOrderCreate, parseOrderGenerateDocument } from "../validation/orders";
 
 export async function handleOrders(
   request: Request,
@@ -117,12 +123,24 @@ export async function handleOrderAction(
   request: Request,
   env: Env,
   orderId: number,
-  action: "adopt-reservations"
+  action: "adopt-reservations" | "generate-document"
 ): Promise<Response> {
-  if (action !== "adopt-reservations") {
-    return notFound();
+  if (action === "adopt-reservations") {
+    return handleAdoptReservations(request, env, orderId);
   }
 
+  if (action === "generate-document") {
+    return handleGenerateOrderDocument(request, env, orderId);
+  }
+
+  return notFound();
+}
+
+async function handleAdoptReservations(
+  request: Request,
+  env: Env,
+  orderId: number
+): Promise<Response> {
   if (request.method !== "POST") {
     return methodNotAllowed(["POST"]);
   }
@@ -254,6 +272,160 @@ export async function handleOrderAction(
   }
 }
 
+async function handleGenerateOrderDocument(
+  request: Request,
+  env: Env,
+  orderId: number
+): Promise<Response> {
+  if (request.method !== "POST") {
+    return methodNotAllowed(["POST"]);
+  }
+
+  const db = getDb(env);
+  const order = await db
+    .prepare("SELECT * FROM orders WHERE id = ? LIMIT 1")
+    .bind(orderId)
+    .first<OrderRow>();
+
+  if (!order) {
+    return notFound(`order ${orderId} not found`);
+  }
+
+  let body: Record<string, unknown>;
+  try {
+    body = await readOptionalJsonObject(request);
+  } catch {
+    return badRequest("Invalid JSON body");
+  }
+
+  const errors: string[] = [];
+  const input = parseOrderGenerateDocument(body, errors);
+  if (!input || errors.length > 0) {
+    return badRequest(errors.length ? errors.join("; ") : "Validation failed");
+  }
+
+  const templateOk = await rowExists(db, TABLE_DOCUMENT_TEMPLATES, input.template_id);
+  if (!templateOk) {
+    return badRequest(`template_id ${input.template_id} not found`);
+  }
+
+  if (input.generated_by_user_id !== null) {
+    const ok = await rowExists(db, TABLE_USERS, input.generated_by_user_id);
+    if (!ok) {
+      return badRequest(`generated_by_user_id ${input.generated_by_user_id} not found`);
+    }
+  }
+
+  const template = await db
+    .prepare("SELECT * FROM document_templates WHERE id = ? LIMIT 1")
+    .bind(input.template_id)
+    .first<DocumentTemplateRow>();
+
+  if (!template) {
+    return notFound(`document_template ${input.template_id} not found`);
+  }
+
+  if (template.is_active !== 1) {
+    return badRequest(`document_template ${template.id} is not active`);
+  }
+
+  if (template.template_type !== "order") {
+    return badRequest(`document_template ${template.id} must have template_type order`);
+  }
+
+  if (template.entity_type !== "order") {
+    return badRequest(`document_template ${template.id} must have entity_type order`);
+  }
+
+  const { results: orderLines } = await db
+    .prepare("SELECT * FROM order_lines WHERE order_id = ? ORDER BY line_number ASC, id ASC")
+    .bind(orderId)
+    .all<OrderLineRow>();
+  const { results: orderDiscounts } = await db
+    .prepare("SELECT * FROM order_discounts WHERE order_id = ? ORDER BY id ASC")
+    .bind(orderId)
+    .all<OrderDiscountRow>();
+
+  const quoteVersion =
+    order.quote_version_id === null
+      ? null
+      : await db
+          .prepare("SELECT * FROM quote_versions WHERE id = ? LIMIT 1")
+          .bind(order.quote_version_id)
+          .first<QuoteVersionRow>();
+
+  const documentNumber = buildOrderDocumentNumber(order, input.document_number);
+  const title = input.title ?? `Order Document ${order.order_number}`;
+  const renderedContent = buildOrderDocumentHtml(
+    template,
+    order,
+    orderLines ?? [],
+    orderDiscounts ?? [],
+    title,
+    documentNumber,
+    quoteVersion ?? null
+  );
+
+  try {
+    await db.exec("BEGIN TRANSACTION");
+
+    const generatedDocument = await db
+      .prepare(
+        `INSERT INTO generated_documents (
+          template_id, document_number, title, entity_type, entity_id,
+          generation_status, rendered_content, file_url, file_name,
+          mime_type, generated_by_user_id, generated_at
+        ) VALUES (?, ?, ?, 'order', ?, 'generated', ?, NULL, NULL, ?, ?, datetime('now')) RETURNING *`
+      )
+      .bind(
+        input.template_id,
+        documentNumber,
+        title,
+        order.id,
+        renderedContent,
+        "text/html",
+        input.generated_by_user_id
+      )
+      .first<GeneratedDocumentRow>();
+
+    if (!generatedDocument) {
+      throw new Error("Insert did not return a generated document row");
+    }
+
+    if (input.create_order_link === 1) {
+      await db
+        .prepare(
+          `INSERT INTO document_links (
+            generated_document_id, entity_type, entity_id, link_role
+          ) VALUES (?, 'order', ?, 'primary')`
+        )
+        .bind(generatedDocument.id, order.id)
+        .run();
+    }
+
+    await db.exec("COMMIT");
+
+    return jsonOk(
+      {
+        data: {
+          generated_document: generatedDocument,
+          linked_order: input.create_order_link === 1,
+          line_count: orderLines?.length ?? 0,
+          discount_count: orderDiscounts?.length ?? 0,
+        },
+      },
+      { status: 201 }
+    );
+  } catch (err) {
+    try {
+      await db.exec("ROLLBACK");
+    } catch {
+      // Ignore rollback errors and preserve the original failure.
+    }
+    return asSqlFailure(err);
+  }
+}
+
 async function loadActiveReservationsForQuoteLines(
   db: D1Database,
   quoteLineIds: number[]
@@ -288,4 +460,158 @@ function findMatchingOrderLines(
   return sameTypeLines.filter(
     (orderLine) => orderLine.product_id === reservation.product_id
   );
+}
+
+function buildOrderDocumentNumber(
+  order: OrderRow,
+  requestedDocumentNumber: string | null
+): string {
+  if (requestedDocumentNumber) {
+    return requestedDocumentNumber;
+  }
+
+  return `${order.order_number}-DOC`;
+}
+
+function buildOrderDocumentHtml(
+  template: DocumentTemplateRow,
+  order: OrderRow,
+  orderLines: OrderLineRow[],
+  orderDiscounts: OrderDiscountRow[],
+  title: string,
+  documentNumber: string,
+  quoteVersion: QuoteVersionRow | null
+): string {
+  const lineRows = orderLines
+    .map((line) => {
+      const description = line.snapshot_description
+        ? `<div><strong>Description:</strong> ${escapeHtml(line.snapshot_description)}</div>`
+        : "";
+
+      return `<tr>
+        <td>${line.line_number}</td>
+        <td>
+          <div><strong>${escapeHtml(line.snapshot_product_name)}</strong></div>
+          <div>SKU: ${escapeHtml(line.snapshot_sku)}</div>
+          ${description}
+        </td>
+        <td>${formatNumber(line.quantity)}</td>
+        <td>${escapeHtml(line.snapshot_unit_name)}</td>
+        <td>${formatMoney(line.unit_price)}</td>
+        <td>${formatMoney(line.line_total)}</td>
+        <td>${escapeHtml(line.fulfillment_status)}</td>
+      </tr>`;
+    })
+    .join("\n");
+
+  const discountBlock = orderDiscounts.length
+    ? `<section>
+        <h2>Discounts</h2>
+        <ul>
+          ${orderDiscounts
+            .map(
+              (discount) => `<li>${escapeHtml(discount.discount_type)}: ${formatMoney(
+                discount.discount_total ?? discount.discount_value
+              )}${discount.reason ? ` (${escapeHtml(discount.reason)})` : ""}</li>`
+            )
+            .join("")}
+        </ul>
+      </section>`
+    : "";
+
+  const quoteVersionBlock = quoteVersion
+    ? `<div>Quote Version Reference: ${quoteVersion.id} / V${quoteVersion.version_number}</div>`
+    : "";
+
+  const templateHint = template.template_content
+    ? `<section><h2>Template Notes</h2><div>${escapeHtml(template.template_content)}</div></section>`
+    : "";
+
+  return `<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>${escapeHtml(title)}</title>
+  </head>
+  <body>
+    <header>
+      <div>Document Number: ${escapeHtml(documentNumber)}</div>
+      <div>Date: ${escapeHtml(order.order_date)}</div>
+      <div>Template: ${escapeHtml(template.name)} (${escapeHtml(template.code)})</div>
+      <h1>${escapeHtml(title)}</h1>
+      <p>Order document generated from order context.</p>
+    </header>
+
+    <section>
+      <h2>Order Metadata</h2>
+      <div>Order Number: ${escapeHtml(order.order_number)}</div>
+      <div>Order Status: ${escapeHtml(order.order_status)}</div>
+      <div>Payment Status: ${escapeHtml(order.payment_status)}</div>
+      <div>Reservation Status: ${escapeHtml(order.reservation_status)}</div>
+      <div>Fulfillment Type: ${escapeHtml(order.fulfillment_type)}</div>
+      <div>Installation Required: ${order.installation_required === 1 ? "Yes" : "No"}</div>
+      ${quoteVersionBlock}
+    </section>
+
+    <section>
+      <h2>Line Items</h2>
+      <table border="1" cellspacing="0" cellpadding="6">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Item</th>
+            <th>Qty</th>
+            <th>Unit</th>
+            <th>Unit Price</th>
+            <th>Line Total</th>
+            <th>Fulfillment</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${lineRows || '<tr><td colspan="7">No line items</td></tr>'}
+        </tbody>
+      </table>
+    </section>
+
+    ${discountBlock}
+
+    <section>
+      <h2>Totals</h2>
+      <div>Minimum Sale Total: ${formatMoney(order.minimum_sale_total)}</div>
+      <div>Actual Sale Total: ${formatMoney(order.actual_sale_total)}</div>
+      <div>Discount Total: ${formatMoney(order.discount_total)}</div>
+      <div>Grand Total: ${formatMoney(order.grand_total)}</div>
+      <div>Paid Total: ${formatMoney(order.paid_total)}</div>
+      <div><strong>Remaining Total: ${formatMoney(order.remaining_total)}</strong></div>
+    </section>
+
+    ${order.notes ? `<section><h2>Notes</h2><p>${escapeHtml(order.notes)}</p></section>` : ""}
+    ${templateHint}
+  </body>
+</html>`;
+}
+
+function formatMoney(value: number | null): string {
+  if (value === null || value === undefined) {
+    return "-";
+  }
+
+  return Number.isFinite(value) ? value.toFixed(2) : "-";
+}
+
+function formatNumber(value: number | null): string {
+  if (value === null || value === undefined) {
+    return "-";
+  }
+
+  return Number.isFinite(value) ? String(value) : "-";
+}
+
+function escapeHtml(value: string): string {
+  return value
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
 }
