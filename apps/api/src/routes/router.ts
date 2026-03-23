@@ -114,14 +114,17 @@ export async function routeRequest(request: Request, env: Env): Promise<Response
   }
 
   const installationJobActionMatch = path.match(
-    /^\/api\/installation-jobs\/(\d+)\/(mark-completed|generate-document)$/
+    /^\/api\/installation-jobs\/(\d+)\/(mark-completed|generate-document|create-result-draft)$/
   );
   if (installationJobActionMatch) {
     return handleInstallationJobAction(
       request,
       env,
       Number(installationJobActionMatch[1]),
-      installationJobActionMatch[2] as "mark-completed" | "generate-document"
+      installationJobActionMatch[2] as
+        | "mark-completed"
+        | "generate-document"
+        | "create-result-draft"
     );
   }
 

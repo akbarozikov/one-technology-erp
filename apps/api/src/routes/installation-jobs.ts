@@ -1,5 +1,6 @@
 import {
   TABLE_DOCUMENT_TEMPLATES,
+  TABLE_INSTALLATION_RESULTS,
   TABLE_USERS,
   TABLE_ORDER_LINES,
   TABLE_ORDERS,
@@ -20,6 +21,7 @@ import type { Env } from "../types/env";
 import {
   parseInstallationJobCompletion,
   parseInstallationJobCreate,
+  parseInstallationJobCreateResultDraft,
   parseInstallationJobGenerateDocument,
   type InstallationJobCompletionInput,
 } from "../validation/installation-jobs";
@@ -132,10 +134,14 @@ export async function handleInstallationJobAction(
   request: Request,
   env: Env,
   installationJobId: number,
-  action: "mark-completed" | "generate-document"
+  action: "mark-completed" | "generate-document" | "create-result-draft"
 ): Promise<Response> {
   if (action === "generate-document") {
     return handleGenerateInstallationDocument(request, env, installationJobId);
+  }
+
+  if (action === "create-result-draft") {
+    return handleCreateInstallationResultDraft(request, env, installationJobId);
   }
 
   if (request.method !== "POST") {
@@ -256,7 +262,7 @@ export async function handleInstallationJobAction(
         .first<StockReservationRow>();
     }
 
-    return jsonOk({
+  return jsonOk({
       data: {
         installation_job: updatedJob,
         installation_result: actionContext.result,
@@ -264,6 +270,86 @@ export async function handleInstallationJobAction(
         stock_reservation: updatedReservation,
       },
     });
+  } catch (err) {
+    return asSqlFailure(err);
+  }
+}
+
+async function handleCreateInstallationResultDraft(
+  request: Request,
+  env: Env,
+  installationJobId: number
+): Promise<Response> {
+  if (request.method !== "POST") {
+    return methodNotAllowed(["POST"]);
+  }
+
+  const db = getDb(env);
+  const job = await db
+    .prepare("SELECT * FROM installation_jobs WHERE id = ? LIMIT 1")
+    .bind(installationJobId)
+    .first<InstallationJobRow>();
+
+  if (!job) {
+    return notFound(`installation_job ${installationJobId} not found`);
+  }
+
+  if (job.job_status === "cancelled") {
+    return badRequest(
+      `installation_job ${installationJobId} is cancelled and cannot create a result draft`
+    );
+  }
+
+  let body: Record<string, unknown>;
+  try {
+    body = await readOptionalJsonObject(request);
+  } catch {
+    return badRequest("Invalid JSON body");
+  }
+
+  const errors: string[] = [];
+  const input = parseInstallationJobCreateResultDraft(body, errors);
+  if (!input || errors.length > 0) {
+    return badRequest(errors.length ? errors.join("; ") : "Validation failed");
+  }
+
+  if (input.created_by_user_id !== null) {
+    const ok = await rowExists(db, TABLE_USERS, input.created_by_user_id);
+    if (!ok) {
+      return badRequest(`created_by_user_id ${input.created_by_user_id} not found`);
+    }
+  }
+
+  try {
+    const row = await db
+      .prepare(
+        `INSERT INTO installation_results (
+          installation_job_id, result_status, completion_date, work_summary,
+          issues_found, materials_used_notes, customer_feedback,
+          customer_signoff_text, followup_required, followup_notes,
+          created_by_user_id
+        ) VALUES (?, ?, COALESCE(?, datetime('now')), ?, ?, ?, ?, ?, ?, ?, ?) RETURNING *`
+      )
+      .bind(
+        job.id,
+        input.result_status,
+        input.completion_date,
+        input.work_summary,
+        input.issues_found,
+        input.materials_used_notes,
+        input.customer_feedback,
+        input.customer_signoff_text,
+        input.followup_required,
+        input.followup_notes,
+        input.created_by_user_id
+      )
+      .first<InstallationResultRow>();
+
+    if (!row) {
+      return badRequest("Insert did not return a row");
+    }
+
+    return jsonOk({ data: row }, { status: 201 });
   } catch (err) {
     return asSqlFailure(err);
   }

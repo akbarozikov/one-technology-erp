@@ -37,7 +37,12 @@ function buildPayload(fields: EntityField[], fd: FormData): Record<string, unkno
     if (f.kind === "select") {
       const s = String(raw ?? "").trim();
       if (!s && !f.required) continue;
-      out[f.key] = s;
+      if (f.lookup) {
+        const n = Number(s);
+        out[f.key] = Number.isNaN(n) ? s : n;
+      } else {
+        out[f.key] = s;
+      }
       continue;
     }
     if (f.kind === "boolean-select") {
