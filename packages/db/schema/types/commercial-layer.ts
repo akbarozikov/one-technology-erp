@@ -193,6 +193,10 @@ export interface OrderLineRow {
   line_discount_total: number | null;
   line_total: number | null;
   fulfillment_status: FulfillmentStatus;
+  primary_reservation_id: number | null;
+  primary_installation_job_id: number | null;
+  primary_stock_movement_id: number | null;
+  fulfilled_at: string | null;
   snapshot_product_name: string;
   snapshot_sku: string;
   snapshot_unit_name: string;

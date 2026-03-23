@@ -31,3 +31,6 @@ export const PHASE8D_RESERVATION_CONSUME_CONTEXT_MIGRATION =
 
 export const PHASE9AB_INSTALLATION_MODULE_MIGRATION =
   "0009_phase9ab_installation_module.sql" as const;
+
+export const PHASE9A_ORDER_LINE_FULFILLMENT_CONTEXT_MIGRATION =
+  "0010_phase9a_order_line_fulfillment_context.sql" as const;

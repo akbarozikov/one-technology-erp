@@ -84,6 +84,13 @@ export interface OrderLineCreateInput {
   notes: string | null;
 }
 
+export interface OrderLineActionInput {
+  reservation_id: number | null;
+  stock_movement_id: number | null;
+  installation_job_id: number | null;
+  fulfilled_at: string | null;
+}
+
 export function parseOrderLineCreate(
   body: JsonObject,
   errors: Failures
@@ -152,9 +159,7 @@ export function parseOrderLineCreate(
   );
   const notes = optionalTrimmedString(body, "notes", errors);
 
-  if (line_type === "configuration" && configuration_variant_id !== null) {
-    // Configuration lines are allowed without a product link, but they must point at a real variant.
-  } else if (line_type === "configuration") {
+  if (line_type === "configuration" && configuration_variant_id === null) {
     push(errors, "configuration_variant_id is required when line_type is configuration");
   }
 
@@ -197,5 +202,26 @@ export function parseOrderLineCreate(
     snapshot_description:
       snapshot_description === undefined ? null : snapshot_description,
     notes: notes === undefined ? null : notes,
+  };
+}
+
+export function parseOrderLineAction(
+  body: JsonObject,
+  errors: Failures
+): OrderLineActionInput | null {
+  const reservation_id = optionalNullableFk(body, "reservation_id", errors);
+  const stock_movement_id = optionalNullableFk(body, "stock_movement_id", errors);
+  const installation_job_id = optionalNullableFk(body, "installation_job_id", errors);
+  const fulfilled_at = optionalTrimmedString(body, "fulfilled_at", errors);
+
+  if (errors.length > 0) {
+    return null;
+  }
+
+  return {
+    reservation_id,
+    stock_movement_id,
+    installation_job_id,
+    fulfilled_at: fulfilled_at === undefined ? null : fulfilled_at,
   };
 }

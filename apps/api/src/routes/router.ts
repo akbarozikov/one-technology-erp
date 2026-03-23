@@ -19,7 +19,10 @@ import { handleInventoryCountLines } from "./inventory-count-lines";
 import { handleInventoryCounts } from "./inventory-counts";
 import { handleLocations } from "./locations";
 import { handleOrderDiscounts } from "./order-discounts";
-import { handleOrderLines } from "./order-lines";
+import {
+  handleOrderLineAction,
+  handleOrderLines,
+} from "./order-lines";
 import { handleOrders } from "./orders";
 import { handlePaymentMethods } from "./payment-methods";
 import { handlePayments } from "./payments";
@@ -73,6 +76,18 @@ export async function routeRequest(request: Request, env: Env): Promise<Response
       env,
       Number(stockReservationActionMatch[1]),
       stockReservationActionMatch[2] as "release" | "consume" | "cancel"
+    );
+  }
+
+  const orderLineActionMatch = path.match(
+    /^\/api\/order-lines\/(\d+)\/(mark-reserved|mark-issued|mark-installed)$/
+  );
+  if (orderLineActionMatch) {
+    return handleOrderLineAction(
+      request,
+      env,
+      Number(orderLineActionMatch[1]),
+      orderLineActionMatch[2] as "mark-reserved" | "mark-issued" | "mark-installed"
     );
   }
 

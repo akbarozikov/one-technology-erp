@@ -1,17 +1,27 @@
 import {
   TABLE_DOOR_CONFIGURATION_VARIANTS,
+  TABLE_INSTALLATION_JOBS,
   TABLE_ORDERS,
   TABLE_PRODUCTS,
+  TABLE_STOCK_MOVEMENTS,
+  TABLE_STOCK_RESERVATIONS,
   TABLE_UNITS_OF_MEASURE,
+  type FulfillmentStatus,
   type OrderLineRow,
 } from "@one-technology/db";
 import { getDb } from "../lib/db";
 import { asSqlFailure } from "../lib/d1-errors";
 import { rowExists } from "../lib/exists";
-import { readJsonObject } from "../lib/json";
-import { badRequest, jsonOk, methodNotAllowed } from "../lib/response";
+import { readJsonObject, readOptionalJsonObject } from "../lib/json";
+import { badRequest, jsonOk, methodNotAllowed, notFound } from "../lib/response";
 import type { Env } from "../types/env";
-import { parseOrderLineCreate } from "../validation/order-lines";
+import {
+  parseOrderLineAction,
+  parseOrderLineCreate,
+  type OrderLineActionInput,
+} from "../validation/order-lines";
+
+type OrderLineAction = "mark-reserved" | "mark-issued" | "mark-installed";
 
 export async function handleOrderLines(
   request: Request,
@@ -111,5 +121,136 @@ export async function handleOrderLines(
     return jsonOk({ data: row }, { status: 201 });
   } catch (err) {
     return asSqlFailure(err);
+  }
+}
+
+export async function handleOrderLineAction(
+  request: Request,
+  env: Env,
+  orderLineId: number,
+  action: OrderLineAction
+): Promise<Response> {
+  if (request.method !== "POST") {
+    return methodNotAllowed(["POST"]);
+  }
+
+  const db = getDb(env);
+  const orderLine = await db
+    .prepare("SELECT * FROM order_lines WHERE id = ? LIMIT 1")
+    .bind(orderLineId)
+    .first<OrderLineRow>();
+
+  if (!orderLine) {
+    return notFound(`order_line ${orderLineId} not found`);
+  }
+
+  if (orderLine.fulfillment_status === "cancelled") {
+    return badRequest(`Order line ${orderLineId} is cancelled and cannot be updated operationally`);
+  }
+
+  const targetStatus = actionToFulfillmentStatus(action);
+  if (action === "mark-installed" && orderLine.fulfillment_status === "installed") {
+    return badRequest(`Order line ${orderLineId} is already installed`);
+  }
+
+  let body: Record<string, unknown>;
+  try {
+    body = await readOptionalJsonObject(request);
+  } catch {
+    return badRequest("Invalid JSON body");
+  }
+
+  const errors: string[] = [];
+  const input = parseOrderLineAction(body, errors);
+  if (!input || errors.length > 0) {
+    return badRequest(errors.length ? errors.join("; ") : "Validation failed");
+  }
+
+  const actionError = await validateOrderLineActionContext(db, input, action);
+  if (actionError) {
+    return badRequest(actionError);
+  }
+
+  try {
+    const row = await db
+      .prepare(
+        `UPDATE order_lines
+         SET fulfillment_status = ?,
+             primary_reservation_id = CASE WHEN ? = 'mark-reserved' THEN COALESCE(?, primary_reservation_id) ELSE primary_reservation_id END,
+             primary_stock_movement_id = CASE WHEN ? = 'mark-issued' THEN COALESCE(?, primary_stock_movement_id) ELSE primary_stock_movement_id END,
+             primary_installation_job_id = CASE WHEN ? = 'mark-installed' THEN COALESCE(?, primary_installation_job_id) ELSE primary_installation_job_id END,
+             fulfilled_at = CASE
+               WHEN ? = 'mark-installed' THEN COALESCE(?, fulfilled_at, datetime('now'))
+               ELSE fulfilled_at
+             END,
+             updated_at = datetime('now')
+         WHERE id = ?
+         RETURNING *`
+      )
+      .bind(
+        targetStatus,
+        action,
+        input.reservation_id,
+        action,
+        input.stock_movement_id,
+        action,
+        input.installation_job_id,
+        action,
+        input.fulfilled_at,
+        orderLineId
+      )
+      .first<OrderLineRow>();
+
+    if (!row) {
+      return notFound(`order_line ${orderLineId} not found`);
+    }
+
+    return jsonOk({ data: row });
+  } catch (err) {
+    return asSqlFailure(err);
+  }
+}
+
+async function validateOrderLineActionContext(
+  db: D1Database,
+  input: OrderLineActionInput,
+  action: OrderLineAction
+): Promise<string | null> {
+  if (action === "mark-reserved" && input.reservation_id !== null) {
+    const reservationOk = await rowExists(db, TABLE_STOCK_RESERVATIONS, input.reservation_id);
+    if (!reservationOk) {
+      return `reservation_id ${input.reservation_id} not found`;
+    }
+  }
+
+  if (action === "mark-issued" && input.stock_movement_id !== null) {
+    const movementOk = await rowExists(db, TABLE_STOCK_MOVEMENTS, input.stock_movement_id);
+    if (!movementOk) {
+      return `stock_movement_id ${input.stock_movement_id} not found`;
+    }
+  }
+
+  if (action === "mark-installed" && input.installation_job_id !== null) {
+    const installationJobOk = await rowExists(
+      db,
+      TABLE_INSTALLATION_JOBS,
+      input.installation_job_id
+    );
+    if (!installationJobOk) {
+      return `installation_job_id ${input.installation_job_id} not found`;
+    }
+  }
+
+  return null;
+}
+
+function actionToFulfillmentStatus(action: OrderLineAction): FulfillmentStatus {
+  switch (action) {
+    case "mark-reserved":
+      return "reserved";
+    case "mark-issued":
+      return "issued";
+    case "mark-installed":
+      return "installed";
   }
 }
