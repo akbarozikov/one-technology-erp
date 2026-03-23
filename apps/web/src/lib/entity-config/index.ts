@@ -4,6 +4,7 @@ import { accessCompanyConfigs, accessCompanyNavGroup } from "./access-company";
 import { catalogConfigs, catalogNavGroup } from "./catalog";
 import { commercialConfigs, commercialNavGroup } from "./commercial";
 import { constructorConfigs, constructorNavGroup } from "./constructor";
+import { documentConfigs, documentNavGroup } from "./documents";
 import { installationConfigs, installationNavGroup } from "./installation";
 import { warehouseConfigs, warehouseNavGroup } from "./warehouse";
 
@@ -13,6 +14,7 @@ export const entityConfigs = {
   ...warehouseConfigs,
   ...commercialConfigs,
   ...constructorConfigs,
+  ...documentConfigs,
   ...installationConfigs,
 };
 
@@ -24,5 +26,6 @@ export const adminNavGroups = [
   warehouseNavGroup,
   commercialNavGroup,
   constructorNavGroup,
+  documentNavGroup,
   installationNavGroup,
 ];

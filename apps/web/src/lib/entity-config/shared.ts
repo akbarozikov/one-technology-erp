@@ -342,6 +342,45 @@ export const installationResultStatuses = [
   { value: "revisit_required", label: "revisit_required" },
 ];
 
+export const documentTemplateTypes = [
+  { value: "quote", label: "quote" },
+  { value: "order", label: "order" },
+  { value: "payment", label: "payment" },
+  { value: "installation", label: "installation" },
+  { value: "service", label: "service" },
+  { value: "internal", label: "internal" },
+];
+
+export const documentEntityTypes = [
+  { value: "quote", label: "quote" },
+  { value: "quote_version", label: "quote_version" },
+  { value: "order", label: "order" },
+  { value: "payment", label: "payment" },
+  { value: "installation_job", label: "installation_job" },
+  { value: "installation_result", label: "installation_result" },
+  { value: "stock_transfer_document", label: "stock_transfer_document" },
+];
+
+export const documentOutputFormats = [
+  { value: "html", label: "html" },
+  { value: "pdf", label: "pdf" },
+  { value: "docx", label: "docx" },
+];
+
+export const documentGenerationStatuses = [
+  { value: "draft", label: "draft" },
+  { value: "generated", label: "generated" },
+  { value: "failed", label: "failed" },
+  { value: "archived", label: "archived" },
+];
+
+export const documentLinkRoles = [
+  { value: "primary", label: "primary" },
+  { value: "supporting", label: "supporting" },
+  { value: "derived_from", label: "derived_from" },
+  { value: "related", label: "related" },
+];
+
 export const userLookup = {
   apiPath: "/api/users",
   labelKeys: ["email", "phone"],
@@ -411,5 +450,17 @@ export const variantLookup = {
 export const installationJobLookup = {
   apiPath: "/api/installation-jobs",
   labelKeys: ["job_number", "job_status"],
+  includeIdInLabel: true,
+} as const satisfies EntityLookup;
+
+export const documentTemplateLookup = {
+  apiPath: "/api/document-templates",
+  labelKeys: ["name", "code"],
+  includeIdInLabel: true,
+} as const satisfies EntityLookup;
+
+export const generatedDocumentLookup = {
+  apiPath: "/api/generated-documents",
+  labelKeys: ["title", "document_number"],
   includeIdInLabel: true,
 } as const satisfies EntityLookup;
