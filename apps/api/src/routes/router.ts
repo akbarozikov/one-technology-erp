@@ -9,7 +9,10 @@ import { handleDebugBindings } from "./debug";
 import { handleDepartments } from "./departments";
 import { handleDoorConfigurations } from "./door-configurations";
 import { handleDoorConfigurationInputs } from "./door-configuration-inputs";
-import { handleDoorConfigurationVariants } from "./door-configuration-variants";
+import {
+  handleDoorConfigurationVariantAction,
+  handleDoorConfigurationVariants,
+} from "./door-configuration-variants";
 import { handleEmployees } from "./employees";
 import { handleHealth } from "./health";
 import { handleInstallationAssignments } from "./installation-assignments";
@@ -118,6 +121,18 @@ export async function routeRequest(request: Request, env: Env): Promise<Response
       env,
       Number(quoteVersionActionMatch[1]),
       quoteVersionActionMatch[2] as "create-order-draft"
+    );
+  }
+
+  const doorConfigurationVariantActionMatch = path.match(
+    /^\/api\/door-configuration-variants\/(\d+)\/(create-reservation-draft)$/
+  );
+  if (doorConfigurationVariantActionMatch) {
+    return handleDoorConfigurationVariantAction(
+      request,
+      env,
+      Number(doorConfigurationVariantActionMatch[1]),
+      doorConfigurationVariantActionMatch[2] as "create-reservation-draft"
     );
   }
 

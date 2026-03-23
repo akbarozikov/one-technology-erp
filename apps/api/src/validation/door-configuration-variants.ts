@@ -1,3 +1,4 @@
+import type { ReservationStatus, VariantStatus } from "@one-technology/db";
 import type { JsonObject } from "../lib/json";
 import type { Failures } from "./helpers";
 import {
@@ -10,7 +11,6 @@ import {
   requireNonEmptyString,
   requirePositiveInt,
 } from "./helpers";
-import type { VariantStatus } from "@one-technology/db";
 
 const VARIANT_STATUSES: readonly VariantStatus[] = [
   "draft",
@@ -18,6 +18,13 @@ const VARIANT_STATUSES: readonly VariantStatus[] = [
   "priced",
   "quoted",
   "accepted",
+  "cancelled",
+];
+
+const RESERVATION_STATUSES: readonly ReservationStatus[] = [
+  "active",
+  "released",
+  "consumed",
   "cancelled",
 ];
 
@@ -66,6 +73,17 @@ export interface DoorConfigurationVariantCreateInput {
   bom_total_cost: number | null;
   bom_total_items: number | null;
   created_by_user_id: number | null;
+}
+
+export interface DoorConfigurationVariantCreateReservationDraftInput {
+  warehouse_id: number;
+  default_position_id: number;
+  created_by_user_id: number | null;
+  reservation_reason: string | null;
+  reserved_from: string | null;
+  reserved_until: string | null;
+  status: ReservationStatus;
+  include_optional: 0 | 1;
 }
 
 export function parseDoorConfigurationVariantCreate(
@@ -131,5 +149,46 @@ export function parseDoorConfigurationVariantCreate(
     bom_total_cost: bom_total_cost === undefined ? null : bom_total_cost,
     bom_total_items: bom_total_items === undefined ? null : bom_total_items,
     created_by_user_id,
+  };
+}
+
+export function parseDoorConfigurationVariantCreateReservationDraft(
+  body: JsonObject,
+  errors: Failures
+): DoorConfigurationVariantCreateReservationDraftInput | null {
+  const warehouse_id = requirePositiveInt(body, "warehouse_id", errors);
+  const default_position_id = requirePositiveInt(body, "default_position_id", errors);
+  const created_by_user_id = optionalNullableFk(body, "created_by_user_id", errors);
+  const reservation_reason = optionalTrimmedString(body, "reservation_reason", errors);
+  const reserved_from = optionalTrimmedString(body, "reserved_from", errors);
+  const reserved_until = optionalTrimmedString(body, "reserved_until", errors);
+  const status = optionalEnum(
+    body,
+    "status",
+    RESERVATION_STATUSES,
+    "active",
+    errors
+  );
+  const include_optional = optionalBoolAsInt(body, "include_optional", 0, errors);
+
+  if (
+    warehouse_id === null ||
+    default_position_id === null ||
+    status === null ||
+    errors.length > 0
+  ) {
+    return null;
+  }
+
+  return {
+    warehouse_id,
+    default_position_id,
+    created_by_user_id,
+    reservation_reason:
+      reservation_reason === undefined ? null : reservation_reason,
+    reserved_from: reserved_from === undefined ? null : reserved_from,
+    reserved_until: reserved_until === undefined ? null : reserved_until,
+    status,
+    include_optional,
   };
 }
