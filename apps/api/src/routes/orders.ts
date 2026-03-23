@@ -1,13 +1,19 @@
 import {
+  TABLE_ORDER_LINES,
+  TABLE_QUOTE_LINES,
+  TABLE_STOCK_RESERVATIONS,
   TABLE_QUOTE_VERSIONS,
   TABLE_USERS,
+  type OrderLineRow,
   type OrderRow,
+  type QuoteLineRow,
+  type StockReservationRow,
 } from "@one-technology/db";
 import { getDb } from "../lib/db";
 import { asSqlFailure } from "../lib/d1-errors";
 import { rowExists } from "../lib/exists";
 import { readJsonObject } from "../lib/json";
-import { badRequest, jsonOk, methodNotAllowed } from "../lib/response";
+import { badRequest, jsonOk, methodNotAllowed, notFound } from "../lib/response";
 import type { Env } from "../types/env";
 import { parseOrderCreate } from "../validation/orders";
 
@@ -105,4 +111,181 @@ export async function handleOrders(
   } catch (err) {
     return asSqlFailure(err);
   }
+}
+
+export async function handleOrderAction(
+  request: Request,
+  env: Env,
+  orderId: number,
+  action: "adopt-reservations"
+): Promise<Response> {
+  if (action !== "adopt-reservations") {
+    return notFound();
+  }
+
+  if (request.method !== "POST") {
+    return methodNotAllowed(["POST"]);
+  }
+
+  const db = getDb(env);
+  const order = await db
+    .prepare("SELECT * FROM orders WHERE id = ? LIMIT 1")
+    .bind(orderId)
+    .first<OrderRow>();
+
+  if (!order) {
+    return notFound(`order ${orderId} not found`);
+  }
+
+  if (order.quote_version_id === null) {
+    return badRequest(`Order ${orderId} is not linked to a quote_version and cannot adopt reservations`);
+  }
+
+  const { results: orderLines } = await db
+    .prepare("SELECT * FROM order_lines WHERE order_id = ? ORDER BY line_number ASC, id ASC")
+    .bind(orderId)
+    .all<OrderLineRow>();
+
+  const { results: quoteLines } = await db
+    .prepare(
+      "SELECT * FROM quote_lines WHERE quote_version_id = ? ORDER BY line_number ASC, id ASC"
+    )
+    .bind(order.quote_version_id)
+    .all<QuoteLineRow>();
+
+  const quoteLineList = quoteLines ?? [];
+  if (quoteLineList.length === 0) {
+    return jsonOk({
+      data: {
+        adopted_count: 0,
+        skipped_count: 0,
+        adopted_reservation_ids: [],
+        skipped_items: [],
+      },
+    });
+  }
+
+  const quoteLineIds = quoteLineList.map((line) => line.id);
+  const quoteLineById = new Map(quoteLineList.map((line) => [line.id, line]));
+  const reservations = await loadActiveReservationsForQuoteLines(db, quoteLineIds);
+
+  const adoptedReservationIds: number[] = [];
+  const skippedItems: Array<{ reservation_id: number; reason: string }> = [];
+
+  try {
+    await db.exec("BEGIN TRANSACTION");
+
+    for (const reservation of reservations) {
+      if (reservation.order_line_id !== null) {
+        skippedItems.push({
+          reservation_id: reservation.id,
+          reason: "already linked to order_line",
+        });
+        continue;
+      }
+
+      const sourceQuoteLine = reservation.quote_line_id
+        ? quoteLineById.get(reservation.quote_line_id) ?? null
+        : null;
+      if (!sourceQuoteLine) {
+        skippedItems.push({
+          reservation_id: reservation.id,
+          reason: "source quote_line not found",
+        });
+        continue;
+      }
+
+      const matchingOrderLines = findMatchingOrderLines(
+        reservation,
+        sourceQuoteLine,
+        orderLines ?? []
+      );
+
+      if (matchingOrderLines.length === 0) {
+        skippedItems.push({
+          reservation_id: reservation.id,
+          reason: "no safe matching order_line found",
+        });
+        continue;
+      }
+
+      if (matchingOrderLines.length > 1) {
+        skippedItems.push({
+          reservation_id: reservation.id,
+          reason: "multiple matching order_lines found",
+        });
+        continue;
+      }
+
+      const adopted = await db
+        .prepare(
+          `UPDATE stock_reservations
+           SET order_line_id = ?, updated_at = datetime('now')
+           WHERE id = ?
+           RETURNING *`
+        )
+        .bind(matchingOrderLines[0].id, reservation.id)
+        .first<StockReservationRow>();
+
+      if (!adopted) {
+        throw new Error(`Failed to adopt reservation ${reservation.id}`);
+      }
+
+      adoptedReservationIds.push(adopted.id);
+    }
+
+    await db.exec("COMMIT");
+
+    return jsonOk({
+      data: {
+        adopted_count: adoptedReservationIds.length,
+        skipped_count: skippedItems.length,
+        adopted_reservation_ids: adoptedReservationIds,
+        skipped_items: skippedItems,
+      },
+    });
+  } catch (err) {
+    try {
+      await db.exec("ROLLBACK");
+    } catch {
+      // Ignore rollback errors and preserve the original failure.
+    }
+    return asSqlFailure(err);
+  }
+}
+
+async function loadActiveReservationsForQuoteLines(
+  db: D1Database,
+  quoteLineIds: number[]
+): Promise<StockReservationRow[]> {
+  const placeholders = quoteLineIds.map(() => "?").join(", ");
+  const statement = db.prepare(
+    `SELECT * FROM stock_reservations
+     WHERE status = 'active'
+       AND quote_line_id IN (${placeholders})
+     ORDER BY id ASC`
+  );
+  const { results } = await statement.bind(...quoteLineIds).all<StockReservationRow>();
+  return results ?? [];
+}
+
+function findMatchingOrderLines(
+  reservation: StockReservationRow,
+  sourceQuoteLine: QuoteLineRow,
+  orderLines: OrderLineRow[]
+): OrderLineRow[] {
+  const sameTypeLines = orderLines.filter(
+    (orderLine) => orderLine.line_type === sourceQuoteLine.line_type
+  );
+
+  if (sourceQuoteLine.configuration_variant_id !== null) {
+    return sameTypeLines.filter(
+      (orderLine) =>
+        orderLine.configuration_variant_id === sourceQuoteLine.configuration_variant_id
+    );
+  }
+
+  return sameTypeLines.filter(
+    (orderLine) => orderLine.product_id === reservation.product_id
+  );
 }

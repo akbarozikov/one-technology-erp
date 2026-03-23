@@ -29,7 +29,10 @@ import {
   handleOrderLineAction,
   handleOrderLines,
 } from "./order-lines";
-import { handleOrders } from "./orders";
+import {
+  handleOrderAction,
+  handleOrders,
+} from "./orders";
 import { handlePaymentMethods } from "./payment-methods";
 import { handlePayments } from "./payments";
 import { handlePermissions } from "./permissions";
@@ -121,6 +124,18 @@ export async function routeRequest(request: Request, env: Env): Promise<Response
       env,
       Number(quoteVersionActionMatch[1]),
       quoteVersionActionMatch[2] as "create-order-draft"
+    );
+  }
+
+  const orderActionMatch = path.match(
+    /^\/api\/orders\/(\d+)\/(adopt-reservations)$/
+  );
+  if (orderActionMatch) {
+    return handleOrderAction(
+      request,
+      env,
+      Number(orderActionMatch[1]),
+      orderActionMatch[2] as "adopt-reservations"
     );
   }
 
