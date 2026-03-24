@@ -343,6 +343,15 @@ export default function OrderDetailPage() {
                 showConfigHint={false}
                 panelTitle="Generate Order Document"
                 panelDescription="Use an active order template to create a stored HTML document snapshot from this order."
+                onGenerated={(generatedDocument) => {
+                  if (!generatedDocument) return;
+                  setDocuments((current) => {
+                    if (current.some((document) => document.id === generatedDocument.id)) {
+                      return current;
+                    }
+                    return [generatedDocument as GeneratedDocumentRow, ...current];
+                  });
+                }}
               />
             </DetailSection>
 

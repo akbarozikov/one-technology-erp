@@ -370,6 +370,15 @@ export default function QuoteVersionDetailPage() {
                 showConfigHint={false}
                 panelTitle="Generate Commercial Proposal"
                 panelDescription="Use an active quote template to create a stored proposal document snapshot from this version."
+                onGenerated={(generatedDocument) => {
+                  if (!generatedDocument) return;
+                  setDocuments((current) => {
+                    if (current.some((document) => document.id === generatedDocument.id)) {
+                      return current;
+                    }
+                    return [generatedDocument as GeneratedDocumentRow, ...current];
+                  });
+                }}
               />
             </DetailSection>
 

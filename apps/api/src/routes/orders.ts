@@ -166,6 +166,10 @@ async function handleCreatePaymentRecord(
     return notFound(`order ${orderId} not found`);
   }
 
+  if (order.order_status === "cancelled") {
+    return badRequest(`order ${orderId} is cancelled and cannot accept new payments`);
+  }
+
   let body: Record<string, unknown>;
   try {
     body = await readOptionalJsonObject(request);
@@ -191,10 +195,22 @@ async function handleCreatePaymentRecord(
     }
   }
 
-  const amount = input.amount ?? order.remaining_total;
-  if (amount === null || amount <= 0) {
+  const currentSummary = await calculateOrderPaymentSummary(
+    db,
+    order.id,
+    order.grand_total ?? 0
+  );
+  const currentRemaining = currentSummary.remainingTotal;
+  const amount = input.amount ?? currentRemaining;
+  if (amount === null || amount <= 0 || currentRemaining <= 0) {
     return badRequest(
       `Order ${orderId} does not have a positive remaining balance for payment creation`
+    );
+  }
+
+  if (amount > currentRemaining) {
+    return badRequest(
+      `Payment amount ${amount.toFixed(2)} exceeds the current remaining balance ${currentRemaining.toFixed(2)} for order ${orderId}`
     );
   }
 
@@ -578,19 +594,8 @@ async function refreshOrderPaymentSummary(
   db: D1Database,
   order: OrderRow
 ): Promise<OrderRow> {
-  const paymentTotals = await db
-    .prepare(
-      `SELECT COALESCE(SUM(amount), 0) AS paid_total
-       FROM payments
-       WHERE order_id = ? AND status != 'cancelled'`
-    )
-    .bind(order.id)
-    .first<{ paid_total: number | null }>();
-
-  const paidTotal = paymentTotals?.paid_total ?? 0;
   const grandTotal = order.grand_total ?? 0;
-  const remainingTotal = Math.max(grandTotal - paidTotal, 0);
-  const paymentStatus = deriveOrderPaymentStatus(paidTotal, grandTotal);
+  const summary = await calculateOrderPaymentSummary(db, order.id, grandTotal);
 
   const updatedOrder = await db
     .prepare(
@@ -599,7 +604,7 @@ async function refreshOrderPaymentSummary(
        WHERE id = ?
        RETURNING *`
     )
-    .bind(paidTotal, remainingTotal, paymentStatus, order.id)
+    .bind(summary.paidTotal, summary.remainingTotal, summary.paymentStatus, order.id)
     .first<OrderRow>();
 
   if (!updatedOrder) {
@@ -607,6 +612,35 @@ async function refreshOrderPaymentSummary(
   }
 
   return updatedOrder;
+}
+
+async function calculateOrderPaymentSummary(
+  db: D1Database,
+  orderId: number,
+  grandTotal: number
+): Promise<{
+  paidTotal: number;
+  remainingTotal: number;
+  paymentStatus: OrderPaymentStatus;
+}> {
+  const paymentTotals = await db
+    .prepare(
+      `SELECT COALESCE(SUM(amount), 0) AS paid_total
+       FROM payments
+       WHERE order_id = ? AND status != 'cancelled'`
+    )
+    .bind(orderId)
+    .first<{ paid_total: number | null }>();
+
+  const paidTotal = paymentTotals?.paid_total ?? 0;
+  const remainingTotal = Math.max(grandTotal - paidTotal, 0);
+  const paymentStatus = deriveOrderPaymentStatus(paidTotal, grandTotal);
+
+  return {
+    paidTotal,
+    remainingTotal,
+    paymentStatus,
+  };
 }
 
 function deriveOrderPaymentStatus(

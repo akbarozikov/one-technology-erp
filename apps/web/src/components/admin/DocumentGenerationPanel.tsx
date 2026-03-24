@@ -49,6 +49,7 @@ type Props = {
   panelTitle?: string;
   panelDescription?: string;
   showConfigHint?: boolean;
+  onGenerated?: (document: GeneratedDocumentRow | null) => void;
 };
 
 export function DocumentGenerationPanel({
@@ -63,6 +64,7 @@ export function DocumentGenerationPanel({
   panelTitle = "Generate Document",
   panelDescription,
   showConfigHint = true,
+  onGenerated,
 }: Props) {
   const templateTypeKey = templateTypes.join("|");
   const [entity, setEntity] = useState<Record<string, unknown> | null>(null);
@@ -187,6 +189,7 @@ export function DocumentGenerationPanel({
         message: "Document generated successfully.",
         generatedDocument,
       });
+      onGenerated?.(generatedDocument);
     } catch (err) {
       setSubmitError(
         err instanceof ApiError

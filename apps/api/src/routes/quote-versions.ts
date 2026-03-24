@@ -156,6 +156,26 @@ async function handleCreateOrderDraft(
     return notFound(`quote ${quoteVersion.quote_id} not found`);
   }
 
+  if (
+    quoteVersion.version_status === "rejected" ||
+    quoteVersion.version_status === "superseded" ||
+    quoteVersion.version_status === "cancelled"
+  ) {
+    return badRequest(
+      `quote_version ${quoteVersionId} with status ${quoteVersion.version_status} cannot create an order draft`
+    );
+  }
+
+  if (
+    quote.status === "rejected" ||
+    quote.status === "expired" ||
+    quote.status === "cancelled"
+  ) {
+    return badRequest(
+      `quote ${quote.id} with status ${quote.status} cannot create an order draft`
+    );
+  }
+
   const existingOrder = await db
     .prepare("SELECT * FROM orders WHERE quote_version_id = ? LIMIT 1")
     .bind(quoteVersionId)
