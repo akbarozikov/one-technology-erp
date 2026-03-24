@@ -622,7 +622,7 @@ export function EntityListCreate({ config }: { config: EntityConfig }) {
 
       <section className="rounded border border-zinc-200 bg-white p-4 shadow-sm dark:border-zinc-700 dark:bg-zinc-900">
         <h2 className="mb-3 text-lg font-semibold text-zinc-900 dark:text-zinc-50">
-          Existing {config.title.toLowerCase()}
+          Current {config.title.toLowerCase()}
         </h2>
         {loading && (
           <p className="text-sm text-zinc-500" role="status">
@@ -635,7 +635,7 @@ export function EntityListCreate({ config }: { config: EntityConfig }) {
           </p>
         )}
         {!loading && !error && rows && rows.length === 0 && (
-          <p className="text-sm text-zinc-500">No rows yet.</p>
+          <p className="text-sm text-zinc-500">Nothing has been added here yet.</p>
         )}
         {!loading && rows && rows.length > 0 && (
           <div className="space-y-4">
@@ -685,13 +685,15 @@ export function EntityListCreate({ config }: { config: EntityConfig }) {
                   </div>
                 )}
                 <p className="text-xs text-zinc-500 dark:text-zinc-400">
-                  Showing {filteredRows.length} of {rows.length} rows.
+                  Showing {filteredRows.length} of {rows.length} items.
                 </p>
               </div>
             )}
 
             {filteredRows.length === 0 ? (
-              <p className="text-sm text-zinc-500">No rows match the current filters.</p>
+              <p className="text-sm text-zinc-500">
+                No items match the current search or filters.
+              </p>
             ) : (
               <div className="overflow-x-auto">
                 <table className="min-w-full border-collapse text-left text-sm">
@@ -763,9 +765,12 @@ export function EntityListCreate({ config }: { config: EntityConfig }) {
 
       {createEnabled && (
         <section className="rounded border border-zinc-200 bg-white p-4 shadow-sm dark:border-zinc-700 dark:bg-zinc-900">
-          <h2 className="mb-3 text-lg font-semibold text-zinc-900 dark:text-zinc-50">
-            Add {config.title}
-          </h2>
+        <h2 className="mb-3 text-lg font-semibold text-zinc-900 dark:text-zinc-50">
+          Add {config.title}
+        </h2>
+        <p className="mb-4 text-sm text-zinc-500 dark:text-zinc-400">
+          Fill in the main details below, then save to create a new record.
+        </p>
           <form
             className="max-w-xl space-y-3"
             onSubmit={onSubmit}
@@ -806,7 +811,7 @@ export function EntityListCreate({ config }: { config: EntityConfig }) {
               disabled={submitting}
               className="rounded bg-zinc-900 px-4 py-2 text-sm font-medium text-white hover:bg-zinc-800 disabled:opacity-50 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-white"
             >
-              {submitting ? "Creating..." : "Create"}
+              {submitting ? "Saving..." : "Save"}
             </button>
           </form>
         </section>

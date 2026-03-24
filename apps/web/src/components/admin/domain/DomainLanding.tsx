@@ -30,7 +30,7 @@ export function DomainLanding({
   insightsError = null,
   activityTitle = "Recent Activity",
   activityItems,
-  activityEmptyMessage = "No recent activity yet.",
+  activityEmptyMessage = "No recent activity to show yet.",
   activityLinkHref,
   activityLinkLabel = "View all",
 }: {
@@ -52,7 +52,7 @@ export function DomainLanding({
     <div className="max-w-5xl space-y-6">
       <section className="rounded border border-zinc-200 bg-white p-5 shadow-sm dark:border-zinc-700 dark:bg-zinc-900">
         <p className="text-xs font-semibold uppercase tracking-wide text-zinc-500">
-          Domain Overview
+          Workspace Guide
         </p>
         <h1 className="mt-2 text-2xl font-semibold text-zinc-900 dark:text-zinc-50">
           {title}
@@ -71,7 +71,7 @@ export function DomainLanding({
           </h2>
           {insightsLoading && (
             <p className="mt-3 text-sm text-zinc-500 dark:text-zinc-400">
-              Loading current state...
+              Loading current activity...
             </p>
           )}
           {!insightsLoading && insightsError && (
@@ -145,7 +145,7 @@ export function DomainLanding({
           </div>
           {insightsLoading && (
             <p className="mt-3 text-sm text-zinc-500 dark:text-zinc-400">
-              Loading recent activity...
+              Loading recent updates...
             </p>
           )}
           {!insightsLoading && insightsError && (

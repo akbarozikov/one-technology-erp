@@ -422,7 +422,7 @@ export default function GeneratedDocumentDetailPage() {
             Generated Document Detail
           </h1>
           <p className="text-sm text-zinc-500 dark:text-zinc-400">
-            Readable metadata and stored rendered output preview.
+            Review the saved document details and the rendered output in one place.
           </p>
         </div>
         <Link
@@ -619,13 +619,13 @@ export default function GeneratedDocumentDetailPage() {
                   onClick={() => setShowSource((current) => !current)}
                   className="rounded border border-zinc-300 px-3 py-1.5 text-sm text-zinc-700 hover:bg-zinc-50 dark:border-zinc-700 dark:text-zinc-200 dark:hover:bg-zinc-800"
                 >
-                  {showSource ? "Hide Source" : "View Raw HTML"}
+                  {showSource ? "Hide Source" : "View Source"}
                 </button>
               )}
             </div>
             {!renderedContent && (
               <p className="text-sm text-zinc-500 dark:text-zinc-400">
-                No rendered content is stored for this generated document.
+                This document does not have saved rendered content yet.
               </p>
             )}
             {renderedContent && htmlPreview && (
@@ -661,7 +661,7 @@ export default function GeneratedDocumentDetailPage() {
             </h2>
             {links.length === 0 ? (
               <p className="text-sm text-zinc-500 dark:text-zinc-400">
-                No related document links found.
+                No related links have been saved for this document yet.
               </p>
             ) : (
               <div className="overflow-x-auto">

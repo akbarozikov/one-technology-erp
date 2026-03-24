@@ -214,7 +214,7 @@ export function DocumentGenerationPanel({
 
       {loading && (
         <section className="rounded border border-zinc-200 bg-white p-4 shadow-sm dark:border-zinc-700 dark:bg-zinc-900">
-          <p className="text-sm text-zinc-500">Loading...</p>
+          <p className="text-sm text-zinc-500">Loading document options...</p>
         </section>
       )}
 
@@ -229,7 +229,7 @@ export function DocumentGenerationPanel({
           {showSummary && (
             <section className="rounded border border-zinc-200 bg-white p-4 shadow-sm dark:border-zinc-700 dark:bg-zinc-900">
               <h2 className="mb-3 text-lg font-semibold text-zinc-900 dark:text-zinc-50">
-                {entityLabel} Summary
+                {entityLabel} Snapshot
               </h2>
               <dl className="grid gap-3 sm:grid-cols-2">
                 {summaryFields.map((field) => (
@@ -258,7 +258,7 @@ export function DocumentGenerationPanel({
 
             {templates.length === 0 ? (
               <p className="text-sm text-zinc-500 dark:text-zinc-400">
-                No compatible active document templates found.
+                No active templates match this record yet.
               </p>
             ) : (
               <form className="max-w-xl space-y-3" onSubmit={handleSubmit}>
@@ -283,8 +283,10 @@ export function DocumentGenerationPanel({
 
                 {selectedTemplate && (
                   <p className="text-xs text-zinc-500 dark:text-zinc-400">
-                    Using template type <span className="font-mono">{displayValue(selectedTemplate.template_type)}</span> for{" "}
-                    <span className="font-mono">{displayValue(selectedTemplate.entity_type)}</span>.
+                    This template is set up for{" "}
+                    <span className="font-mono">{displayValue(selectedTemplate.entity_type)}</span>{" "}
+                    documents of type{" "}
+                    <span className="font-mono">{displayValue(selectedTemplate.template_type)}</span>.
                   </p>
                 )}
 
@@ -298,6 +300,9 @@ export function DocumentGenerationPanel({
                     onChange={(event) => setDocumentNumber(event.target.value)}
                     className="w-full rounded border border-zinc-300 px-2 py-1.5 text-zinc-900 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100"
                   />
+                  <span className="mt-1 block text-xs text-zinc-500 dark:text-zinc-400">
+                    Leave this blank to use the backend default.
+                  </span>
                 </label>
 
                 <label className="block text-sm">
@@ -310,6 +315,9 @@ export function DocumentGenerationPanel({
                     onChange={(event) => setTitle(event.target.value)}
                     className="w-full rounded border border-zinc-300 px-2 py-1.5 text-zinc-900 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100"
                   />
+                  <span className="mt-1 block text-xs text-zinc-500 dark:text-zinc-400">
+                    Add a custom title only when you want something clearer than the default.
+                  </span>
                 </label>
 
                 {submitError && (
@@ -329,7 +337,7 @@ export function DocumentGenerationPanel({
                         href={`/admin/generated-documents/${success.generatedDocument.id}`}
                         className="mt-2 inline-block text-blue-700 underline underline-offset-2 hover:text-blue-900 dark:text-blue-300 dark:hover:text-blue-200"
                       >
-                        Open generated document {success.generatedDocument.title || success.generatedDocument.document_number || `#${success.generatedDocument.id}`}
+                        Open the generated document
                       </Link>
                     ) : null}
                   </div>

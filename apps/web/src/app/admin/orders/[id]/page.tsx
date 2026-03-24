@@ -213,7 +213,7 @@ export default function OrderDetailPage() {
             Order Workflow
           </h1>
           <p className="text-sm text-zinc-500 dark:text-zinc-400">
-            Review commercial status, document actions, and recent payment follow-through.
+            See where the order stands, what still needs attention, and what to do next.
           </p>
         </div>
         <Link
@@ -250,7 +250,7 @@ export default function OrderDetailPage() {
         <>
           <DetailSection
             title={order.order_number || `Order ${order.id}`}
-            description="Current commercial and fulfillment context for this order."
+            description="A quick summary of order status, payment progress, and fulfillment context."
           >
             <SummaryGrid
               items={[
@@ -277,7 +277,7 @@ export default function OrderDetailPage() {
 
           <DetailSection
             title="Next Steps"
-            description="Lightweight guidance based on the current order state."
+            description="A few simple cues based on the current state of this order."
           >
             <AttentionList items={attentionItems} />
           </DetailSection>
@@ -285,12 +285,12 @@ export default function OrderDetailPage() {
           <div className="grid gap-6 xl:grid-cols-[1.3fr_0.9fr]">
             <DetailSection
               title="Key Actions"
-              description="Generate order documents here, then move into payments or supporting records as the order progresses."
+              description="Use these actions when you need to capture payment progress or create an order document."
             >
               <div className="mb-4 space-y-4">
                 <ActionGroup
                   title="Primary Actions"
-                  description="These are the most common next moves when an order is still progressing."
+                  description="Start here for the most common follow-up on an active order."
                   items={[
                     {
                       key: "payments",
@@ -300,13 +300,13 @@ export default function OrderDetailPage() {
                       helperText:
                         order.payment_status === "unpaid" || order.payment_status === "partially_paid"
                           ? "Payment follow-through is still open on this order."
-                          : "Payments are already further along, but you can still review or add records.",
+                          : "Payments are already underway, but you can still review or add records.",
                     },
                   ]}
                 />
                 <ActionGroup
                   title="Supporting Actions"
-                  description="Open related operational areas or generate supporting documents."
+                  description="Use these links when you need more order detail or supporting records."
                   items={[
                     {
                       key: "order-lines",
@@ -318,7 +318,7 @@ export default function OrderDetailPage() {
                       key: "documents",
                       label: "Open Documents",
                       href: "/admin/generated-documents",
-                      helperText: "Review existing generated documents across the ERP.",
+                      helperText: "Review generated order documents and other stored document records.",
                     },
                   ]}
                 />
@@ -349,7 +349,7 @@ export default function OrderDetailPage() {
             <div className="space-y-6">
               <DetailSection
                 title="Commercial Source"
-                description="Readable quote-version context that led into this order."
+                description="The quote version this order came from, when one is linked."
               >
                 {linkedQuoteVersion ? (
                   <RelatedList
@@ -366,14 +366,14 @@ export default function OrderDetailPage() {
                   />
                 ) : (
                   <p className="text-sm text-zinc-500 dark:text-zinc-400">
-                    No linked quote version is attached to this order.
+                    This order is not linked to a quote version.
                   </p>
                 )}
               </DetailSection>
 
               <DetailSection
                 title="Recent Payments"
-                description="Recent payment records already linked to this order."
+                description="The latest payment records linked to this order."
                 action={
                   <Link
                     href="/admin/payments"
@@ -391,7 +391,7 @@ export default function OrderDetailPage() {
                       href="/admin/payments"
                       className="text-sm text-blue-700 underline underline-offset-2 hover:text-blue-900 dark:text-blue-300 dark:hover:text-blue-200"
                     >
-                      Go to payments
+                      Record or review payments
                     </Link>
                   }
                 />
@@ -399,7 +399,7 @@ export default function OrderDetailPage() {
 
               <DetailSection
                 title="Generated Documents"
-                description="Recent document outputs created from this order."
+                description="Saved document outputs created from this order."
                 action={
                   <Link
                     href="/admin/generated-documents"
@@ -414,7 +414,7 @@ export default function OrderDetailPage() {
                   emptyMessage="No generated documents are linked directly to this order yet."
                   emptyAction={
                     <p className="text-sm text-zinc-500 dark:text-zinc-400">
-                      Use the document action on this page to create the first order document.
+                      Use the document section on this page to create the first order document.
                     </p>
                   }
                 />
@@ -423,7 +423,7 @@ export default function OrderDetailPage() {
           </div>
 
           {order.notes && (
-            <DetailSection title="Notes" description="Additional commercial context stored on the order.">
+            <DetailSection title="Notes" description="Extra context saved on the order record.">
               <p className="text-sm text-zinc-700 dark:text-zinc-300">{order.notes}</p>
             </DetailSection>
           )}

@@ -149,7 +149,7 @@ export function AttentionList({
   if (items.length === 0) {
     return (
       <div className="rounded border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-900 dark:border-emerald-900 dark:bg-emerald-950/40 dark:text-emerald-100">
-        No immediate follow-up is standing out right now.
+        Nothing urgent stands out right now. This record looks ready to continue normally.
       </div>
     );
   }

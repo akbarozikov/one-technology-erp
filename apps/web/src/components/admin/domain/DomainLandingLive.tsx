@@ -81,7 +81,8 @@ export function DomainLandingLive({
           role="status"
         >
           Set <code className="rounded bg-amber-100 px-1 dark:bg-amber-900">NEXT_PUBLIC_API_BASE_URL</code>{" "}
-          in <code className="rounded bg-amber-100 px-1 dark:bg-amber-900">.env.local</code>.
+          in <code className="rounded bg-amber-100 px-1 dark:bg-amber-900">.env.local</code> to
+          load live domain updates.
         </div>
       )}
 

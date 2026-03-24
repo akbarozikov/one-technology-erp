@@ -223,7 +223,7 @@ export default function QuoteVersionDetailPage() {
             Quote Version Workflow
           </h1>
           <p className="text-sm text-zinc-500 dark:text-zinc-400">
-            Review proposal context, generate documents, and move cleanly toward order creation.
+            Review this proposal version, generate a document, and move it into an order when ready.
           </p>
         </div>
         <Link
@@ -260,7 +260,7 @@ export default function QuoteVersionDetailPage() {
         <>
           <DetailSection
             title={`${quote?.quote_number ?? `Quote ${quoteVersion.quote_id}`} · Version ${quoteVersion.version_number}`}
-            description="Current quote revision, pricing snapshot, and next-step commercial context."
+            description="A quick view of this version's status, pricing snapshot, and commercial context."
           >
             <SummaryGrid
               items={[
@@ -278,7 +278,7 @@ export default function QuoteVersionDetailPage() {
 
           <DetailSection
             title="Next Steps"
-            description="Lightweight guidance based on the current quote-version state."
+            description="A few simple cues based on the current state of this quote version."
           >
             <AttentionList items={attentionItems} />
           </DetailSection>
@@ -286,12 +286,12 @@ export default function QuoteVersionDetailPage() {
           <div className="grid gap-6 xl:grid-cols-[1.3fr_0.9fr]">
             <DetailSection
               title="Key Actions"
-              description="Generate a proposal document here, or create the first order draft when this version is ready to move forward."
+              description="Use these actions when the version is ready to be shared or turned into an order."
             >
               <div className="mb-4 space-y-4">
                 <ActionGroup
                   title="Primary Actions"
-                  description="These are the most likely next commercial steps from this quote version."
+                  description="Start here for the most common next step from this version."
                   items={[
                     {
                       key: "create-order",
@@ -305,13 +305,13 @@ export default function QuoteVersionDetailPage() {
                       primary: true,
                       helperText: linkedOrder
                         ? "This quote version already has a linked order."
-                        : "Create a draft order without manually re-entering the quote version details.",
+                        : "Create a draft order without re-entering the main quote details.",
                     },
                   ]}
                 />
                 <ActionGroup
                   title="Supporting Actions"
-                  description="Open the surrounding commercial records when you need more context."
+                  description="Use these links when you need wider quote or order context."
                   items={[
                     {
                       key: "quotes",
@@ -323,7 +323,7 @@ export default function QuoteVersionDetailPage() {
                       key: "orders",
                       label: "Open Orders",
                       href: "/admin/orders",
-                      helperText: "Move into downstream order follow-through when an order exists.",
+                      helperText: "Continue into the order workflow once an order has been created.",
                     },
                   ]}
                 />
@@ -374,7 +374,7 @@ export default function QuoteVersionDetailPage() {
             </DetailSection>
 
             <div className="space-y-6">
-              <DetailSection title="Linked Order" description="Order follow-through derived from this quote version when present.">
+              <DetailSection title="Linked Order" description="The order created from this quote version, when one exists.">
                 {linkedOrder ? (
                   <RelatedList
                     items={[
@@ -394,7 +394,7 @@ export default function QuoteVersionDetailPage() {
                     emptyMessage="No order draft has been created from this quote version yet."
                     emptyAction={
                       <p className="text-sm text-zinc-500 dark:text-zinc-400">
-                        Use the primary action above when this version is ready to move into order follow-through.
+                        Use the main action above when this version is ready to move into order follow-through.
                       </p>
                     }
                   />
@@ -403,7 +403,7 @@ export default function QuoteVersionDetailPage() {
 
               <DetailSection
                 title="Generated Documents"
-                description="Recent proposal documents created from this version."
+                description="Saved proposal documents created from this version."
                 action={
                   <Link
                     href="/admin/generated-documents"
@@ -418,7 +418,7 @@ export default function QuoteVersionDetailPage() {
                   emptyMessage="No generated documents are linked directly to this quote version yet."
                   emptyAction={
                     <p className="text-sm text-zinc-500 dark:text-zinc-400">
-                      Generate a commercial proposal from the action area on this page.
+                      Generate a proposal from the document section on this page.
                     </p>
                   }
                 />
@@ -427,7 +427,7 @@ export default function QuoteVersionDetailPage() {
           </div>
 
           {(quoteVersion.notes || quote?.notes) && (
-            <DetailSection title="Notes" description="Stored context from the quote and this specific version.">
+            <DetailSection title="Notes" description="Saved context from the quote and this specific version.">
               <div className="space-y-3 text-sm text-zinc-700 dark:text-zinc-300">
                 {quoteVersion.notes && (
                   <div>

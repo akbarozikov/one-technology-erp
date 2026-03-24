@@ -83,23 +83,23 @@ export default function DocumentsLandingPage() {
   return (
     <DomainLandingLive
       title="Documents"
-      summary="Manage reusable templates, generated records, and cross-entity document links."
-      description="Use this area when you need proposal, order, or installation document history. Generated documents are the most practical starting point for review, preview, and follow-through."
+      summary="Manage reusable templates, saved document outputs, and document links."
+      description="Use this area when you need proposal, order, or installation document history. Generated documents are usually the best starting point for review, preview, and follow-through."
       links={[
         {
           href: "/admin/generated-documents",
           label: "Generated Documents",
-          description: "Open rendered proposal, order, and installation document records.",
+          description: "Open saved proposal, order, and installation document records.",
         },
         {
           href: "/admin/document-templates",
           label: "Document Templates",
-          description: "Maintain active templates used by the backend document actions.",
+          description: "Maintain the active templates used by document generation actions.",
         },
         {
           href: "/admin/document-links",
           label: "Document Links",
-          description: "Inspect how generated documents relate back to business entities.",
+          description: "See how generated documents connect back to business records.",
         },
       ]}
       loadData={loadData}

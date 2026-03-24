@@ -298,7 +298,7 @@ export default function InstallationJobDetailPage() {
             Installation Job Workflow
           </h1>
           <p className="text-sm text-zinc-500 dark:text-zinc-400">
-            Review operational context, capture follow-through, and generate supporting documents.
+            Review the job, capture the outcome, and create any supporting document you need.
           </p>
         </div>
         <Link
@@ -335,7 +335,7 @@ export default function InstallationJobDetailPage() {
         <>
           <DetailSection
             title={job.job_number || `Installation Job ${job.id}`}
-            description="Current operational status, customer context, and completion readiness."
+            description="A quick view of status, customer context, and completion progress."
           >
             <SummaryGrid
               items={[
@@ -362,7 +362,7 @@ export default function InstallationJobDetailPage() {
 
           <DetailSection
             title="Next Steps"
-            description="Lightweight guidance based on the current installation-job state."
+            description="A few simple cues based on the current state of this job."
           >
             <AttentionList items={attentionItems} />
           </DetailSection>
@@ -370,12 +370,12 @@ export default function InstallationJobDetailPage() {
           <div className="grid gap-6 xl:grid-cols-[1.3fr_0.9fr]">
             <DetailSection
               title="Key Actions"
-              description="Use these lightweight actions to capture field follow-through and keep document output close to the job."
+              description="Use these actions to capture the job outcome and keep related documents close at hand."
             >
               <div className="mb-4 space-y-4">
                 <ActionGroup
                   title="Primary Actions"
-                  description="These are the most common next operational steps from this job page."
+                  description="Start here for the most common next step on an active job."
                   items={[
                     {
                       key: "result-draft",
@@ -386,7 +386,7 @@ export default function InstallationJobDetailPage() {
                       helperText:
                         results.length === 0
                           ? "No result records exist yet for this job."
-                          : "Create another result record when you need additional field-history detail.",
+                          : "Add another result record when you need more completion history.",
                     },
                     {
                       key: "mark-completed",
@@ -401,19 +401,19 @@ export default function InstallationJobDetailPage() {
                       helperText:
                         job.job_status === "completed"
                           ? "This job is already marked completed."
-                          : "Use when the operational work is finished and the status should be closed out.",
+                          : "Use this when the work is finished and the job should be closed out.",
                     },
                   ]}
                 />
                 <ActionGroup
                   title="Supporting Actions"
-                  description="Open related operational and commercial areas when you need more context."
+                  description="Use these links when you need more background or supporting records."
                   items={[
                     {
                       key: "results",
                       label: "Open Results",
                       href: "/admin/installation-results",
-                      helperText: "Review or add result records outside this page.",
+                      helperText: "Review or add result records from the full results list.",
                     },
                     ...(linkedOrder
                       ? [
@@ -439,12 +439,12 @@ export default function InstallationJobDetailPage() {
               )}
               {resultDraftState.successId && (
                 <div className="mb-4 rounded border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-900 dark:border-emerald-900 dark:bg-emerald-950/40 dark:text-emerald-100">
-                  <p>Installation result draft created successfully.</p>
+                  <p>Result draft created successfully.</p>
                   <Link
                     href="/admin/installation-results"
                     className="mt-2 inline-block text-blue-700 underline underline-offset-2 hover:text-blue-900 dark:text-blue-300 dark:hover:text-blue-200"
                   >
-                    Open installation results
+                    Open results
                   </Link>
                 </div>
               )}
@@ -482,12 +482,12 @@ export default function InstallationJobDetailPage() {
                 showSummary={false}
                 showConfigHint={false}
                 panelTitle="Generate Installation Document"
-                panelDescription="Use an active installation or service template to create a stored document snapshot from this job."
+                panelDescription="Use an active installation or service template to create a saved document snapshot from this job."
               />
             </DetailSection>
 
             <div className="space-y-6">
-              <DetailSection title="Linked Order" description="Commercial context associated with this installation job.">
+              <DetailSection title="Linked Order" description="The commercial record connected to this installation job.">
                 {linkedOrder ? (
                   <RelatedList
                     items={[
@@ -507,14 +507,14 @@ export default function InstallationJobDetailPage() {
                   />
                 ) : (
                   <p className="text-sm text-zinc-500 dark:text-zinc-400">
-                    No linked order is attached to this installation job.
+                    This installation job is not linked to an order.
                   </p>
                 )}
               </DetailSection>
 
               <DetailSection
                 title="Installation Results"
-                description="Recent result records captured against this job."
+                description="Recent result records saved for this job."
                 action={
                   <Link
                     href="/admin/installation-results"
@@ -529,7 +529,7 @@ export default function InstallationJobDetailPage() {
                   emptyMessage="No installation results have been recorded for this job yet."
                   emptyAction={
                     <p className="text-sm text-zinc-500 dark:text-zinc-400">
-                      Use the primary action above to create the first result draft.
+                      Use the main action above to create the first result draft.
                     </p>
                   }
                 />
@@ -537,7 +537,7 @@ export default function InstallationJobDetailPage() {
 
               <DetailSection
                 title="Generated Documents"
-                description="Recent installation/service documents created from this job."
+                description="Saved installation or service documents created from this job."
                 action={
                   <Link
                     href="/admin/generated-documents"
@@ -552,7 +552,7 @@ export default function InstallationJobDetailPage() {
                   emptyMessage="No generated documents are linked directly to this installation job yet."
                   emptyAction={
                     <p className="text-sm text-zinc-500 dark:text-zinc-400">
-                      Generate an installation or service document from the action area on this page.
+                      Generate an installation or service document from the document section on this page.
                     </p>
                   }
                 />
@@ -561,7 +561,7 @@ export default function InstallationJobDetailPage() {
           </div>
 
           {job.notes && (
-            <DetailSection title="Notes" description="Additional field context stored on the installation job.">
+            <DetailSection title="Notes" description="Extra context saved on this installation job.">
               <p className="text-sm text-zinc-700 dark:text-zinc-300">{job.notes}</p>
             </DetailSection>
           )}

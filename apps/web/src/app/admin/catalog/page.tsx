@@ -81,8 +81,8 @@ export default function CatalogLandingPage() {
   return (
     <DomainLandingLive
       title="Catalog"
-      summary="Maintain the reusable product, unit, supplier, and product-structure reference data used across the ERP."
-      description="This area is mostly master data. Start with products, then move into categories, units, supplier relationships, attributes, and bundles when you need deeper catalog structure."
+      summary="Maintain the product, unit, supplier, and reference data used across the ERP."
+      description="This area is mostly shared master data. Start with products, then move into categories, units, suppliers, attributes, and bundles when you need deeper catalog structure."
       links={[
         {
           href: "/admin/products",
@@ -92,17 +92,17 @@ export default function CatalogLandingPage() {
         {
           href: "/admin/product-categories",
           label: "Product Categories",
-          description: "Organize the catalog into a clearer business hierarchy.",
+          description: "Organize products into a clearer business hierarchy.",
         },
         {
           href: "/admin/units",
           label: "Units",
-          description: "Maintain measurement units used in warehouse and commercial flows.",
+          description: "Maintain measurement units used across warehouse and commercial work.",
         },
         {
           href: "/admin/suppliers",
           label: "Suppliers",
-          description: "Keep supplier reference records and purchasing contacts current.",
+          description: "Keep supplier records and purchasing contacts up to date.",
         },
       ]}
       loadData={loadData}
