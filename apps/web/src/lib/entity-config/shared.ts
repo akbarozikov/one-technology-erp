@@ -19,6 +19,7 @@ export type EntityField = {
   key: string;
   label: string;
   kind: FieldKind;
+  section?: string;
   required?: boolean;
   min?: number;
   step?: number | "any";
@@ -27,10 +28,17 @@ export type EntityField = {
   lookup?: EntityLookup;
 };
 
+export type EntityFormSection = {
+  key: string;
+  label: string;
+  description?: string;
+};
+
 export type EntityConfig = {
   title: string;
   apiPath: string;
   fields: EntityField[];
+  formSections?: EntityFormSection[];
   createEnabled?: boolean;
   detailBasePath?: string;
   detailLabelKey?: string;

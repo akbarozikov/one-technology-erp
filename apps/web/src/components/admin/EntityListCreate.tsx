@@ -16,6 +16,13 @@ type LookupOption = {
   label: string;
 };
 
+type FieldGroup = {
+  key: string;
+  label: string;
+  description?: string;
+  fields: EntityField[];
+};
+
 function buildPayload(fields: EntityField[], fd: FormData): Record<string, unknown> {
   const out: Record<string, unknown> = {};
   for (const f of fields) {
@@ -99,6 +106,103 @@ function buildLookupLabel(
     return main;
   }
   return `${row.id} · ${main}`;
+}
+
+function renderField(
+  f: EntityField,
+  lookupOptions: Record<string, LookupOption[]>
+): React.ReactNode {
+  return (
+    <label key={f.key} className="block text-sm">
+      <span className="mb-1 block font-medium text-zinc-700 dark:text-zinc-300">
+        {f.label}
+        {f.required ? " *" : ""}
+      </span>
+      {f.kind === "textarea" && (
+        <textarea
+          name={f.key}
+          required={f.required}
+          rows={3}
+          className="w-full rounded border border-zinc-300 px-2 py-1.5 text-zinc-900 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100"
+        />
+      )}
+      {f.kind === "text" && (
+        <input
+          name={f.key}
+          type="text"
+          required={f.required}
+          autoComplete="off"
+          className="w-full rounded border border-zinc-300 px-2 py-1.5 text-zinc-900 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100"
+        />
+      )}
+      {f.kind === "date" && (
+        <input
+          name={f.key}
+          type="date"
+          required={f.required}
+          className="w-full rounded border border-zinc-300 px-2 py-1.5 text-zinc-900 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100"
+        />
+      )}
+      {f.kind === "datetime-local" && (
+        <input
+          name={f.key}
+          type="datetime-local"
+          required={f.required}
+          className="w-full rounded border border-zinc-300 px-2 py-1.5 text-zinc-900 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100"
+        />
+      )}
+      {f.kind === "number" && (
+        <input
+          name={f.key}
+          type="number"
+          required={f.required}
+          min={f.min ?? (f.key === "sort_order" ? 0 : f.required ? 1 : undefined)}
+          step={f.step ?? 1}
+          className="w-full rounded border border-zinc-300 px-2 py-1.5 text-zinc-900 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100"
+        />
+      )}
+      {f.kind === "checkbox" && (
+        <input
+          name={f.key}
+          type="checkbox"
+          defaultChecked={f.defaultChecked ?? false}
+          className="h-4 w-4 rounded border-zinc-300 text-zinc-900"
+        />
+      )}
+      {f.kind === "select" && (
+        <select
+          name={f.key}
+          required={f.required}
+          defaultValue={
+            f.required
+              ? (f.lookup
+                  ? (lookupOptions[f.key]?.[0]?.value ?? "")
+                  : (f.options?.[0]?.value ?? ""))
+              : ""
+          }
+          className="w-full rounded border border-zinc-300 px-2 py-1.5 text-zinc-900 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100"
+        >
+          {!f.required && <option value="">-</option>}
+          {(f.lookup ? (lookupOptions[f.key] ?? []) : (f.options ?? [])).map((o) => (
+            <option key={o.value} value={o.value}>
+              {o.label}
+            </option>
+          ))}
+        </select>
+      )}
+      {f.kind === "boolean-select" && (
+        <select
+          name={f.key}
+          defaultValue=""
+          className="w-full rounded border border-zinc-300 px-2 py-1.5 text-zinc-900 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100"
+        >
+          <option value="">-</option>
+          <option value="true">true</option>
+          <option value="false">false</option>
+        </select>
+      )}
+    </label>
+  );
 }
 
 export function EntityListCreate({ config }: { config: EntityConfig }) {
@@ -273,6 +377,33 @@ export function EntityListCreate({ config }: { config: EntityConfig }) {
           ...(createEnabled ? [] : ["created_at", "updated_at"]),
         ];
 
+  const fieldGroups = useMemo<FieldGroup[]>(() => {
+    if (!config.formSections || config.formSections.length === 0) {
+      return [{ key: "default", label: "Details", fields: config.fields }];
+    }
+
+    const groups = config.formSections
+      .map((section) => ({
+        key: section.key,
+        label: section.label,
+        description: section.description,
+        fields: config.fields.filter((field) => field.section === section.key),
+      }))
+      .filter((group) => group.fields.length > 0);
+
+    const ungroupedFields = config.fields.filter((field) => !field.section);
+    if (ungroupedFields.length > 0) {
+      groups.push({
+        key: "other",
+        label: "Other",
+        description: undefined,
+        fields: ungroupedFields,
+      });
+    }
+
+    return groups;
+  }, [config.fields, config.formSections]);
+
   return (
     <div className="space-y-8">
       {configHint && (
@@ -421,96 +552,27 @@ export function EntityListCreate({ config }: { config: EntityConfig }) {
             onSubmit={onSubmit}
             aria-busy={submitting}
           >
-            {config.fields.map((f) => (
-              <label key={f.key} className="block text-sm">
-                <span className="mb-1 block font-medium text-zinc-700 dark:text-zinc-300">
-                  {f.label}
-                  {f.required ? " *" : ""}
-                </span>
-                {f.kind === "textarea" && (
-                  <textarea
-                    name={f.key}
-                    required={f.required}
-                    rows={3}
-                    className="w-full rounded border border-zinc-300 px-2 py-1.5 text-zinc-900 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100"
-                  />
+            {fieldGroups.map((group) => (
+              <section
+                key={group.key}
+                className="rounded border border-zinc-100 p-4 dark:border-zinc-800"
+              >
+                {config.formSections && (
+                  <div className="mb-3">
+                    <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
+                      {group.label}
+                    </h3>
+                    {group.description && (
+                      <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
+                        {group.description}
+                      </p>
+                    )}
+                  </div>
                 )}
-                {f.kind === "text" && (
-                  <input
-                    name={f.key}
-                    type="text"
-                    required={f.required}
-                    autoComplete="off"
-                    className="w-full rounded border border-zinc-300 px-2 py-1.5 text-zinc-900 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100"
-                  />
-                )}
-                {f.kind === "date" && (
-                  <input
-                    name={f.key}
-                    type="date"
-                    required={f.required}
-                    className="w-full rounded border border-zinc-300 px-2 py-1.5 text-zinc-900 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100"
-                  />
-                )}
-                {f.kind === "datetime-local" && (
-                  <input
-                    name={f.key}
-                    type="datetime-local"
-                    required={f.required}
-                    className="w-full rounded border border-zinc-300 px-2 py-1.5 text-zinc-900 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100"
-                  />
-                )}
-                {f.kind === "number" && (
-                  <input
-                    name={f.key}
-                    type="number"
-                    required={f.required}
-                    min={f.min ?? (f.key === "sort_order" ? 0 : f.required ? 1 : undefined)}
-                    step={f.step ?? 1}
-                    className="w-full rounded border border-zinc-300 px-2 py-1.5 text-zinc-900 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100"
-                  />
-                )}
-                {f.kind === "checkbox" && (
-                  <input
-                    name={f.key}
-                    type="checkbox"
-                    defaultChecked={f.defaultChecked ?? false}
-                    className="h-4 w-4 rounded border-zinc-300 text-zinc-900"
-                  />
-                )}
-                {f.kind === "select" && (
-                  <select
-                    name={f.key}
-                    required={f.required}
-                    defaultValue={
-                      f.required
-                        ? (f.lookup
-                            ? (lookupOptions[f.key]?.[0]?.value ?? "")
-                            : (f.options?.[0]?.value ?? ""))
-                        : ""
-                    }
-                    className="w-full rounded border border-zinc-300 px-2 py-1.5 text-zinc-900 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100"
-                  >
-                    {!f.required && <option value="">-</option>}
-                    {(f.lookup ? (lookupOptions[f.key] ?? []) : (f.options ?? [])).map((o) => (
-                      <option key={o.value} value={o.value}>
-                        {o.label}
-                      </option>
-                    ))}
-                  </select>
-                )}
-                {f.kind === "boolean-select" && (
-                  <select
-                    name={f.key}
-                    defaultValue=""
-                    className="w-full rounded border border-zinc-300 px-2 py-1.5 text-zinc-900 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100"
-                  >
-                    <option value="">-</option>
-                    <option value="true">true</option>
-                    <option value="false">false</option>
-                  </select>
-                )}
-              </label>
+                <div className="space-y-3">
+                  {group.fields.map((field) => renderField(field, lookupOptions))}
+                </div>
+              </section>
             ))}
             {submitError && (
               <pre
