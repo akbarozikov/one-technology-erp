@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import Link from "next/link";
 import { useParams } from "next/navigation";
@@ -292,22 +292,30 @@ export default function QuoteVersionDetailPage() {
                 <ActionGroup
                   title="Primary Actions"
                   description="Start here for the most common next step from this version."
-                  items={[
-                    {
-                      key: "create-order",
-                      label: creatingOrder
-                        ? "Creating order..."
-                        : linkedOrder
-                          ? "Order Already Exists"
-                          : "Create Order Draft",
-                      onClick: handleCreateOrderDraft,
-                      disabled: creatingOrder || linkedOrder !== null,
-                      primary: true,
-                      helperText: linkedOrder
-                        ? "This quote version already has a linked order."
-                        : "Create a draft order without re-entering the main quote details.",
-                    },
-                  ]}
+                  items={
+                    linkedOrder
+                      ? [
+                          {
+                            key: "open-order",
+                            label: "Open Linked Order",
+                            href: `/admin/orders/${linkedOrder.id}`,
+                            primary: true,
+                            helperText:
+                              "Continue the workflow from the order that was already created from this version.",
+                          },
+                        ]
+                      : [
+                          {
+                            key: "create-order",
+                            label: creatingOrder ? "Creating order..." : "Create Order Draft",
+                            onClick: handleCreateOrderDraft,
+                            disabled: creatingOrder,
+                            primary: true,
+                            helperText:
+                              "Create a draft order without re-entering the main quote details.",
+                          },
+                        ]
+                  }
                 />
                 <ActionGroup
                   title="Supporting Actions"
@@ -462,3 +470,4 @@ export default function QuoteVersionDetailPage() {
     </div>
   );
 }
+

@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
@@ -81,12 +81,12 @@ function titleCaseKey(value: string): string {
 
 function formatDateValue(value: unknown, includeTime: boolean): string {
   if (value === null || value === undefined || value === "") {
-    return "—";
+    return "-";
   }
 
   const raw = String(value).trim();
   if (!raw) {
-    return "—";
+    return "-";
   }
 
   const normalized =
@@ -104,7 +104,7 @@ function formatDateValue(value: unknown, includeTime: boolean): string {
 
 function formatMoneyValue(value: unknown): string {
   if (value === null || value === undefined || value === "") {
-    return "—";
+    return "-";
   }
 
   const amount = typeof value === "number" ? value : Number(value);
@@ -249,7 +249,7 @@ function renderTableCellValue(
 
   if (displayKind === "boolean") {
     if (rawValue === null || rawValue === undefined || rawValue === "") {
-      return "—";
+      return "-";
     }
     const truthy =
       rawValue === true ||
@@ -274,11 +274,11 @@ function renderTableCellValue(
   if (displayKind === "status") {
     const label =
       rawValue === null || rawValue === undefined || rawValue === ""
-        ? "—"
+        ? "-"
         : lookupLabel ??
           field?.options?.find((option) => option.value === String(rawValue))?.label ??
           String(rawValue);
-    if (label === "—") {
+    if (label === "-") {
       return label;
     }
     return (
@@ -292,7 +292,7 @@ function renderTableCellValue(
     );
   }
 
-  return textValue || "—";
+  return textValue || "-";
 }
 
 function renderField(
@@ -819,3 +819,4 @@ export function EntityListCreate({ config }: { config: EntityConfig }) {
     </div>
   );
 }
+

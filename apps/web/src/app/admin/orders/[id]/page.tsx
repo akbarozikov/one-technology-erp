@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import Link from "next/link";
 import { useParams } from "next/navigation";
@@ -294,7 +294,7 @@ export default function OrderDetailPage() {
                   items={[
                     {
                       key: "payments",
-                      label: "Review Payments",
+                      label: "Record or Review Payments",
                       href: "/admin/payments",
                       primary: true,
                       helperText:
@@ -441,3 +441,4 @@ export default function OrderDetailPage() {
     </div>
   );
 }
+

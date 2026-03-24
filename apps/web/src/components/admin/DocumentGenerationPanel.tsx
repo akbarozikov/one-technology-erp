@@ -260,9 +260,19 @@ export function DocumentGenerationPanel({
             )}
 
             {templates.length === 0 ? (
-              <p className="text-sm text-zinc-500 dark:text-zinc-400">
-                No active templates match this record yet.
-              </p>
+              <div className="space-y-2 text-sm text-zinc-500 dark:text-zinc-400">
+                <p>No active templates match this record yet.</p>
+                <p>
+                  Create or activate a compatible template in{" "}
+                  <Link
+                    href="/admin/document-templates"
+                    className="text-blue-700 underline underline-offset-2 hover:text-blue-900 dark:text-blue-300 dark:hover:text-blue-200"
+                  >
+                    Document Templates
+                  </Link>
+                  .
+                </p>
+              </div>
             ) : (
               <form className="max-w-xl space-y-3" onSubmit={handleSubmit}>
                 <label className="block text-sm">
