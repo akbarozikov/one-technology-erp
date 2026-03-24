@@ -9,6 +9,7 @@ import {
   type BomLineRow,
   type DoorConfigurationVariantRow,
   type StockReservationRow,
+  type WarehousePositionRow,
 } from "@one-technology/db";
 import { getDb } from "../lib/db";
 import { asSqlFailure } from "../lib/d1-errors";
@@ -152,6 +153,33 @@ export async function handleDoorConfigurationVariantAction(
   );
   if (!positionOk) {
     return badRequest(`default_position_id ${input.default_position_id} not found`);
+  }
+
+  if (input.status !== "active") {
+    return badRequest(
+      "Reservation draft creation only supports active status in this phase"
+    );
+  }
+
+  const position = await db
+    .prepare("SELECT * FROM warehouse_positions WHERE id = ? LIMIT 1")
+    .bind(input.default_position_id)
+    .first<WarehousePositionRow>();
+
+  if (!position) {
+    return notFound(`warehouse_position ${input.default_position_id} not found`);
+  }
+
+  if (position.warehouse_id !== input.warehouse_id) {
+    return badRequest(
+      `default_position_id ${input.default_position_id} does not belong to warehouse_id ${input.warehouse_id}`
+    );
+  }
+
+  if (position.is_active !== 1) {
+    return badRequest(
+      `default_position_id ${input.default_position_id} is inactive and cannot be used for reservation drafts`
+    );
   }
 
   if (input.created_by_user_id !== null) {

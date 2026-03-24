@@ -235,15 +235,23 @@ export default function InstallationJobDetailPage() {
     setResultDraftState({ loading: true, error: null, successId: null });
 
     try {
-      const response = await apiPost<{ data?: { id?: number | null } | null }>(
+      const response = await apiPost<{ data?: InstallationResultRow | null }>(
         `/api/installation-jobs/${job.id}/create-result-draft`,
         {}
       );
+      const createdResult = response.data ?? null;
+      if (createdResult) {
+        setResults((current) => {
+          if (current.some((result) => result.id === createdResult.id)) {
+            return current;
+          }
+          return [createdResult, ...current];
+        });
+      }
       setResultDraftState({
         loading: false,
         error: null,
-        successId:
-          response.data && typeof response.data.id === "number" ? response.data.id : null,
+        successId: createdResult?.id ?? null,
       });
     } catch (err) {
       setResultDraftState({
@@ -483,6 +491,15 @@ export default function InstallationJobDetailPage() {
                 showConfigHint={false}
                 panelTitle="Generate Installation Document"
                 panelDescription="Use an active installation or service template to create a saved document snapshot from this job."
+                onGenerated={(generatedDocument) => {
+                  if (!generatedDocument) return;
+                  setDocuments((current) => {
+                    if (current.some((document) => document.id === generatedDocument.id)) {
+                      return current;
+                    }
+                    return [generatedDocument as GeneratedDocumentRow, ...current];
+                  });
+                }}
               />
             </DetailSection>
 

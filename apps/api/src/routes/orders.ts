@@ -287,6 +287,10 @@ async function handleAdoptReservations(
     return badRequest(`Order ${orderId} is not linked to a quote_version and cannot adopt reservations`);
   }
 
+  if (order.order_status === "cancelled") {
+    return badRequest(`Order ${orderId} is cancelled and cannot adopt reservations`);
+  }
+
   const { results: orderLines } = await db
     .prepare("SELECT * FROM order_lines WHERE order_id = ? ORDER BY line_number ASC, id ASC")
     .bind(orderId)
@@ -376,6 +380,16 @@ async function handleAdoptReservations(
       if (!adopted) {
         throw new Error(`Failed to adopt reservation ${reservation.id}`);
       }
+
+      await db
+        .prepare(
+          `UPDATE order_lines
+           SET primary_reservation_id = COALESCE(primary_reservation_id, ?),
+               updated_at = datetime('now')
+           WHERE id = ?`
+        )
+        .bind(adopted.id, matchingOrderLines[0].id)
+        .run();
 
       adoptedReservationIds.push(adopted.id);
     }
@@ -575,7 +589,10 @@ function findMatchingOrderLines(
   orderLines: OrderLineRow[]
 ): OrderLineRow[] {
   const sameTypeLines = orderLines.filter(
-    (orderLine) => orderLine.line_type === sourceQuoteLine.line_type
+    (orderLine) =>
+      orderLine.line_type === sourceQuoteLine.line_type &&
+      orderLine.fulfillment_status !== "cancelled" &&
+      orderLine.fulfillment_status !== "installed"
   );
 
   if (sourceQuoteLine.configuration_variant_id !== null) {

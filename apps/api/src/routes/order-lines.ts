@@ -198,7 +198,12 @@ export async function handleOrderLineAction(
     return badRequest(errors.length ? errors.join("; ") : "Validation failed");
   }
 
-  const actionError = await validateOrderLineActionContext(db, input, action);
+  const actionError = await validateOrderLineActionContext(
+    db,
+    orderLine,
+    input,
+    action
+  );
   if (actionError) {
     return badRequest(actionError);
   }
@@ -245,13 +250,21 @@ export async function handleOrderLineAction(
 
 async function validateOrderLineActionContext(
   db: D1Database,
+  orderLine: OrderLineRow,
   input: OrderLineActionInput,
   action: OrderLineAction
 ): Promise<string | null> {
   if (action === "mark-reserved" && input.reservation_id !== null) {
-    const reservationOk = await rowExists(db, TABLE_STOCK_RESERVATIONS, input.reservation_id);
-    if (!reservationOk) {
+    const reservation = await db
+      .prepare("SELECT * FROM stock_reservations WHERE id = ? LIMIT 1")
+      .bind(input.reservation_id)
+      .first<StockReservationRow>();
+    if (!reservation) {
       return `reservation_id ${input.reservation_id} not found`;
+    }
+    const reservationError = validateReservationForOrderLine(orderLine, reservation);
+    if (reservationError) {
+      return reservationError;
     }
   }
 
@@ -269,13 +282,22 @@ async function validateOrderLineActionContext(
   }
 
   if (action === "mark-installed" && input.installation_job_id !== null) {
-    const installationJobOk = await rowExists(
-      db,
-      TABLE_INSTALLATION_JOBS,
-      input.installation_job_id
-    );
-    if (!installationJobOk) {
+    const installationJob = await db
+      .prepare("SELECT * FROM installation_jobs WHERE id = ? LIMIT 1")
+      .bind(input.installation_job_id)
+      .first<InstallationJobRow>();
+    if (!installationJob) {
       return `installation_job_id ${input.installation_job_id} not found`;
+    }
+    if (installationJob.job_status === "cancelled") {
+      return `installation_job_id ${input.installation_job_id} is cancelled and cannot be linked`;
+    }
+    const installationJobError = validateInstallationJobForOrderLine(
+      orderLine,
+      installationJob
+    );
+    if (installationJobError) {
+      return installationJobError;
     }
   }
 
@@ -387,11 +409,9 @@ async function validateOrderLineProgressContext(
     if (!reservation) {
       return `reservation_id ${input.reservation_id} not found`;
     }
-    if (reservation.status === "cancelled") {
-      return `reservation_id ${input.reservation_id} is cancelled and cannot be linked`;
-    }
-    if (reservation.status === "consumed") {
-      return `reservation_id ${input.reservation_id} is consumed and cannot be linked`;
+    const reservationError = validateReservationForOrderLine(orderLine, reservation);
+    if (reservationError) {
+      return reservationError;
     }
   }
 
@@ -419,10 +439,57 @@ async function validateOrderLineProgressContext(
     if (installationJob.job_status === "cancelled") {
       return `installation_job_id ${input.installation_job_id} is cancelled and cannot be linked`;
     }
+    const installationJobError = validateInstallationJobForOrderLine(
+      orderLine,
+      installationJob
+    );
+    if (installationJobError) {
+      return installationJobError;
+    }
   }
 
   if (input.target_status === "issued" && orderLine.fulfillment_status === "installed") {
     return `Order line ${orderLine.id} is already installed and cannot be marked issued`;
+  }
+
+  return null;
+}
+
+function validateReservationForOrderLine(
+  orderLine: OrderLineRow,
+  reservation: StockReservationRow
+): string | null {
+  if (reservation.status !== "active") {
+    return `reservation_id ${reservation.id} has status ${reservation.status} and cannot be linked`;
+  }
+
+  if (reservation.order_line_id !== null && reservation.order_line_id !== orderLine.id) {
+    return `reservation_id ${reservation.id} is already linked to order_line ${reservation.order_line_id}`;
+  }
+
+  if (orderLine.product_id !== null && reservation.product_id !== orderLine.product_id) {
+    return `reservation_id ${reservation.id} does not match product_id ${orderLine.product_id} on order_line ${orderLine.id}`;
+  }
+
+  if (
+    orderLine.configuration_variant_id !== null &&
+    reservation.configuration_variant_id !== orderLine.configuration_variant_id
+  ) {
+    return `reservation_id ${reservation.id} does not match configuration_variant_id ${orderLine.configuration_variant_id} on order_line ${orderLine.id}`;
+  }
+
+  return null;
+}
+
+function validateInstallationJobForOrderLine(
+  orderLine: OrderLineRow,
+  installationJob: InstallationJobRow
+): string | null {
+  if (
+    installationJob.order_line_id !== null &&
+    installationJob.order_line_id !== orderLine.id
+  ) {
+    return `installation_job_id ${installationJob.id} is already linked to order_line ${installationJob.order_line_id}`;
   }
 
   return null;
