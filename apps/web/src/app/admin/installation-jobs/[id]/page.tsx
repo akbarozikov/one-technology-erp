@@ -273,17 +273,12 @@ export default function InstallationJobDetailPage() {
     setCompletionState({ loading: true, error: null, success: false });
 
     try {
-      await apiPost(`/api/installation-jobs/${job.id}/mark-completed`, {});
+      const response = await apiPost<{
+        data?: { installation_job?: InstallationJobRow | null } | null;
+      }>(`/api/installation-jobs/${job.id}/mark-completed`, {});
       setCompletionState({ loading: false, error: null, success: true });
-      setJob((current) =>
-        current
-          ? {
-              ...current,
-              job_status: "completed",
-              actual_completed_at: current.actual_completed_at || new Date().toISOString(),
-            }
-          : current
-      );
+      const updatedJob = response.data?.installation_job ?? null;
+      setJob((current) => updatedJob ?? current);
     } catch (err) {
       setCompletionState({
         loading: false,

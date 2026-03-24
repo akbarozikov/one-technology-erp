@@ -198,6 +198,8 @@ export async function handleInstallationJobAction(
     null;
 
   try {
+    await db.exec("BEGIN TRANSACTION");
+
     const updatedJob = await db
       .prepare(
         `UPDATE installation_jobs
@@ -262,7 +264,9 @@ export async function handleInstallationJobAction(
         .first<StockReservationRow>();
     }
 
-  return jsonOk({
+    await db.exec("COMMIT");
+
+    return jsonOk({
       data: {
         installation_job: updatedJob,
         installation_result: actionContext.result,
@@ -271,6 +275,11 @@ export async function handleInstallationJobAction(
       },
     });
   } catch (err) {
+    try {
+      await db.exec("ROLLBACK");
+    } catch {
+      // Ignore rollback errors and preserve the original failure.
+    }
     return asSqlFailure(err);
   }
 }
@@ -560,6 +569,18 @@ async function validateInstallationJobCompletionContext(
     if (result.installation_job_id !== job.id) {
       return `installation_result_id ${input.installation_result_id} does not belong to installation_job ${job.id}`;
     }
+    if (result.result_status === "failed") {
+      return `installation_result_id ${input.installation_result_id} has result_status failed and cannot be used to mark installation_job ${job.id} completed`;
+    }
+  }
+
+  const effectiveOrderLineId = input.order_line_id ?? job.order_line_id;
+  if (
+    input.order_line_id !== null &&
+    job.order_line_id !== null &&
+    input.order_line_id !== job.order_line_id
+  ) {
+    return `order_line_id ${input.order_line_id} does not match installation_job ${job.id} order_line_id ${job.order_line_id}`;
   }
 
   let orderLine: OrderLineRow | null = null;
@@ -590,6 +611,16 @@ async function validateInstallationJobCompletionContext(
     }
     if (reservation.status === "released") {
       return `reservation_id ${input.reservation_id} is released and cannot be consumed by installation completion`;
+    }
+    if (reservation.status === "consumed") {
+      return `reservation_id ${input.reservation_id} is already consumed and cannot be consumed again`;
+    }
+    if (
+      effectiveOrderLineId !== null &&
+      reservation.order_line_id !== null &&
+      reservation.order_line_id !== effectiveOrderLineId
+    ) {
+      return `reservation_id ${input.reservation_id} is linked to order_line ${reservation.order_line_id} and does not match installation_job ${job.id} order-line context`;
     }
   }
 
