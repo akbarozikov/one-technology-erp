@@ -1,5 +1,12 @@
 import type { AdminNavGroup, EntityConfigMap } from "./shared";
-import { productAttributeDataTypes, productStatuses, productTypes, unitLookup } from "./shared";
+import {
+  productAttributeDataTypes,
+  productLookup,
+  productStatuses,
+  productTypes,
+  supplierLookup,
+  unitLookup,
+} from "./shared";
 
 export const catalogConfigs = {
   product_categories: {
@@ -93,7 +100,7 @@ export const catalogConfigs = {
     title: "Product attribute values",
     apiPath: "/api/product-attribute-values",
     fields: [
-      { key: "product_id", label: "Product ID", kind: "number", required: true },
+      { key: "product_id", label: "Product", kind: "select", required: true, lookup: productLookup },
       { key: "attribute_id", label: "Attribute ID", kind: "number", required: true },
       { key: "value_text", label: "Value text", kind: "text" },
       { key: "value_number", label: "Value number", kind: "number", step: "any" },
@@ -105,8 +112,8 @@ export const catalogConfigs = {
     title: "Product suppliers",
     apiPath: "/api/product-suppliers",
     fields: [
-      { key: "product_id", label: "Product ID", kind: "number", required: true },
-      { key: "supplier_id", label: "Supplier ID", kind: "number", required: true },
+      { key: "product_id", label: "Product", kind: "select", required: true, lookup: productLookup },
+      { key: "supplier_id", label: "Supplier", kind: "select", required: true, lookup: supplierLookup },
       { key: "supplier_sku", label: "Supplier SKU", kind: "text" },
       { key: "purchase_price", label: "Purchase price", kind: "number", step: "any" },
       { key: "currency", label: "Currency", kind: "text" },
@@ -118,7 +125,7 @@ export const catalogConfigs = {
     title: "Product bundles",
     apiPath: "/api/product-bundles",
     fields: [
-      { key: "bundle_product_id", label: "Bundle product ID", kind: "number", required: true },
+      { key: "bundle_product_id", label: "Bundle product", kind: "select", required: true, lookup: productLookup },
       { key: "name", label: "Name", kind: "text", required: true },
       { key: "code", label: "Code", kind: "text", required: true },
       { key: "description", label: "Description", kind: "textarea" },
@@ -130,9 +137,9 @@ export const catalogConfigs = {
     apiPath: "/api/product-bundle-items",
     fields: [
       { key: "bundle_id", label: "Bundle ID", kind: "number", required: true },
-      { key: "component_product_id", label: "Component product ID", kind: "number", required: true },
+      { key: "component_product_id", label: "Component product", kind: "select", required: true, lookup: productLookup },
       { key: "quantity", label: "Quantity", kind: "number", required: true, min: 0.000001, step: "any" },
-      { key: "unit_id", label: "Unit ID", kind: "number", required: true },
+      { key: "unit_id", label: "Unit", kind: "select", required: true, lookup: unitLookup },
       { key: "sort_order", label: "Sort order", kind: "number", min: 0 },
       { key: "is_optional", label: "Optional", kind: "checkbox" },
     ],

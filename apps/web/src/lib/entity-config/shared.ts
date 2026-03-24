@@ -419,6 +419,12 @@ export const warehouseLookup = {
   includeIdInLabel: true,
 } as const satisfies EntityLookup;
 
+export const warehousePositionLookup = {
+  apiPath: "/api/warehouse-positions",
+  labelKeys: ["name", "code"],
+  includeIdInLabel: true,
+} as const satisfies EntityLookup;
+
 export const employeeLookup = {
   apiPath: "/api/employees",
   labelKeys: ["full_name", "job_title"],
@@ -437,6 +443,12 @@ export const productLookup = {
   includeIdInLabel: true,
 } as const satisfies EntityLookup;
 
+export const supplierLookup = {
+  apiPath: "/api/suppliers",
+  labelKeys: ["name", "code"],
+  includeIdInLabel: true,
+} as const satisfies EntityLookup;
+
 export const quoteLookup = {
   apiPath: "/api/quotes",
   labelKeys: ["quote_number", "status"],
@@ -449,9 +461,21 @@ export const quoteVersionLookup = {
   includeIdInLabel: true,
 } as const satisfies EntityLookup;
 
+export const quoteLineLookup = {
+  apiPath: "/api/quote-lines",
+  labelKeys: ["line_number", "snapshot_product_name"],
+  includeIdInLabel: true,
+} as const satisfies EntityLookup;
+
 export const orderLookup = {
   apiPath: "/api/orders",
   labelKeys: ["order_number", "order_status"],
+  includeIdInLabel: true,
+} as const satisfies EntityLookup;
+
+export const orderLineLookup = {
+  apiPath: "/api/order-lines",
+  labelKeys: ["line_number", "snapshot_product_name"],
   includeIdInLabel: true,
 } as const satisfies EntityLookup;
 
@@ -470,6 +494,12 @@ export const variantLookup = {
 export const installationJobLookup = {
   apiPath: "/api/installation-jobs",
   labelKeys: ["job_number", "job_status"],
+  includeIdInLabel: true,
+} as const satisfies EntityLookup;
+
+export const stockMovementLookup = {
+  apiPath: "/api/stock-movements",
+  labelKeys: ["reference_code", "movement_type", "status"],
   includeIdInLabel: true,
 } as const satisfies EntityLookup;
 

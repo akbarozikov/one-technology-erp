@@ -30,6 +30,65 @@ type DocumentLinkRow = Record<string, unknown> & {
   created_at?: string | null;
 };
 
+type DocumentTemplateRow = {
+  id: number;
+  name?: string | null;
+  code?: string | null;
+};
+
+type UserRow = {
+  id: number;
+  email?: string | null;
+  phone?: string | null;
+};
+
+type QuoteRow = {
+  id: number;
+  quote_number?: string | null;
+  status?: string | null;
+};
+
+type QuoteVersionRow = {
+  id: number;
+  version_number?: number | null;
+  version_status?: string | null;
+};
+
+type OrderRow = {
+  id: number;
+  order_number?: string | null;
+  order_status?: string | null;
+};
+
+type PaymentRow = {
+  id: number;
+  reference_number?: string | null;
+  status?: string | null;
+};
+
+type InstallationJobRow = {
+  id: number;
+  job_number?: string | null;
+  job_status?: string | null;
+};
+
+type InstallationResultRow = {
+  id: number;
+  result_status?: string | null;
+};
+
+type StockTransferDocumentRow = {
+  id: number;
+  reference_code?: string | null;
+  status?: string | null;
+};
+
+type EntityReference = {
+  label: string;
+  hint?: string;
+  href?: string;
+};
+
 function looksLikeHtml(value: string): boolean {
   return /<[a-z][\s\S]*>/i.test(value);
 }
@@ -39,6 +98,100 @@ function metadataValue(value: unknown): string {
     return "-";
   }
   return String(value);
+}
+
+function joinReadableParts(parts: Array<string | null | undefined>): string {
+  const compact = parts.map((part) => part?.trim()).filter(Boolean);
+  return compact.length > 0 ? compact.join(" · ") : "-";
+}
+
+function buildEntityReference(
+  entityType: string | null | undefined,
+  entityId: number | null | undefined,
+  lookups: {
+    quotes: QuoteRow[];
+    quoteVersions: QuoteVersionRow[];
+    orders: OrderRow[];
+    payments: PaymentRow[];
+    installationJobs: InstallationJobRow[];
+    installationResults: InstallationResultRow[];
+    stockTransferDocuments: StockTransferDocumentRow[];
+  }
+): EntityReference | null {
+  if (typeof entityId !== "number" || !entityType) {
+    return null;
+  }
+
+  if (entityType === "quote") {
+    const quote = lookups.quotes.find((row) => row.id === entityId);
+    if (!quote) return null;
+    return {
+      label: quote.quote_number || `Quote ${quote.id}`,
+      hint: quote.status || undefined,
+    };
+  }
+
+  if (entityType === "quote_version") {
+    const quoteVersion = lookups.quoteVersions.find((row) => row.id === entityId);
+    if (!quoteVersion) return null;
+    return {
+      label:
+        quoteVersion.version_number !== null && quoteVersion.version_number !== undefined
+          ? `Version ${quoteVersion.version_number}`
+          : `Quote Version ${quoteVersion.id}`,
+      hint: quoteVersion.version_status || undefined,
+      href: `/admin/quote-versions/${quoteVersion.id}`,
+    };
+  }
+
+  if (entityType === "order") {
+    const order = lookups.orders.find((row) => row.id === entityId);
+    if (!order) return null;
+    return {
+      label: order.order_number || `Order ${order.id}`,
+      hint: order.order_status || undefined,
+      href: `/admin/orders/${order.id}`,
+    };
+  }
+
+  if (entityType === "payment") {
+    const payment = lookups.payments.find((row) => row.id === entityId);
+    if (!payment) return null;
+    return {
+      label: payment.reference_number || `Payment ${payment.id}`,
+      hint: payment.status || undefined,
+    };
+  }
+
+  if (entityType === "installation_job") {
+    const job = lookups.installationJobs.find((row) => row.id === entityId);
+    if (!job) return null;
+    return {
+      label: job.job_number || `Installation Job ${job.id}`,
+      hint: job.job_status || undefined,
+      href: `/admin/installation-jobs/${job.id}`,
+    };
+  }
+
+  if (entityType === "installation_result") {
+    const result = lookups.installationResults.find((row) => row.id === entityId);
+    if (!result) return null;
+    return {
+      label: `Installation Result ${result.id}`,
+      hint: result.result_status || undefined,
+    };
+  }
+
+  if (entityType === "stock_transfer_document") {
+    const document = lookups.stockTransferDocuments.find((row) => row.id === entityId);
+    if (!document) return null;
+    return {
+      label: document.reference_code || `Stock Transfer ${document.id}`,
+      hint: document.status || undefined,
+    };
+  }
+
+  return null;
 }
 
 function sanitizeFilenamePart(value: string): string {
@@ -75,6 +228,17 @@ export default function GeneratedDocumentDetailPage() {
   const id = Number(params?.id);
   const [document, setDocument] = useState<GeneratedDocument | null>(null);
   const [links, setLinks] = useState<DocumentLinkRow[]>([]);
+  const [templates, setTemplates] = useState<DocumentTemplateRow[]>([]);
+  const [users, setUsers] = useState<UserRow[]>([]);
+  const [quotes, setQuotes] = useState<QuoteRow[]>([]);
+  const [quoteVersions, setQuoteVersions] = useState<QuoteVersionRow[]>([]);
+  const [orders, setOrders] = useState<OrderRow[]>([]);
+  const [payments, setPayments] = useState<PaymentRow[]>([]);
+  const [installationJobs, setInstallationJobs] = useState<InstallationJobRow[]>([]);
+  const [installationResults, setInstallationResults] = useState<InstallationResultRow[]>([]);
+  const [stockTransferDocuments, setStockTransferDocuments] = useState<
+    StockTransferDocumentRow[]
+  >([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [configHint, setConfigHint] = useState(false);
@@ -95,9 +259,30 @@ export default function GeneratedDocumentDetailPage() {
       }
 
       try {
-        const [docsRes, linksRes] = await Promise.all([
+        const [
+          docsRes,
+          linksRes,
+          templatesRes,
+          usersRes,
+          quotesRes,
+          quoteVersionsRes,
+          ordersRes,
+          paymentsRes,
+          installationJobsRes,
+          installationResultsRes,
+          stockTransferDocumentsRes,
+        ] = await Promise.all([
           apiGet<{ data: unknown[] }>("/api/generated-documents"),
           apiGet<{ data: unknown[] }>("/api/document-links"),
+          apiGet<{ data: DocumentTemplateRow[] }>("/api/document-templates"),
+          apiGet<{ data: UserRow[] }>("/api/users"),
+          apiGet<{ data: QuoteRow[] }>("/api/quotes"),
+          apiGet<{ data: QuoteVersionRow[] }>("/api/quote-versions"),
+          apiGet<{ data: OrderRow[] }>("/api/orders"),
+          apiGet<{ data: PaymentRow[] }>("/api/payments"),
+          apiGet<{ data: InstallationJobRow[] }>("/api/installation-jobs"),
+          apiGet<{ data: InstallationResultRow[] }>("/api/installation-results"),
+          apiGet<{ data: StockTransferDocumentRow[] }>("/api/stock-transfer-documents"),
         ]);
 
         if (cancelled) return;
@@ -119,6 +304,15 @@ export default function GeneratedDocumentDetailPage() {
           : [];
 
         setDocument(found);
+        setTemplates(templatesRes.data ?? []);
+        setUsers(usersRes.data ?? []);
+        setQuotes(quotesRes.data ?? []);
+        setQuoteVersions(quoteVersionsRes.data ?? []);
+        setOrders(ordersRes.data ?? []);
+        setPayments(paymentsRes.data ?? []);
+        setInstallationJobs(installationJobsRes.data ?? []);
+        setInstallationResults(installationResultsRes.data ?? []);
+        setStockTransferDocuments(stockTransferDocumentsRes.data ?? []);
         setLinks(
           allLinks.filter((row) => row.generated_document_id === found.id)
         );
@@ -154,6 +348,43 @@ export default function GeneratedDocumentDetailPage() {
     [renderedContent]
   );
   const hasRenderedContent = typeof renderedContent === "string" && renderedContent.length > 0;
+  const resolvedTemplate = useMemo(
+    () =>
+      typeof document?.template_id === "number"
+        ? templates.find((row) => row.id === document.template_id) ?? null
+        : null,
+    [document?.template_id, templates]
+  );
+  const resolvedUser = useMemo(
+    () =>
+      typeof document?.generated_by_user_id === "number"
+        ? users.find((row) => row.id === document.generated_by_user_id) ?? null
+        : null,
+    [document?.generated_by_user_id, users]
+  );
+  const resolvedEntity = useMemo(
+    () =>
+      buildEntityReference(document?.entity_type, document?.entity_id, {
+        quotes,
+        quoteVersions,
+        orders,
+        payments,
+        installationJobs,
+        installationResults,
+        stockTransferDocuments,
+      }),
+    [
+      document?.entity_id,
+      document?.entity_type,
+      installationJobs,
+      installationResults,
+      orders,
+      payments,
+      quoteVersions,
+      quotes,
+      stockTransferDocuments,
+    ]
+  );
 
   function createHtmlBlobUrl(): string | null {
     if (!hasRenderedContent || !renderedContent) {
@@ -264,10 +495,15 @@ export default function GeneratedDocumentDetailPage() {
               </div>
               <div>
                 <dt className="text-xs uppercase tracking-wide text-zinc-500">
-                  Template ID
+                  Template
                 </dt>
                 <dd className="text-sm text-zinc-900 dark:text-zinc-100">
-                  {metadataValue(document.template_id)}
+                  {resolvedTemplate
+                    ? joinReadableParts([
+                        resolvedTemplate.name ?? null,
+                        resolvedTemplate.code ? `Code ${resolvedTemplate.code}` : null,
+                      ])
+                    : metadataValue(document.template_id)}
                 </dd>
               </div>
               <div>
@@ -280,10 +516,24 @@ export default function GeneratedDocumentDetailPage() {
               </div>
               <div>
                 <dt className="text-xs uppercase tracking-wide text-zinc-500">
-                  Entity ID
+                  Linked Entity
                 </dt>
                 <dd className="text-sm text-zinc-900 dark:text-zinc-100">
-                  {metadataValue(document.entity_id)}
+                  {resolvedEntity ? (
+                    resolvedEntity.href ? (
+                      <Link
+                        href={resolvedEntity.href}
+                        className="text-blue-700 underline underline-offset-2 hover:text-blue-900 dark:text-blue-300 dark:hover:text-blue-200"
+                      >
+                        {resolvedEntity.label}
+                        {resolvedEntity.hint ? ` · ${resolvedEntity.hint}` : ""}
+                      </Link>
+                    ) : (
+                      joinReadableParts([resolvedEntity.label, resolvedEntity.hint])
+                    )
+                  ) : (
+                    metadataValue(document.entity_id)
+                  )}
                 </dd>
               </div>
               <div>
@@ -296,10 +546,12 @@ export default function GeneratedDocumentDetailPage() {
               </div>
               <div>
                 <dt className="text-xs uppercase tracking-wide text-zinc-500">
-                  Generated By User ID
+                  Generated By
                 </dt>
                 <dd className="text-sm text-zinc-900 dark:text-zinc-100">
-                  {metadataValue(document.generated_by_user_id)}
+                  {resolvedUser
+                    ? joinReadableParts([resolvedUser.email ?? null, resolvedUser.phone ?? null])
+                    : metadataValue(document.generated_by_user_id)}
                 </dd>
               </div>
               <div>
@@ -435,26 +687,61 @@ export default function GeneratedDocumentDetailPage() {
                   </thead>
                   <tbody>
                     {links.map((link) => (
-                      <tr
-                        key={link.id}
-                        className="border-b border-zinc-100 dark:border-zinc-800"
-                      >
-                        <td className="px-2 py-2 font-mono text-xs text-zinc-800 dark:text-zinc-200">
-                          {link.id}
-                        </td>
-                        <td className="px-2 py-2 font-mono text-xs text-zinc-800 dark:text-zinc-200">
-                          {metadataValue(link.entity_type)}
-                        </td>
-                        <td className="px-2 py-2 font-mono text-xs text-zinc-800 dark:text-zinc-200">
-                          {metadataValue(link.entity_id)}
-                        </td>
-                        <td className="px-2 py-2 font-mono text-xs text-zinc-800 dark:text-zinc-200">
-                          {metadataValue(link.link_role)}
-                        </td>
-                        <td className="px-2 py-2 font-mono text-xs text-zinc-800 dark:text-zinc-200">
-                          {metadataValue(link.created_at)}
-                        </td>
-                      </tr>
+                      (() => {
+                        const entityReference = buildEntityReference(
+                          link.entity_type,
+                          link.entity_id,
+                          {
+                            quotes,
+                            quoteVersions,
+                            orders,
+                            payments,
+                            installationJobs,
+                            installationResults,
+                            stockTransferDocuments,
+                          }
+                        );
+
+                        return (
+                          <tr
+                            key={link.id}
+                            className="border-b border-zinc-100 dark:border-zinc-800"
+                          >
+                            <td className="px-2 py-2 font-mono text-xs text-zinc-800 dark:text-zinc-200">
+                              {link.id}
+                            </td>
+                            <td className="px-2 py-2 font-mono text-xs text-zinc-800 dark:text-zinc-200">
+                              {metadataValue(link.entity_type)}
+                            </td>
+                            <td className="px-2 py-2 text-xs text-zinc-800 dark:text-zinc-200">
+                              {entityReference ? (
+                                entityReference.href ? (
+                                  <Link
+                                    href={entityReference.href}
+                                    className="text-blue-700 underline underline-offset-2 hover:text-blue-900 dark:text-blue-300 dark:hover:text-blue-200"
+                                  >
+                                    {entityReference.label}
+                                    {entityReference.hint ? ` · ${entityReference.hint}` : ""}
+                                  </Link>
+                                ) : (
+                                  joinReadableParts([
+                                    entityReference.label,
+                                    entityReference.hint,
+                                  ])
+                                )
+                              ) : (
+                                metadataValue(link.entity_id)
+                              )}
+                            </td>
+                            <td className="px-2 py-2 font-mono text-xs text-zinc-800 dark:text-zinc-200">
+                              {metadataValue(link.link_role)}
+                            </td>
+                            <td className="px-2 py-2 font-mono text-xs text-zinc-800 dark:text-zinc-200">
+                              {metadataValue(link.created_at)}
+                            </td>
+                          </tr>
+                        );
+                      })()
                     ))}
                   </tbody>
                 </table>

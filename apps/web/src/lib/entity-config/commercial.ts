@@ -57,7 +57,7 @@ export const commercialConfigs = {
     fields: [
       { key: "quote_id", label: "Quote", kind: "select", required: true, lookup: quoteLookup, section: "core" },
       { key: "version_number", label: "Version number", kind: "number", required: true, section: "core" },
-      { key: "based_on_version_id", label: "Based on version ID", kind: "number", section: "core" },
+      { key: "based_on_version_id", label: "Based on version", kind: "select", lookup: quoteVersionLookup, section: "core" },
       { key: "created_by_user_id", label: "Created by user", kind: "select", lookup: userLookup, section: "core" },
       { key: "version_status", label: "Version status", kind: "select", options: quoteVersionStatuses, section: "status" },
       { key: "reservation_status", label: "Reservation status", kind: "select", options: commercialReservationStatuses, section: "status" },

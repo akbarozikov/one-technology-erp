@@ -15,6 +15,7 @@ import {
 
 type OrderRow = {
   id: number;
+  quote_version_id: number | null;
   order_number: string;
   order_status: string;
   payment_status: string;
@@ -38,6 +39,12 @@ type PaymentRow = {
   reference_number: string | null;
 };
 
+type QuoteVersionRow = {
+  id: number;
+  version_number: number;
+  version_status: string;
+};
+
 type GeneratedDocumentRow = {
   id: number;
   entity_type: string;
@@ -59,6 +66,7 @@ export default function OrderDetailPage() {
   const [order, setOrder] = useState<OrderRow | null>(null);
   const [payments, setPayments] = useState<PaymentRow[]>([]);
   const [documents, setDocuments] = useState<GeneratedDocumentRow[]>([]);
+  const [linkedQuoteVersion, setLinkedQuoteVersion] = useState<QuoteVersionRow | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [configHint, setConfigHint] = useState(false);
@@ -78,10 +86,11 @@ export default function OrderDetailPage() {
       }
 
       try {
-        const [ordersRes, paymentsRes, docsRes] = await Promise.all([
+        const [ordersRes, paymentsRes, docsRes, quoteVersionsRes] = await Promise.all([
           apiGet<{ data: OrderRow[] }>("/api/orders"),
           apiGet<{ data: PaymentRow[] }>("/api/payments"),
           apiGet<{ data: GeneratedDocumentRow[] }>("/api/generated-documents"),
+          apiGet<{ data: QuoteVersionRow[] }>("/api/quote-versions"),
         ]);
 
         if (cancelled) return;
@@ -92,6 +101,7 @@ export default function OrderDetailPage() {
           setOrder(null);
           setPayments([]);
           setDocuments([]);
+          setLinkedQuoteVersion(null);
           return;
         }
 
@@ -101,6 +111,13 @@ export default function OrderDetailPage() {
           (docsRes.data ?? []).filter(
             (document) => document.entity_type === "order" && document.entity_id === id
           )
+        );
+        setLinkedQuoteVersion(
+          foundOrder.quote_version_id === null
+            ? null
+            : (quoteVersionsRes.data ?? []).find(
+                (row) => row.id === foundOrder.quote_version_id
+              ) ?? null
         );
       } catch (err) {
         if (cancelled) return;
@@ -237,6 +254,11 @@ export default function OrderDetailPage() {
           >
             <SummaryGrid
               items={[
+                {
+                  label: "Source Quote Version",
+                  value: linkedQuoteVersion ? `Version ${linkedQuoteVersion.version_number}` : "-",
+                  hint: linkedQuoteVersion?.version_status ?? undefined,
+                },
                 { label: "Order Status", value: order.order_status },
                 { label: "Payment Status", value: order.payment_status },
                 { label: "Reservation Status", value: order.reservation_status },
@@ -325,6 +347,30 @@ export default function OrderDetailPage() {
             </DetailSection>
 
             <div className="space-y-6">
+              <DetailSection
+                title="Commercial Source"
+                description="Readable quote-version context that led into this order."
+              >
+                {linkedQuoteVersion ? (
+                  <RelatedList
+                    items={[
+                      {
+                        key: linkedQuoteVersion.id,
+                        href: `/admin/quote-versions/${linkedQuoteVersion.id}`,
+                        title: `Version ${linkedQuoteVersion.version_number}`,
+                        meta: linkedQuoteVersion.version_status,
+                        description: "Open the originating quote-version workflow page.",
+                      },
+                    ]}
+                    emptyMessage=""
+                  />
+                ) : (
+                  <p className="text-sm text-zinc-500 dark:text-zinc-400">
+                    No linked quote version is attached to this order.
+                  </p>
+                )}
+              </DetailSection>
+
               <DetailSection
                 title="Recent Payments"
                 description="Recent payment records already linked to this order."

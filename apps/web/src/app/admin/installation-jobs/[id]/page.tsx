@@ -55,6 +55,14 @@ type OrderRow = {
   order_status: string;
 };
 
+type OrderLineRow = {
+  id: number;
+  order_id: number;
+  line_number: number;
+  snapshot_product_name: string | null;
+  fulfillment_status: string | null;
+};
+
 export default function InstallationJobDetailPage() {
   const params = useParams<{ id: string }>();
   const id = Number(params?.id);
@@ -62,6 +70,7 @@ export default function InstallationJobDetailPage() {
   const [results, setResults] = useState<InstallationResultRow[]>([]);
   const [documents, setDocuments] = useState<GeneratedDocumentRow[]>([]);
   const [linkedOrder, setLinkedOrder] = useState<OrderRow | null>(null);
+  const [linkedOrderLine, setLinkedOrderLine] = useState<OrderLineRow | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [configHint, setConfigHint] = useState(false);
@@ -91,11 +100,12 @@ export default function InstallationJobDetailPage() {
       }
 
       try {
-        const [jobsRes, resultsRes, docsRes, ordersRes] = await Promise.all([
+        const [jobsRes, resultsRes, docsRes, ordersRes, orderLinesRes] = await Promise.all([
           apiGet<{ data: InstallationJobRow[] }>("/api/installation-jobs"),
           apiGet<{ data: InstallationResultRow[] }>("/api/installation-results"),
           apiGet<{ data: GeneratedDocumentRow[] }>("/api/generated-documents"),
           apiGet<{ data: OrderRow[] }>("/api/orders"),
+          apiGet<{ data: OrderLineRow[] }>("/api/order-lines"),
         ]);
 
         if (cancelled) return;
@@ -107,6 +117,7 @@ export default function InstallationJobDetailPage() {
           setResults([]);
           setDocuments([]);
           setLinkedOrder(null);
+          setLinkedOrderLine(null);
           return;
         }
 
@@ -125,6 +136,11 @@ export default function InstallationJobDetailPage() {
           foundJob.order_id === null
             ? null
             : (ordersRes.data ?? []).find((row) => row.id === foundJob.order_id) ?? null
+        );
+        setLinkedOrderLine(
+          foundJob.order_line_id === null
+            ? null
+            : (orderLinesRes.data ?? []).find((row) => row.id === foundJob.order_line_id) ?? null
         );
       } catch (err) {
         if (cancelled) return;
@@ -327,6 +343,15 @@ export default function InstallationJobDetailPage() {
                 { label: "Job Status", value: job.job_status },
                 { label: "Planned Date", value: job.planned_date || "-" },
                 { label: "Completed At", value: job.actual_completed_at || "-" },
+                {
+                  label: "Linked Order Line",
+                  value: linkedOrderLine
+                    ? `Line ${linkedOrderLine.line_number}`
+                    : job.order_line_id !== null
+                      ? `#${job.order_line_id}`
+                      : "-",
+                  hint: linkedOrderLine?.snapshot_product_name ?? undefined,
+                },
                 { label: "Address", value: job.address_text || "-" },
                 { label: "City", value: job.city || "-" },
                 { label: "Contact Name", value: job.contact_name || "-" },
@@ -471,9 +496,10 @@ export default function InstallationJobDetailPage() {
                         href: `/admin/orders/${linkedOrder.id}`,
                         title: linkedOrder.order_number,
                         meta: linkedOrder.order_status,
-                        description:
-                          job.order_line_id !== null
-                            ? `Linked order line: ${job.order_line_id}`
+                        description: linkedOrderLine
+                          ? `Linked order line ${linkedOrderLine.line_number}: ${linkedOrderLine.snapshot_product_name ?? "Unnamed line"}`
+                          : job.order_line_id !== null
+                            ? `Linked order line ID ${job.order_line_id}`
                             : "Linked at order level",
                       },
                     ]}

@@ -6,6 +6,7 @@ import {
   installationJobStatuses,
   installationJobTypes,
   installationResultStatuses,
+  orderLineLookup,
   orderLookup,
   userLookup,
 } from "./shared";
@@ -29,7 +30,7 @@ export const installationConfigs = {
     ],
     fields: [
       { key: "order_id", label: "Order", kind: "select", lookup: orderLookup, section: "core" },
-      { key: "order_line_id", label: "Order line ID", kind: "number", section: "core" },
+      { key: "order_line_id", label: "Order line", kind: "select", lookup: orderLineLookup, section: "core" },
       { key: "job_number", label: "Job number", kind: "text", required: true, section: "core" },
       { key: "job_type", label: "Job type", kind: "select", required: true, options: installationJobTypes, section: "core" },
       { key: "job_status", label: "Job status", kind: "select", options: installationJobStatuses, section: "schedule" },
