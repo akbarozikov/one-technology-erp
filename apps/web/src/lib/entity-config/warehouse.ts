@@ -64,6 +64,15 @@ export const warehouseConfigs = {
   stock_movements: {
     title: "Stock movements",
     apiPath: "/api/stock-movements",
+    tableColumns: [
+      { key: "reference_code", label: "Reference" },
+      { key: "movement_type", label: "Movement Type", format: "status" },
+      { key: "status", label: "Status", format: "status" },
+      { key: "warehouse_id", label: "Warehouse" },
+      { key: "source_warehouse_id", label: "Source" },
+      { key: "destination_warehouse_id", label: "Destination" },
+      { key: "movement_date", label: "Movement Date", format: "datetime" },
+    ],
     searchKeys: ["reference_code", "related_entity_type", "related_entity_id", "notes"],
     filters: [
       { key: "movement_type", label: "Movement type", options: stockMovementTypes },
@@ -249,6 +258,15 @@ export const warehouseConfigs = {
   stock_reservations: {
     title: "Stock reservations",
     apiPath: "/api/stock-reservations",
+    tableColumns: [
+      { key: "product_id", label: "Product" },
+      { key: "warehouse_id", label: "Warehouse" },
+      { key: "position_id", label: "Position" },
+      { key: "status", label: "Status", format: "status" },
+      { key: "reserved_qty", label: "Reserved Qty" },
+      { key: "reserved_from", label: "Reserved From", format: "datetime" },
+      { key: "reserved_until", label: "Reserved Until", format: "datetime" },
+    ],
     searchKeys: ["reservation_reason", "release_reason"],
     filters: [
       { key: "status", label: "Status", options: reservationStatuses },

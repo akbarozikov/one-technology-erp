@@ -9,7 +9,7 @@ import {
   formatApiError,
   getApiBaseUrl,
 } from "@/lib/api";
-import type { EntityConfig, EntityField } from "@/lib/entity-config";
+import type { EntityConfig, EntityField, EntityTableColumn } from "@/lib/entity-config";
 
 type LookupOption = {
   value: string;
@@ -71,6 +71,108 @@ function cellValue(v: unknown): string {
   return String(v);
 }
 
+function titleCaseKey(value: string): string {
+  return value
+    .split("_")
+    .filter(Boolean)
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(" ");
+}
+
+function formatDateValue(value: unknown, includeTime: boolean): string {
+  if (value === null || value === undefined || value === "") {
+    return "—";
+  }
+
+  const raw = String(value).trim();
+  if (!raw) {
+    return "—";
+  }
+
+  const normalized =
+    includeTime && /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(raw) ? `${raw}:00` : raw;
+  const parsed = new Date(normalized);
+  if (Number.isNaN(parsed.getTime())) {
+    return raw;
+  }
+
+  return new Intl.DateTimeFormat(
+    undefined,
+    includeTime ? { dateStyle: "medium", timeStyle: "short" } : { dateStyle: "medium" }
+  ).format(parsed);
+}
+
+function formatMoneyValue(value: unknown): string {
+  if (value === null || value === undefined || value === "") {
+    return "—";
+  }
+
+  const amount = typeof value === "number" ? value : Number(value);
+  if (Number.isNaN(amount)) {
+    return String(value);
+  }
+
+  return amount.toFixed(2);
+}
+
+function statusTone(value: string): string {
+  const normalized = value.toLowerCase();
+
+  if (
+    [
+      "active",
+      "confirmed",
+      "completed",
+      "paid",
+      "generated",
+      "accepted",
+      "fulfilled",
+      "ready_for_fulfillment",
+      "recorded",
+    ].includes(normalized)
+  ) {
+    return "border-emerald-200 bg-emerald-50 text-emerald-800 dark:border-emerald-900 dark:bg-emerald-950/40 dark:text-emerald-200";
+  }
+
+  if (
+    [
+      "draft",
+      "scheduled",
+      "in_progress",
+      "prepared",
+      "partially_paid",
+      "partially_reserved",
+      "fully_reserved",
+      "sent",
+      "archived",
+      "pending",
+      "reserved",
+      "issued",
+    ].includes(normalized)
+  ) {
+    return "border-amber-200 bg-amber-50 text-amber-800 dark:border-amber-900 dark:bg-amber-950/40 dark:text-amber-200";
+  }
+
+  if (
+    [
+      "cancelled",
+      "failed",
+      "rejected",
+      "expired",
+      "released",
+      "consumed",
+      "refunded",
+      "suspended",
+      "inactive",
+      "archived",
+    ].includes(normalized)
+  ) {
+    return "border-red-200 bg-red-50 text-red-800 dark:border-red-900 dark:bg-red-950/40 dark:text-red-200";
+  }
+
+  return "border-zinc-200 bg-zinc-100 text-zinc-800 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-200";
+}
+
 function isDetailCell(
   config: EntityConfig,
   row: Record<string, unknown>,
@@ -106,6 +208,91 @@ function buildLookupLabel(
     return main;
   }
   return `${row.id} · ${main}`;
+}
+
+function resolveLookupCell(
+  field: EntityField | undefined,
+  rawValue: unknown,
+  lookupOptions: Record<string, LookupOption[]>
+): string | null {
+  if (!field?.lookup || rawValue === null || rawValue === undefined || rawValue === "") {
+    return null;
+  }
+
+  const match = (lookupOptions[field.key] ?? []).find(
+    (option) => option.value === String(rawValue)
+  );
+  return match?.label ?? null;
+}
+
+function renderTableCellValue(
+  row: Record<string, unknown>,
+  column: EntityTableColumn,
+  field: EntityField | undefined,
+  lookupOptions: Record<string, LookupOption[]>
+): React.ReactNode {
+  const rawValue = row[column.key];
+  const displayKind =
+    column.format ??
+    (column.key === "status" || column.key.endsWith("_status")
+      ? "status"
+      : field?.kind === "date"
+        ? "date"
+        : field?.kind === "datetime-local"
+          ? "datetime"
+          : field?.kind === "checkbox" || field?.kind === "boolean-select"
+            ? "boolean"
+            : "text");
+
+  const lookupLabel = resolveLookupCell(field, rawValue, lookupOptions);
+  const textValue = lookupLabel ?? cellValue(rawValue);
+
+  if (displayKind === "boolean") {
+    if (rawValue === null || rawValue === undefined || rawValue === "") {
+      return "—";
+    }
+    const truthy =
+      rawValue === true ||
+      rawValue === 1 ||
+      rawValue === "1" ||
+      String(rawValue).toLowerCase() === "true";
+    return truthy ? "Yes" : "No";
+  }
+
+  if (displayKind === "date") {
+    return formatDateValue(rawValue, false);
+  }
+
+  if (displayKind === "datetime") {
+    return formatDateValue(rawValue, true);
+  }
+
+  if (displayKind === "money") {
+    return formatMoneyValue(rawValue);
+  }
+
+  if (displayKind === "status") {
+    const label =
+      rawValue === null || rawValue === undefined || rawValue === ""
+        ? "—"
+        : lookupLabel ??
+          field?.options?.find((option) => option.value === String(rawValue))?.label ??
+          String(rawValue);
+    if (label === "—") {
+      return label;
+    }
+    return (
+      <span
+        className={`inline-flex rounded-full border px-2 py-0.5 text-[11px] font-medium ${statusTone(
+          label
+        )}`}
+      >
+        {label}
+      </span>
+    );
+  }
+
+  return textValue || "—";
 }
 
 function renderField(
@@ -368,6 +555,11 @@ export function EntityListCreate({ config }: { config: EntityConfig }) {
     });
   }, [config.filters, config.searchKeys, filterValues, rows, searchTerm]);
 
+  const fieldsByKey = useMemo(
+    () => Object.fromEntries(config.fields.map((field) => [field.key, field])),
+    [config.fields]
+  );
+
   const columnKeys =
     rows && rows.length > 0
       ? Object.keys(rows[0] as object)
@@ -376,6 +568,17 @@ export function EntityListCreate({ config }: { config: EntityConfig }) {
           ...config.fields.map((f) => f.key),
           ...(createEnabled ? [] : ["created_at", "updated_at"]),
         ];
+
+  const tableColumns = useMemo<EntityTableColumn[]>(
+    () =>
+      config.tableColumns && config.tableColumns.length > 0
+        ? config.tableColumns
+        : columnKeys.map((key) => ({
+            key,
+            label: fieldsByKey[key]?.label ?? titleCaseKey(key),
+          })),
+    [columnKeys, config.tableColumns, fieldsByKey]
+  );
 
   const fieldGroups = useMemo<FieldGroup[]>(() => {
     if (!config.formSections || config.formSections.length === 0) {
@@ -494,12 +697,12 @@ export function EntityListCreate({ config }: { config: EntityConfig }) {
                 <table className="min-w-full border-collapse text-left text-sm">
                   <thead>
                     <tr className="border-b border-zinc-200 dark:border-zinc-600">
-                      {columnKeys.map((k) => (
+                      {tableColumns.map((column) => (
                         <th
-                          key={k}
-                          className="whitespace-nowrap px-2 py-2 font-medium text-zinc-700 dark:text-zinc-300"
+                          key={column.key}
+                          className="whitespace-nowrap px-3 py-2 font-medium text-zinc-700 dark:text-zinc-300"
                         >
-                          {k}
+                          {column.label ?? fieldsByKey[column.key]?.label ?? titleCaseKey(column.key)}
                         </th>
                       ))}
                     </tr>
@@ -514,21 +717,37 @@ export function EntityListCreate({ config }: { config: EntityConfig }) {
                         }
                         className="border-b border-zinc-100 dark:border-zinc-800"
                       >
-                        {columnKeys.map((k) => (
+                        {tableColumns.map((column) => (
                           <td
-                            key={k}
-                            className="max-w-xs truncate px-2 py-2 font-mono text-xs text-zinc-800 dark:text-zinc-200"
-                            title={cellValue((row as Record<string, unknown>)[k])}
+                            key={column.key}
+                            className="max-w-xs px-3 py-2 text-xs text-zinc-800 dark:text-zinc-200"
+                            title={cellValue((row as Record<string, unknown>)[column.key])}
                           >
-                            {isDetailCell(config, row as Record<string, unknown>, k) ? (
+                            {isDetailCell(
+                              config,
+                              row as Record<string, unknown>,
+                              column.key
+                            ) ? (
                               <Link
                                 href={`${config.detailBasePath}/${(row as { id: number }).id}`}
-                                className="font-medium text-blue-700 underline decoration-blue-300 underline-offset-2 hover:text-blue-900 dark:text-blue-300 dark:decoration-blue-700 dark:hover:text-blue-200"
+                                className="inline-flex max-w-full truncate font-medium text-blue-700 underline decoration-blue-300 underline-offset-2 hover:text-blue-900 dark:text-blue-300 dark:decoration-blue-700 dark:hover:text-blue-200"
                               >
-                                {cellValue((row as Record<string, unknown>)[k])}
+                                {renderTableCellValue(
+                                  row as Record<string, unknown>,
+                                  column,
+                                  fieldsByKey[column.key],
+                                  lookupOptions
+                                )}
                               </Link>
                             ) : (
-                              cellValue((row as Record<string, unknown>)[k])
+                              <span className="inline-flex max-w-full items-center truncate">
+                                {renderTableCellValue(
+                                  row as Record<string, unknown>,
+                                  column,
+                                  fieldsByKey[column.key],
+                                  lookupOptions
+                                )}
+                              </span>
                             )}
                           </td>
                         ))}

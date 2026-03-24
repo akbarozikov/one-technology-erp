@@ -36,6 +36,13 @@ export const documentConfigs = {
     apiPath: "/api/generated-documents",
     detailBasePath: "/admin/generated-documents",
     detailLabelKey: "title",
+    tableColumns: [
+      { key: "title", label: "Title" },
+      { key: "document_number", label: "Document Number" },
+      { key: "entity_type", label: "Entity" },
+      { key: "generation_status", label: "Status", format: "status" },
+      { key: "generated_at", label: "Generated At", format: "datetime" },
+    ],
     searchKeys: ["title", "document_number"],
     filters: [
       { key: "generation_status", label: "Generation status", options: documentGenerationStatuses },

@@ -34,11 +34,18 @@ export type EntityFormSection = {
   description?: string;
 };
 
+export type EntityTableColumn = {
+  key: string;
+  label?: string;
+  format?: "text" | "status" | "date" | "datetime" | "boolean" | "money";
+};
+
 export type EntityConfig = {
   title: string;
   apiPath: string;
   fields: EntityField[];
   formSections?: EntityFormSection[];
+  tableColumns?: EntityTableColumn[];
   createEnabled?: boolean;
   detailBasePath?: string;
   detailLabelKey?: string;

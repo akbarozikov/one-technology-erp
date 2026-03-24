@@ -44,6 +44,14 @@ export const commercialConfigs = {
     apiPath: "/api/quote-versions",
     detailBasePath: "/admin/quote-versions",
     detailLabelKey: "version_number",
+    tableColumns: [
+      { key: "quote_id", label: "Quote" },
+      { key: "version_number", label: "Version" },
+      { key: "version_status", label: "Status", format: "status" },
+      { key: "reservation_status", label: "Reservation", format: "status" },
+      { key: "actual_sale_total", label: "Actual Total", format: "money" },
+      { key: "grand_total", label: "Grand Total", format: "money" },
+    ],
     searchKeys: ["version_number", "quote_id", "notes"],
     filters: [
       { key: "version_status", label: "Version status", options: quoteVersionStatuses },
@@ -110,6 +118,15 @@ export const commercialConfigs = {
     apiPath: "/api/orders",
     detailBasePath: "/admin/orders",
     detailLabelKey: "order_number",
+    tableColumns: [
+      { key: "order_number", label: "Order" },
+      { key: "order_status", label: "Order Status", format: "status" },
+      { key: "payment_status", label: "Payment", format: "status" },
+      { key: "reservation_status", label: "Reservation", format: "status" },
+      { key: "grand_total", label: "Grand Total", format: "money" },
+      { key: "remaining_total", label: "Remaining", format: "money" },
+      { key: "order_date", label: "Order Date", format: "date" },
+    ],
     searchKeys: ["order_number", "notes"],
     filters: [
       { key: "order_status", label: "Order status", options: orderStatuses },
@@ -196,6 +213,15 @@ export const commercialConfigs = {
   payments: {
     title: "Payments",
     apiPath: "/api/payments",
+    tableColumns: [
+      { key: "order_id", label: "Order" },
+      { key: "payment_method_id", label: "Method" },
+      { key: "amount", label: "Amount", format: "money" },
+      { key: "currency", label: "Currency" },
+      { key: "status", label: "Status", format: "status" },
+      { key: "payment_date", label: "Payment Date", format: "date" },
+      { key: "reference_number", label: "Reference" },
+    ],
     searchKeys: ["reference_number", "notes"],
     filters: [
       { key: "status", label: "Status", options: paymentRecordStatuses },

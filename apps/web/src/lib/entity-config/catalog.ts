@@ -51,6 +51,14 @@ export const catalogConfigs = {
   products: {
     title: "Products",
     apiPath: "/api/products",
+    tableColumns: [
+      { key: "name", label: "Product" },
+      { key: "sku", label: "SKU" },
+      { key: "product_type", label: "Type", format: "status" },
+      { key: "status", label: "Status", format: "status" },
+      { key: "brand", label: "Brand" },
+      { key: "minimum_sale_price", label: "Min Sale Price", format: "money" },
+    ],
     searchKeys: ["name", "sku", "code", "brand"],
     filters: [
       { key: "product_type", label: "Product type", options: productTypes },

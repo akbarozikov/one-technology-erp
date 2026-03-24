@@ -17,6 +17,14 @@ export const installationConfigs = {
     apiPath: "/api/installation-jobs",
     detailBasePath: "/admin/installation-jobs",
     detailLabelKey: "job_number",
+    tableColumns: [
+      { key: "job_number", label: "Job" },
+      { key: "job_status", label: "Status", format: "status" },
+      { key: "job_type", label: "Type", format: "status" },
+      { key: "planned_date", label: "Planned Date", format: "date" },
+      { key: "contact_name", label: "Contact" },
+      { key: "city", label: "City" },
+    ],
     searchKeys: ["job_number", "contact_name", "contact_phone", "notes"],
     filters: [
       { key: "job_status", label: "Job status", options: installationJobStatuses },
