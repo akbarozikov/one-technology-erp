@@ -228,7 +228,7 @@ export function BossControlDashboard() {
             <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-50">
               Quick Control Actions
             </h2>
-            <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+            <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-5">
               <Link
                 href="/admin/approvals"
                 className="rounded border border-zinc-900 bg-zinc-900 px-4 py-3 text-white hover:bg-zinc-800 dark:border-zinc-100 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-white"
@@ -254,6 +254,15 @@ export function BossControlDashboard() {
                 <div className="font-medium text-zinc-900 dark:text-zinc-100">Check payments & debt</div>
                 <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
                   See what is paid, open, overdue, or risky.
+                </p>
+              </Link>
+              <Link
+                href="/admin/expenses-adjustments"
+                className="rounded border border-zinc-200 px-4 py-3 hover:bg-zinc-50 dark:border-zinc-700 dark:hover:bg-zinc-800"
+              >
+                <div className="font-medium text-zinc-900 dark:text-zinc-100">Check expenses & inventory</div>
+                <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
+                  Review supplier spend, writeoffs, and manual stock corrections.
                 </p>
               </Link>
               <Link
