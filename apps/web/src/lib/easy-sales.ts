@@ -63,6 +63,9 @@ export type SaleOrderRow = {
   order_status: string;
   payment_status?: string;
   grand_total: number | null;
+  paid_total?: number | null;
+  remaining_total?: number | null;
+  order_date?: string | null;
   notes: string | null;
   updated_at?: string | null;
 };
@@ -77,6 +80,16 @@ export type SaleUserRow = {
   id: number;
   email: string;
   phone: string | null;
+};
+
+export type SalePaymentRow = {
+  id: number;
+  order_id: number;
+  amount: number | null;
+  payment_date: string | null;
+  status: string;
+  reference_number: string | null;
+  updated_at?: string | null;
 };
 
 type BuildSalesInput = {

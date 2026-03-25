@@ -248,12 +248,12 @@ export function BossControlDashboard() {
                 </p>
               </Link>
               <Link
-                href="/admin/documents-lite"
+                href="/admin/payments-debt"
                 className="rounded border border-zinc-200 px-4 py-3 hover:bg-zinc-50 dark:border-zinc-700 dark:hover:bg-zinc-800"
               >
-                <div className="font-medium text-zinc-900 dark:text-zinc-100">Check documents</div>
+                <div className="font-medium text-zinc-900 dark:text-zinc-100">Check payments & debt</div>
                 <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
-                  Review generated customer-facing documents.
+                  See what is paid, open, overdue, or risky.
                 </p>
               </Link>
               <Link

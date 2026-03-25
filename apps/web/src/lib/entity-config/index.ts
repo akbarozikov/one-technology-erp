@@ -41,6 +41,7 @@ export const easySellerNavItems = [
 export const easyBossNavItems = [
   { href: "/admin", label: "Dashboard" },
   { href: "/admin/approvals", label: "Awaiting Approval" },
+  { href: "/admin/payments-debt", label: "Payments & Debt" },
   { href: "/admin/my-sales", label: "Sales Overview" },
   { href: "/admin/documents-lite", label: "Documents" },
   { href: "/admin/installations-lite", label: "Installations" },
