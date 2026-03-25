@@ -1,4 +1,4 @@
-import type { AdminNavGroup, EntityConfigMap } from "./shared";
+﻿import type { AdminNavGroup, EntityConfigMap } from "./shared";
 import {
   productAttributeDataTypes,
   productLookup,
@@ -83,6 +83,17 @@ export const catalogConfigs = {
       { key: "product_type", label: "Product type", options: productTypes },
       { key: "status", label: "Status", options: productStatuses },
     ],
+    listSection: {
+      kicker: "Review",
+      title: "Product catalog",
+      description: "Scan active catalog records above first, then move into the structured form only when you need to add or maintain a product.",
+    },
+    createSection: {
+      kicker: "Create",
+      title: "Add a product",
+      description: "Work section by section: identity first, then classification, pricing, and the defaults the team will rely on later.",
+    },
+    formSectionLayout: "stacked",
     formSections: [
       { key: "core", label: "Core Info", description: "Name, SKU, and the essential identity signals belong up front." },
       { key: "classification", label: "Classification", description: "Describe what kind of product this is before setting pricing or defaults." },
@@ -188,4 +199,6 @@ export const catalogNavGroup: AdminNavGroup = {
     { href: "/admin/product-bundle-items", label: "Product Bundle Items" },
   ],
 };
+
+
 

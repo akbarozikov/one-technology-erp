@@ -1,4 +1,4 @@
-import type { AdminNavGroup, EntityConfigMap } from "./shared";
+﻿import type { AdminNavGroup, EntityConfigMap } from "./shared";
 import {
   commercialLineTypes,
   commercialReservationStatuses,
@@ -24,19 +24,46 @@ export const commercialConfigs = {
   quotes: {
     title: "Quotes",
     apiPath: "/api/quotes",
+    tableColumns: [
+      { key: "quote_number", label: "Quote" },
+      { key: "status", label: "Status", format: "status" },
+      { key: "grand_total", label: "Grand Total", format: "money" },
+      { key: "valid_until", label: "Valid Until", format: "date" },
+      { key: "created_by_user_id", label: "Created By" },
+    ],
+    searchKeys: ["quote_number", "notes"],
+    filters: [
+      { key: "status", label: "Status", options: quoteStatuses },
+    ],
+    listSection: {
+      kicker: "Review",
+      title: "Quote pipeline",
+      description: "Scan active commercial quotes first, then drop into a new draft only when you need the next top-level quote record.",
+    },
+    createSection: {
+      kicker: "Create",
+      title: "Add a quote",
+      description: "Start with the commercial identity, set timing and totals, then capture any approval or handoff notes below.",
+    },
+    formSections: [
+      { key: "core", label: "Core Info", description: "Set the quote identity and owner first so the rest of the record has clear commercial context." },
+      { key: "status", label: "Status & Validity", description: "Capture state, timing, and approval context together." },
+      { key: "totals", label: "Totals", description: "Keep pricing and discount totals in one scan-friendly block." },
+      { key: "notes", label: "Notes", description: "Use this area for context, negotiation detail, or internal handoff notes." },
+    ],
     fields: [
-      { key: "deal_id", label: "Deal ID", kind: "number" },
-      { key: "quote_number", label: "Quote number", kind: "text", required: true },
-      { key: "status", label: "Status", kind: "select", options: quoteStatuses },
-      { key: "currency", label: "Currency", kind: "text" },
-      { key: "minimum_sale_total", label: "Minimum sale total", kind: "number", step: "any", min: 0 },
-      { key: "actual_sale_total", label: "Actual sale total", kind: "number", step: "any", min: 0 },
-      { key: "discount_total", label: "Discount total", kind: "number", step: "any", min: 0 },
-      { key: "grand_total", label: "Grand total", kind: "number", step: "any", min: 0 },
-      { key: "valid_until", label: "Valid until", kind: "date" },
-      { key: "created_by_user_id", label: "Created by user", kind: "select", lookup: userLookup },
-      { key: "approved_by_user_id", label: "Approved by user", kind: "select", lookup: userLookup },
-      { key: "notes", label: "Notes", kind: "textarea" },
+      { key: "deal_id", label: "Deal ID", kind: "number", section: "core" },
+      { key: "quote_number", label: "Quote number", kind: "text", required: true, section: "core" },
+      { key: "status", label: "Status", kind: "select", options: quoteStatuses, section: "status" },
+      { key: "currency", label: "Currency", kind: "text", section: "core" },
+      { key: "minimum_sale_total", label: "Minimum sale total", kind: "number", step: "any", min: 0, section: "totals" },
+      { key: "actual_sale_total", label: "Actual sale total", kind: "number", step: "any", min: 0, section: "totals" },
+      { key: "discount_total", label: "Discount total", kind: "number", step: "any", min: 0, section: "totals" },
+      { key: "grand_total", label: "Grand total", kind: "number", step: "any", min: 0, section: "totals" },
+      { key: "valid_until", label: "Valid until", kind: "date", section: "status" },
+      { key: "created_by_user_id", label: "Created by user", kind: "select", lookup: userLookup, section: "status" },
+      { key: "approved_by_user_id", label: "Approved by user", kind: "select", lookup: userLookup, section: "status" },
+      { key: "notes", label: "Notes", kind: "textarea", section: "notes" },
     ],
   },
   quote_versions: {
@@ -104,7 +131,7 @@ export const commercialConfigs = {
       { key: "snapshot_sku", label: "Snapshot SKU", kind: "text", required: true },
       { key: "snapshot_unit_name", label: "Snapshot unit name", kind: "text", required: true },
       { key: "snapshot_description", label: "Snapshot description", kind: "textarea" },
-      { key: "notes", label: "Notes", kind: "textarea" },
+      { key: "notes", label: "Notes", kind: "textarea", section: "notes" },
     ],
   },
   quote_discounts: {
@@ -114,9 +141,9 @@ export const commercialConfigs = {
       { key: "quote_version_id", label: "Quote version", kind: "select", required: true, lookup: quoteVersionLookup },
       { key: "discount_type", label: "Discount type", kind: "select", required: true, options: discountTypes },
       { key: "discount_value", label: "Discount value", kind: "number", required: true, step: "any", min: 0 },
-      { key: "discount_total", label: "Discount total", kind: "number", step: "any", min: 0 },
+      { key: "discount_total", label: "Discount total", kind: "number", step: "any", min: 0, section: "totals" },
       { key: "reason", label: "Reason", kind: "textarea" },
-      { key: "created_by_user_id", label: "Created by user", kind: "select", lookup: userLookup },
+      { key: "created_by_user_id", label: "Created by user", kind: "select", lookup: userLookup, section: "status" },
     ],
   },
   orders: {
@@ -191,7 +218,7 @@ export const commercialConfigs = {
       { key: "snapshot_sku", label: "Snapshot SKU", kind: "text", required: true },
       { key: "snapshot_unit_name", label: "Snapshot unit name", kind: "text", required: true },
       { key: "snapshot_description", label: "Snapshot description", kind: "textarea" },
-      { key: "notes", label: "Notes", kind: "textarea" },
+      { key: "notes", label: "Notes", kind: "textarea", section: "notes" },
     ],
   },
   order_discounts: {
@@ -201,9 +228,9 @@ export const commercialConfigs = {
       { key: "order_id", label: "Order", kind: "select", required: true, lookup: orderLookup },
       { key: "discount_type", label: "Discount type", kind: "select", required: true, options: discountTypes },
       { key: "discount_value", label: "Discount value", kind: "number", required: true, step: "any", min: 0 },
-      { key: "discount_total", label: "Discount total", kind: "number", step: "any", min: 0 },
+      { key: "discount_total", label: "Discount total", kind: "number", step: "any", min: 0, section: "totals" },
       { key: "reason", label: "Reason", kind: "textarea" },
-      { key: "created_by_user_id", label: "Created by user", kind: "select", lookup: userLookup },
+      { key: "created_by_user_id", label: "Created by user", kind: "select", lookup: userLookup, section: "status" },
     ],
   },
   payment_methods: {
@@ -266,4 +293,5 @@ export const commercialNavGroup: AdminNavGroup = {
     { href: "/admin/order-discounts", label: "Order Discounts" },
   ],
 };
+
 

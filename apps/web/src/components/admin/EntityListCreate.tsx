@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
@@ -722,10 +722,24 @@ export function EntityListCreate({ config }: { config: EntityConfig }) {
         </div>
       )}
 
-      <section className="app-panel p-5 lg:p-6">
-        <h2 className="mb-3 text-lg font-semibold text-zinc-900 dark:text-zinc-50">
-          Current {config.title.toLowerCase()}
-        </h2>
+      <section className="app-panel-strong p-5 lg:p-6">
+        <div className="mb-5 flex flex-col gap-4 border-b border-black/6 pb-4 dark:border-white/8 lg:flex-row lg:items-end lg:justify-between">
+          <div className="space-y-1.5">
+            <p className="app-kicker">{config.listSection?.kicker ?? "Review"}</p>
+            <h2 className="app-section-title text-[1.15rem]">
+              {config.listSection?.title ?? `Current ${config.title.toLowerCase()}`}
+            </h2>
+            <p className="app-section-subtitle">
+              {config.listSection?.description ??
+                `Browse the current ${config.title.toLowerCase()} records, then move into creation only when you need a new one.`}
+            </p>
+          </div>
+          {!loading && !error && rows && rows.length > 0 && (
+            <span className="app-chip">
+              {rows.length} {rows.length === 1 ? "record" : "records"}
+            </span>
+          )}
+        </div>
         {loading && (
           <p className="text-sm text-zinc-500" role="status">
             Loading...
@@ -770,8 +784,19 @@ export function EntityListCreate({ config }: { config: EntityConfig }) {
             {((config.searchKeys && config.searchKeys.length > 0) ||
               (config.filters && config.filters.length > 0)) && (
               <div className="app-panel-muted flex flex-col gap-3 p-4">
+                <div className="flex flex-col gap-3 xl:flex-row xl:items-end xl:justify-between">
+                  <div className="space-y-1">
+                    <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">Search and narrow the list</h3>
+                    <p className="text-xs text-zinc-500 dark:text-zinc-400">
+                      Focus the table before you move into the next record.
+                    </p>
+                  </div>
+                  <p className="text-xs text-zinc-500 dark:text-zinc-400">
+                    Showing {filteredRows.length} of {rows.length} items.
+                  </p>
+                </div>
                 {config.searchKeys && config.searchKeys.length > 0 && (
-                  <label className="block text-sm">
+                  <label className="block text-sm xl:max-w-md">
                     <span className="mb-1 block font-medium text-zinc-700 dark:text-zinc-300">
                       Search
                     </span>
@@ -812,9 +837,6 @@ export function EntityListCreate({ config }: { config: EntityConfig }) {
                     ))}
                   </div>
                 )}
-                <p className="text-xs text-zinc-500 dark:text-zinc-400">
-                  Showing {filteredRows.length} of {rows.length} items.
-                </p>
               </div>
             )}
 
@@ -940,23 +962,24 @@ export function EntityListCreate({ config }: { config: EntityConfig }) {
 
       {createEnabled && (
         <section className="app-panel p-5 lg:p-6">
-          <div className="mb-5 flex flex-col gap-2 lg:flex-row lg:items-end lg:justify-between">
-            <div>
-              <p className="app-kicker">Create</p>
-              <h2 className="mt-2 text-lg font-semibold text-zinc-900 dark:text-zinc-50">
-                Add {config.title}
+          <div className="mb-5 flex flex-col gap-3 border-b border-black/6 pb-4 dark:border-white/8 lg:flex-row lg:items-end lg:justify-between">
+            <div className="space-y-1.5">
+              <p className="app-kicker">{config.createSection?.kicker ?? "Create"}</p>
+              <h2 className="app-section-title text-[1.15rem]">
+                {config.createSection?.title ?? `Add ${config.title}`}
               </h2>
+              <p className="app-section-subtitle">
+                {config.createSection?.description ?? "Fill in the grouped fields below, then save to create a new record."}
+              </p>
             </div>
+            <span className="app-chip">Structured form</span>
           </div>
-          <p className="mb-5 text-sm leading-6 text-zinc-500 dark:text-zinc-400">
-            Fill in the main details below, then save to create a new record.
-          </p>
           <form className="space-y-5" onSubmit={onSubmit} aria-busy={submitting}>
-            <div className={`grid gap-4 ${fieldGroups.length > 1 ? "xl:grid-cols-2" : ""}`}>
+            <div className={`grid gap-4 ${config.formSectionLayout === "stacked" ? "" : fieldGroups.length > 1 ? "xl:grid-cols-2" : ""}`}>
               {fieldGroups.map((group) => (
-                <section key={group.key} className="app-panel-muted p-4">
+                <section key={group.key} className="app-panel-muted p-4 lg:p-5">
                   {config.formSections && (
-                    <div className="mb-3">
+                    <div className="mb-3 border-b border-black/6 pb-3 dark:border-white/8">
                       <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
                         {group.label}
                       </h3>
@@ -967,8 +990,12 @@ export function EntityListCreate({ config }: { config: EntityConfig }) {
                       )}
                     </div>
                   )}
-                  <div className="space-y-3">
-                    {group.fields.map((field) => renderField(field, lookupOptions))}
+                  <div className="grid gap-3 md:grid-cols-2">
+                    {group.fields.map((field) => (
+                      <div key={field.key} className={field.kind === "textarea" ? "md:col-span-2" : ""}>
+                        {renderField(field, lookupOptions)}
+                      </div>
+                    ))}
                   </div>
                 </section>
               ))}
@@ -981,16 +1008,23 @@ export function EntityListCreate({ config }: { config: EntityConfig }) {
                 {submitError}
               </pre>
             )}
-            <button
-              type="submit"
-              disabled={submitting}
-              className="app-button-primary disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              {submitting ? "Saving..." : "Save"}
-            </button>
+            <div className="flex items-center justify-between gap-3 border-t border-black/6 pt-4 dark:border-white/8">
+              <p className="text-sm text-zinc-500 dark:text-zinc-400">
+                Review the grouped sections once, then save when the record is ready.
+              </p>
+              <button
+                type="submit"
+                disabled={submitting}
+                className="app-button-primary disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                {submitting ? "Saving..." : "Save"}
+              </button>
+            </div>
           </form>
         </section>
       )}
     </div>
   );
 }
+
+

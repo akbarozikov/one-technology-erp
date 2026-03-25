@@ -1,4 +1,4 @@
-export type FieldKind =
+﻿export type FieldKind =
   | "text"
   | "textarea"
   | "number"
@@ -61,11 +61,18 @@ export type EntityRecordAction = {
   successMessageTemplate?: string;
 };
 
+export type EntityPageSection = {
+  kicker?: string;
+  title?: string;
+  description?: string;
+};
+
 export type EntityConfig = {
   title: string;
   apiPath: string;
   fields: EntityField[];
   formSections?: EntityFormSection[];
+  formSectionLayout?: "grid" | "stacked";
   tableColumns?: EntityTableColumn[];
   createEnabled?: boolean;
   detailBasePath?: string;
@@ -76,6 +83,8 @@ export type EntityConfig = {
     label: string;
     options: { value: string; label: string }[];
   }>;
+  listSection?: EntityPageSection;
+  createSection?: EntityPageSection;
   listNotice?: EntityListNotice;
   recordActions?: EntityRecordAction[];
 };
@@ -544,3 +553,5 @@ export const generatedDocumentLookup = {
   labelKeys: ["title", "document_number"],
   includeIdInLabel: true,
 } as const satisfies EntityLookup;
+
+

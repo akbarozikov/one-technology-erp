@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -56,7 +56,7 @@ export function AdminSidebar() {
 
   return (
     <aside className="app-sidebar-panel hidden w-72 shrink-0 lg:flex lg:flex-col xl:w-76">
-      <div className="flex h-full flex-col gap-5 p-4 xl:p-5">
+      <div className="flex h-full flex-col gap-4 p-4 xl:p-5">
         <div className="rounded-[1.25rem] border border-white/8 bg-white/4 px-4 py-4 backdrop-blur-sm">
           <div className="text-[0.68rem] font-semibold uppercase tracking-[0.16em] text-white/45">
             One Technology ERP
@@ -77,7 +77,7 @@ export function AdminSidebar() {
           </p>
         </div>
 
-        <nav className="flex flex-1 flex-col gap-4 overflow-y-auto pr-1">
+        <nav className="flex flex-1 flex-col gap-3 overflow-y-auto pr-1">
           {mode === "easy" ? (
             <>
               <div>
@@ -109,31 +109,54 @@ export function AdminSidebar() {
                 </Link>
               </div>
 
+              <div className="app-sidebar-group-label px-2">Business areas</div>
+
               {adminNavGroups.map((group) => {
                 const isActiveGroup = activeAdvancedGroups.includes(group.label);
                 const collapsed = collapsedGroups[group.label] ?? !isActiveGroup;
 
                 return (
-                  <div key={group.label} className={`rounded-[1rem] border ${isActiveGroup ? "border-white/14 bg-white/4" : "border-transparent bg-transparent"}`}>
-                    <div className="flex items-center gap-2 px-2 py-1.5">
+                  <section
+                    key={group.label}
+                    className={`rounded-[1rem] border transition ${
+                      isActiveGroup
+                        ? "border-white/14 bg-white/5 shadow-[inset_0_1px_0_rgba(255,248,236,0.05)]"
+                        : "border-white/6 bg-white/[0.015]"
+                    }`}
+                  >
+                    <div className="flex items-center gap-2 px-2 py-2">
                       {group.href ? (
                         <Link
                           href={group.href}
-                          className={`flex-1 rounded-full px-2 py-1 text-[0.68rem] font-semibold uppercase tracking-[0.14em] transition ${
-                            isActiveGroup ? "bg-white/10 text-white/94" : "text-white/42 hover:bg-white/5 hover:text-white/72"
+                          className={`min-w-0 flex-1 rounded-[0.85rem] px-2.5 py-2 text-sm font-semibold transition ${
+                            isActiveGroup
+                              ? "bg-white/10 text-white/96"
+                              : "text-white/68 hover:bg-white/6 hover:text-white/92"
                           }`}
                         >
-                          {group.label}
+                          <div className="flex items-center justify-between gap-3">
+                            <span className="truncate">{group.label}</span>
+                            <span className="rounded-full border border-white/10 px-2 py-0.5 text-[11px] font-medium text-white/52">
+                              {group.items.length}
+                            </span>
+                          </div>
                         </Link>
                       ) : (
-                        <div className="app-sidebar-group-label flex-1 px-2">{group.label}</div>
+                        <div className="flex min-w-0 flex-1 items-center justify-between gap-3 rounded-[0.85rem] px-2.5 py-2 text-sm font-semibold text-white/86">
+                          <span className="truncate">{group.label}</span>
+                          <span className="rounded-full border border-white/10 px-2 py-0.5 text-[11px] font-medium text-white/52">
+                            {group.items.length}
+                          </span>
+                        </div>
                       )}
 
                       <button
                         type="button"
                         onClick={() => toggleGroup(group.label)}
-                        className={`rounded-full px-2 py-1 text-[11px] font-semibold transition ${
-                          isActiveGroup ? "text-white/82 hover:bg-white/8" : "text-white/42 hover:bg-white/5 hover:text-white/72"
+                        className={`rounded-full px-2.5 py-1.5 text-[11px] font-semibold transition ${
+                          isActiveGroup
+                            ? "text-white/82 hover:bg-white/8"
+                            : "text-white/46 hover:bg-white/5 hover:text-white/72"
                         }`}
                         aria-expanded={!collapsed}
                         aria-label={`${collapsed ? "Expand" : "Collapse"} ${group.label}`}
@@ -143,15 +166,18 @@ export function AdminSidebar() {
                     </div>
 
                     {!collapsed && (
-                      <div className="flex flex-col gap-1 px-2 pb-2">
-                        {group.items.map((item) => (
-                          <Link key={item.href} href={item.href} className={navItemClass(isActivePath(pathname, item.href))}>
-                            {item.label}
-                          </Link>
-                        ))}
+                      <div className="space-y-2 px-2 pb-2">
+                        <div className="border-t border-white/8" />
+                        <div className="flex flex-col gap-1">
+                          {group.items.map((item) => (
+                            <Link key={item.href} href={item.href} className={navItemClass(isActivePath(pathname, item.href))}>
+                              {item.label}
+                            </Link>
+                          ))}
+                        </div>
                       </div>
                     )}
-                  </div>
+                  </section>
                 );
               })}
             </>
