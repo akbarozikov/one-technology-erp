@@ -77,7 +77,7 @@ export function AdminSidebar() {
           </p>
         </div>
 
-        <nav className="flex flex-1 flex-col gap-3 overflow-y-auto pr-1">
+        <nav className="flex flex-1 flex-col gap-2.5 overflow-y-auto pr-1">
           {mode === "easy" ? (
             <>
               <div>
@@ -121,7 +121,7 @@ export function AdminSidebar() {
                     className={`rounded-[1rem] border transition ${
                       isActiveGroup
                         ? "border-white/14 bg-white/5 shadow-[inset_0_1px_0_rgba(255,248,236,0.05)]"
-                        : "border-white/6 bg-white/[0.015]"
+                        : "border-transparent bg-transparent hover:border-white/5 hover:bg-white/[0.02]"
                     }`}
                   >
                     <div className="flex items-center gap-2 px-2 py-2">
@@ -131,12 +131,12 @@ export function AdminSidebar() {
                           className={`min-w-0 flex-1 rounded-[0.85rem] px-2.5 py-2 text-sm font-semibold transition ${
                             isActiveGroup
                               ? "bg-white/10 text-white/96"
-                              : "text-white/68 hover:bg-white/6 hover:text-white/92"
+                              : "text-white/62 hover:bg-white/4 hover:text-white/88"
                           }`}
                         >
                           <div className="flex items-center justify-between gap-3">
                             <span className="truncate">{group.label}</span>
-                            <span className="rounded-full border border-white/10 px-2 py-0.5 text-[11px] font-medium text-white/52">
+                            <span className="rounded-full border border-white/8 px-2 py-0.5 text-[11px] font-medium text-white/40">
                               {group.items.length}
                             </span>
                           </div>
@@ -144,7 +144,7 @@ export function AdminSidebar() {
                       ) : (
                         <div className="flex min-w-0 flex-1 items-center justify-between gap-3 rounded-[0.85rem] px-2.5 py-2 text-sm font-semibold text-white/86">
                           <span className="truncate">{group.label}</span>
-                          <span className="rounded-full border border-white/10 px-2 py-0.5 text-[11px] font-medium text-white/52">
+                          <span className="rounded-full border border-white/8 px-2 py-0.5 text-[11px] font-medium text-white/40">
                             {group.items.length}
                           </span>
                         </div>
@@ -156,7 +156,7 @@ export function AdminSidebar() {
                         className={`rounded-full px-2.5 py-1.5 text-[11px] font-semibold transition ${
                           isActiveGroup
                             ? "text-white/82 hover:bg-white/8"
-                            : "text-white/46 hover:bg-white/5 hover:text-white/72"
+                            : "text-white/36 hover:bg-white/4 hover:text-white/68"
                         }`}
                         aria-expanded={!collapsed}
                         aria-label={`${collapsed ? "Expand" : "Collapse"} ${group.label}`}
@@ -187,3 +187,5 @@ export function AdminSidebar() {
     </aside>
   );
 }
+
+

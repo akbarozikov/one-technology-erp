@@ -350,34 +350,46 @@ export default function AdminOverviewPage() {
           )}
         </>
       ) : (
-
         <>
-          <div className="space-y-2">
-            <h1 className="app-page-title text-[2rem]">Advanced dashboard</h1>
-            <p className="app-page-subtitle">Practical overview of commercial, operational, and document activity.</p>
-          </div>
-
-          {configHint && (
-            <div className="rounded-[1.2rem] border border-amber-300 bg-amber-50/90 px-4 py-3 text-sm text-amber-950 dark:border-amber-700 dark:bg-amber-950/40 dark:text-amber-100" role="status">
-              Set <code className="rounded bg-amber-100 px-1 dark:bg-amber-900">NEXT_PUBLIC_API_BASE_URL</code> in <code className="rounded bg-amber-100 px-1 dark:bg-amber-900">.env.local</code>.
+          <section className="app-panel-strong p-6 lg:p-7">
+            <div className="flex flex-col gap-5 xl:flex-row xl:items-end xl:justify-between">
+              <div className="max-w-3xl space-y-2">
+                <p className="app-kicker">Advanced workspace</p>
+                <h1 className="app-page-title text-[2rem]">Advanced dashboard</h1>
+                <p className="app-page-subtitle">
+                  Practical oversight across commercial, operational, warehouse, and document activity, arranged for faster scanning.
+                </p>
+              </div>
+              <div className="flex flex-wrap gap-3">
+                <Link href="/admin/quote-versions" className="app-button-secondary">
+                  Open quotes
+                </Link>
+                <Link href="/admin/orders" className="app-button-secondary">
+                  Open orders
+                </Link>
+              </div>
             </div>
-          )}
 
-          {loading && (
-            <section className="app-panel p-5">
-              <p className="text-sm text-zinc-500">Loading dashboard...</p>
-            </section>
-          )}
+            {configHint && (
+              <div className="mt-5 rounded-[1.2rem] border border-amber-300 bg-amber-50/90 px-4 py-3 text-sm text-amber-950 dark:border-amber-700 dark:bg-amber-950/40 dark:text-amber-100" role="status">
+                Set <code className="rounded bg-amber-100 px-1 dark:bg-amber-900">NEXT_PUBLIC_API_BASE_URL</code> in <code className="rounded bg-amber-100 px-1 dark:bg-amber-900">.env.local</code>.
+              </div>
+            )}
 
-          {!loading && error && (
-            <section className="rounded-[1.2rem] border border-red-200 bg-red-50/90 p-5 dark:border-red-900 dark:bg-red-950/40">
-              <p className="text-sm text-red-700 dark:text-red-200">{error}</p>
-            </section>
-          )}
+            {loading && (
+              <section className="mt-5 app-panel p-5">
+                <p className="text-sm text-zinc-500">Loading dashboard...</p>
+              </section>
+            )}
 
-          {!loading && !error && data && (
-            <>
-              <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+            {!loading && error && (
+              <section className="mt-5 rounded-[1.2rem] border border-red-200 bg-red-50/90 p-5 dark:border-red-900 dark:bg-red-950/40">
+                <p className="text-sm text-red-700 dark:text-red-200">{error}</p>
+              </section>
+            )}
+
+            {!loading && !error && data && (
+              <section className="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
                 <div className="app-stat">
                   <p className="app-kicker">Orders</p>
                   <p className="mt-3 text-3xl font-semibold tracking-tight text-zinc-950 dark:text-zinc-50">{data.orders_summary.total_orders}</p>
@@ -395,52 +407,134 @@ export default function AdminOverviewPage() {
                   <p className="mt-3 text-3xl font-semibold tracking-tight text-zinc-950 dark:text-zinc-50">{data.documents_summary.total_generated_documents}</p>
                 </div>
               </section>
+            )}
+          </section>
 
-              <section className="grid gap-4 lg:grid-cols-2">
-                <SummaryList title={`Order statuses (${data.orders_summary.total_orders})`} items={data.orders_summary.counts_by_status} />
+          {!loading && !error && data && (
+            <>
+              <section className="grid gap-4 xl:grid-cols-[1.15fr_0.85fr]">
                 <section className="app-panel p-5 lg:p-6">
                   <div className="mb-4 space-y-1.5">
-                    <h2 className="app-section-title">Payments</h2>
-                    <p className="app-section-subtitle">Stored order totals and payment status counts.</p>
+                    <p className="app-kicker">Commercial pulse</p>
+                    <h2 className="app-section-title">Orders and payments</h2>
+                    <p className="app-section-subtitle">Use this block first for the commercial state that drives daily follow-through.</p>
                   </div>
-                  <div className="grid gap-3 sm:grid-cols-2">
-                    <div className="app-panel-muted px-4 py-4">
-                      <p className="app-kicker">Grand total</p>
-                      <p className="mt-2 text-xl font-semibold text-zinc-950 dark:text-zinc-50">{formatCurrency(data.payments_summary.total_order_grand_total)}</p>
+                  <div className="grid gap-4 lg:grid-cols-[1.05fr_0.95fr]">
+                    <div className="space-y-2">
+                      {data.orders_summary.counts_by_status.map((item, index) => (
+                        <div key={`${item.status ?? "order"}-${index}`} className="app-panel-muted flex items-center justify-between px-3 py-3 text-sm">
+                          <span className="font-mono text-zinc-700 dark:text-zinc-200">{item.status}</span>
+                          <span className="app-chip">{item.count}</span>
+                        </div>
+                      ))}
                     </div>
-                    <div className="app-panel-muted px-4 py-4">
-                      <p className="app-kicker">Remaining total</p>
-                      <p className="mt-2 text-xl font-semibold text-zinc-950 dark:text-zinc-50">{formatCurrency(data.payments_summary.total_remaining_amount)}</p>
-                    </div>
-                  </div>
-                  <div className="mt-4 space-y-2">
-                    {data.payments_summary.counts_by_payment_status.map((item, index) => (
-                      <div key={`${item.status ?? "payment"}-${index}`} className="app-panel-muted flex items-center justify-between px-3 py-3 text-sm">
-                        <span className="font-mono text-zinc-700 dark:text-zinc-200">{item.status}</span>
-                        <span className="app-chip">{item.count}</span>
+                    <div className="space-y-3">
+                      <div className="app-panel-muted px-4 py-4">
+                        <p className="app-kicker">Grand total</p>
+                        <p className="mt-2 text-xl font-semibold text-zinc-950 dark:text-zinc-50">{formatCurrency(data.payments_summary.total_order_grand_total)}</p>
                       </div>
-                    ))}
+                      <div className="app-panel-muted px-4 py-4">
+                        <p className="app-kicker">Remaining total</p>
+                        <p className="mt-2 text-xl font-semibold text-zinc-950 dark:text-zinc-50">{formatCurrency(data.payments_summary.total_remaining_amount)}</p>
+                      </div>
+                      <div className="space-y-2">
+                        {data.payments_summary.counts_by_payment_status.map((item, index) => (
+                          <div key={`${item.status ?? "payment"}-${index}`} className="app-panel-muted flex items-center justify-between px-3 py-3 text-sm">
+                            <span className="font-mono text-zinc-700 dark:text-zinc-200">{item.status}</span>
+                            <span className="app-chip">{item.count}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                </section>
+
+                <section className="app-panel p-5 lg:p-6">
+                  <div className="mb-4 space-y-1.5">
+                    <p className="app-kicker">Operations pulse</p>
+                    <h2 className="app-section-title">Reservations, jobs, and quotes</h2>
+                    <p className="app-section-subtitle">A tighter read on the operational state supporting the commercial flow.</p>
+                  </div>
+                  <div className="space-y-4">
+                    <div>
+                      <div className="mb-2 flex items-center justify-between">
+                        <span className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">Reservations</span>
+                        <span className="app-chip">{data.reservations_summary.total_reservations}</span>
+                      </div>
+                      <div className="space-y-2">
+                        {data.reservations_summary.counts_by_status.map((item, index) => (
+                          <div key={`${item.status ?? "reservation"}-${index}`} className="app-panel-muted flex items-center justify-between px-3 py-3 text-sm">
+                            <span className="font-mono text-zinc-700 dark:text-zinc-200">{item.status}</span>
+                            <span className="app-chip">{item.count}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                    <div className="grid gap-3 sm:grid-cols-2">
+                      <div className="app-panel-muted px-4 py-4">
+                        <p className="app-kicker">Installation</p>
+                        <p className="mt-2 text-xl font-semibold text-zinc-950 dark:text-zinc-50">{data.installation_summary.total_jobs}</p>
+                        <p className="mt-2 text-sm text-zinc-500 dark:text-zinc-400">{data.installation_summary.recent_completed_jobs_count} completed in the last 7 days.</p>
+                      </div>
+                      <div className="app-panel-muted px-4 py-4">
+                        <p className="app-kicker">Quotes</p>
+                        <p className="mt-2 text-xl font-semibold text-zinc-950 dark:text-zinc-50">{data.quotes_summary.total_quotes}</p>
+                        <p className="mt-2 text-sm text-zinc-500 dark:text-zinc-400">Current quote activity across active, sent, and completed stages.</p>
+                      </div>
+                    </div>
                   </div>
                 </section>
               </section>
 
-              <section className="grid gap-4 lg:grid-cols-3">
-                <SummaryList title={`Reservations (${data.reservations_summary.total_reservations})`} items={data.reservations_summary.counts_by_status} />
+              <section className="grid gap-4 lg:grid-cols-[1.05fr_0.95fr]">
+                <section className="app-panel p-5 lg:p-6">
+                  <div className="mb-4 flex items-center justify-between gap-3">
+                    <div className="space-y-1.5">
+                      <p className="app-kicker">Documents</p>
+                      <h2 className="app-section-title">Recent generated output</h2>
+                      <p className="app-section-subtitle">A quieter review area for what is already ready to use.</p>
+                    </div>
+                    <Link href="/admin/generated-documents" className="app-link text-sm">
+                      Open documents
+                    </Link>
+                  </div>
+                  {data.documents_summary.recent_generated_documents.length === 0 ? (
+                    <div className="app-empty text-sm leading-6 text-zinc-600 dark:text-zinc-300">No generated documents yet.</div>
+                  ) : (
+                    <div className="space-y-3">
+                      {data.documents_summary.recent_generated_documents.slice(0, 5).map((document) => (
+                        <Link key={document.id} href={`/admin/generated-documents/${document.id}`} className="app-panel-muted block px-4 py-4 transition hover:-translate-y-0.5">
+                          <div className="text-sm font-semibold text-zinc-950 dark:text-zinc-100">
+                            {document.title || document.document_number || `Document ${document.id}`}
+                          </div>
+                          <div className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
+                            {document.entity_type} - {document.generation_status} - {document.generated_at}
+                          </div>
+                        </Link>
+                      ))}
+                    </div>
+                  )}
+                </section>
+
                 <section className="app-panel p-5 lg:p-6">
                   <div className="mb-4 space-y-1.5">
-                    <h2 className="app-section-title">Installation</h2>
-                    <p className="app-section-subtitle">{data.installation_summary.recent_completed_jobs_count} completed in the last 7 days.</p>
+                    <p className="app-kicker">Warehouse context</p>
+                    <h2 className="app-section-title">Movement types</h2>
+                    <p className="app-section-subtitle">A compact supporting read on stock movement activity.</p>
+                  </div>
+                  <div className="mb-3 app-panel-muted px-4 py-4">
+                    <p className="app-kicker">Total stock movements</p>
+                    <p className="mt-2 text-xl font-semibold text-zinc-950 dark:text-zinc-50">{data.warehouse_summary.total_stock_movements}</p>
                   </div>
                   <div className="space-y-2">
-                    {data.installation_summary.counts_by_status.map((item, index) => (
-                      <div key={`${item.status ?? "job"}-${index}`} className="app-panel-muted flex items-center justify-between px-3 py-3 text-sm">
-                        <span className="font-mono text-zinc-700 dark:text-zinc-200">{item.status}</span>
+                    {data.warehouse_summary.counts_by_movement_type.map((item, index) => (
+                      <div key={`${item.movement_type ?? "movement"}-${index}`} className="app-panel-muted flex items-center justify-between px-3 py-3 text-sm">
+                        <span className="font-mono text-zinc-700 dark:text-zinc-200">{item.movement_type}</span>
                         <span className="app-chip">{item.count}</span>
                       </div>
                     ))}
                   </div>
                 </section>
-                <SummaryList title={`Quotes (${data.quotes_summary.total_quotes})`} items={data.quotes_summary.counts_by_status} />
               </section>
             </>
           )}
@@ -449,6 +543,7 @@ export default function AdminOverviewPage() {
     </div>
   );
 }
+
 
 
 
