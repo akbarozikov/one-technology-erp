@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { useAdminMode } from "@/components/admin/AdminModeProvider";
 import { ApiError, apiGet, getApiBaseUrl } from "@/lib/api";
 
 type CountItem = {
@@ -111,6 +112,7 @@ function SummaryList({
 }
 
 export default function AdminOverviewPage() {
+  const { mode } = useAdminMode();
   const [data, setData] = useState<DashboardOverview | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -125,9 +127,7 @@ export default function AdminOverviewPage() {
       setConfigHint(!getApiBaseUrl());
 
       try {
-        const response = await apiGet<{ data: DashboardOverview }>(
-          "/api/dashboard/overview"
-        );
+        const response = await apiGet<{ data: DashboardOverview }>("/api/dashboard/overview");
         if (!cancelled) {
           setData(response.data);
         }
@@ -158,10 +158,12 @@ export default function AdminOverviewPage() {
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-semibold text-zinc-900 dark:text-zinc-50">
-          Dashboard
+          {mode === "easy" ? "Workspace Dashboard" : "Dashboard"}
         </h1>
         <p className="text-sm text-zinc-500 dark:text-zinc-400">
-          Practical overview of commercial, operational, and document activity.
+          {mode === "easy"
+            ? "A simpler daily view of sales, documents, installations, and the next places to work."
+            : "Practical overview of commercial, operational, and document activity."}
         </p>
       </div>
 
@@ -189,6 +191,67 @@ export default function AdminOverviewPage() {
 
       {!loading && !error && data && (
         <>
+          {mode === "easy" && (
+            <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+              <Link
+                href="/admin/new-sale"
+                className="rounded border border-zinc-200 bg-white p-4 shadow-sm transition hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-900 dark:hover:bg-zinc-800"
+              >
+                <p className="text-xs font-semibold uppercase tracking-wide text-zinc-500">
+                  New Sale
+                </p>
+                <p className="mt-2 text-lg font-semibold text-zinc-900 dark:text-zinc-50">
+                  Start Commercial Work
+                </p>
+                <p className="mt-2 text-sm text-zinc-500 dark:text-zinc-400">
+                  Begin with quotes, products, and prepared versions.
+                </p>
+              </Link>
+              <Link
+                href="/admin/my-sales"
+                className="rounded border border-zinc-200 bg-white p-4 shadow-sm transition hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-900 dark:hover:bg-zinc-800"
+              >
+                <p className="text-xs font-semibold uppercase tracking-wide text-zinc-500">
+                  My Sales
+                </p>
+                <p className="mt-2 text-lg font-semibold text-zinc-900 dark:text-zinc-50">
+                  {data.orders_summary.total_orders} orders in the system
+                </p>
+                <p className="mt-2 text-sm text-zinc-500 dark:text-zinc-400">
+                  Review payment follow-through and active customer commitments.
+                </p>
+              </Link>
+              <Link
+                href="/admin/documents-lite"
+                className="rounded border border-zinc-200 bg-white p-4 shadow-sm transition hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-900 dark:hover:bg-zinc-800"
+              >
+                <p className="text-xs font-semibold uppercase tracking-wide text-zinc-500">
+                  Documents
+                </p>
+                <p className="mt-2 text-lg font-semibold text-zinc-900 dark:text-zinc-50">
+                  {data.documents_summary.total_generated_documents} generated
+                </p>
+                <p className="mt-2 text-sm text-zinc-500 dark:text-zinc-400">
+                  Open proposals, order documents, and installation documents quickly.
+                </p>
+              </Link>
+              <Link
+                href="/admin/installations-lite"
+                className="rounded border border-zinc-200 bg-white p-4 shadow-sm transition hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-900 dark:hover:bg-zinc-800"
+              >
+                <p className="text-xs font-semibold uppercase tracking-wide text-zinc-500">
+                  Installations
+                </p>
+                <p className="mt-2 text-lg font-semibold text-zinc-900 dark:text-zinc-50">
+                  {data.installation_summary.total_jobs} jobs tracked
+                </p>
+                <p className="mt-2 text-sm text-zinc-500 dark:text-zinc-400">
+                  Keep an eye on field work, results, and completion follow-through.
+                </p>
+              </Link>
+            </section>
+          )}
+
           <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
             <div className="rounded border border-zinc-200 bg-white p-4 shadow-sm dark:border-zinc-700 dark:bg-zinc-900">
               <p className="text-xs uppercase tracking-wide text-zinc-500">Orders</p>
@@ -231,9 +294,7 @@ export default function AdminOverviewPage() {
               </h2>
               <div className="grid gap-3 sm:grid-cols-2">
                 <div className="rounded border border-zinc-100 p-3 dark:border-zinc-800">
-                  <p className="text-xs uppercase tracking-wide text-zinc-500">
-                    Grand Total
-                  </p>
+                  <p className="text-xs uppercase tracking-wide text-zinc-500">Grand Total</p>
                   <p className="mt-1 text-lg font-semibold text-zinc-900 dark:text-zinc-50">
                     {formatCurrency(data.payments_summary.total_order_grand_total)}
                   </p>
@@ -275,7 +336,8 @@ export default function AdminOverviewPage() {
                 Installation
               </h2>
               <p className="mb-3 text-sm text-zinc-500 dark:text-zinc-400">
-                {data.installation_summary.recent_completed_jobs_count} completed in the last 7 days.
+                {data.installation_summary.recent_completed_jobs_count} completed in the last 7
+                days.
               </p>
               <div className="space-y-2">
                 {data.installation_summary.counts_by_status.map((item, index) => (
@@ -366,9 +428,7 @@ export default function AdminOverviewPage() {
                 ))}
               </div>
               {data.warehouse_summary.recent_stock_movements.length === 0 ? (
-                <p className="text-sm text-zinc-500 dark:text-zinc-400">
-                  No stock movements yet.
-                </p>
+                <p className="text-sm text-zinc-500 dark:text-zinc-400">No stock movements yet.</p>
               ) : (
                 <div className="space-y-2">
                   {data.warehouse_summary.recent_stock_movements.map((movement) => (
