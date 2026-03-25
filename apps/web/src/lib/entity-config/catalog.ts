@@ -84,10 +84,10 @@ export const catalogConfigs = {
       { key: "status", label: "Status", options: productStatuses },
     ],
     formSections: [
-      { key: "core", label: "Core Info" },
-      { key: "classification", label: "Classification" },
-      { key: "pricing", label: "Pricing / Status" },
-      { key: "defaults", label: "Defaults / Notes" },
+      { key: "core", label: "Core Info", description: "Name, SKU, and the essential identity signals belong up front." },
+      { key: "classification", label: "Classification", description: "Describe what kind of product this is before setting pricing or defaults." },
+      { key: "pricing", label: "Pricing / Status", description: "Commercial readiness and stock behavior are grouped together here." },
+      { key: "defaults", label: "Defaults / Notes", description: "Finish with default handling and any descriptive copy the team needs." },
     ],
     fields: [
       { key: "name", label: "Name", kind: "text", required: true, section: "core" },
@@ -188,3 +188,4 @@ export const catalogNavGroup: AdminNavGroup = {
     { href: "/admin/product-bundle-items", label: "Product Bundle Items" },
   ],
 };
+

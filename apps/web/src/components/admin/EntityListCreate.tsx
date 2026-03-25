@@ -940,39 +940,39 @@ export function EntityListCreate({ config }: { config: EntityConfig }) {
 
       {createEnabled && (
         <section className="app-panel p-5 lg:p-6">
-        <h2 className="mb-3 text-lg font-semibold text-zinc-900 dark:text-zinc-50">
-          Add {config.title}
-        </h2>
-        <p className="mb-5 text-sm leading-6 text-zinc-500 dark:text-zinc-400">
-          Fill in the main details below, then save to create a new record.
-        </p>
-          <form
-            className="max-w-3xl space-y-4"
-            onSubmit={onSubmit}
-            aria-busy={submitting}
-          >
-            {fieldGroups.map((group) => (
-              <section
-                key={group.key}
-                className="app-panel-muted p-4"
-              >
-                {config.formSections && (
-                  <div className="mb-3">
-                    <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
-                      {group.label}
-                    </h3>
-                    {group.description && (
-                      <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
-                        {group.description}
-                      </p>
-                    )}
+          <div className="mb-5 flex flex-col gap-2 lg:flex-row lg:items-end lg:justify-between">
+            <div>
+              <p className="app-kicker">Create</p>
+              <h2 className="mt-2 text-lg font-semibold text-zinc-900 dark:text-zinc-50">
+                Add {config.title}
+              </h2>
+            </div>
+          </div>
+          <p className="mb-5 text-sm leading-6 text-zinc-500 dark:text-zinc-400">
+            Fill in the main details below, then save to create a new record.
+          </p>
+          <form className="space-y-5" onSubmit={onSubmit} aria-busy={submitting}>
+            <div className={`grid gap-4 ${fieldGroups.length > 1 ? "xl:grid-cols-2" : ""}`}>
+              {fieldGroups.map((group) => (
+                <section key={group.key} className="app-panel-muted p-4">
+                  {config.formSections && (
+                    <div className="mb-3">
+                      <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
+                        {group.label}
+                      </h3>
+                      {group.description && (
+                        <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
+                          {group.description}
+                        </p>
+                      )}
+                    </div>
+                  )}
+                  <div className="space-y-3">
+                    {group.fields.map((field) => renderField(field, lookupOptions))}
                   </div>
-                )}
-                <div className="space-y-3">
-                  {group.fields.map((field) => renderField(field, lookupOptions))}
-                </div>
-              </section>
-            ))}
+                </section>
+              ))}
+            </div>
             {submitError && (
               <pre
                 className="whitespace-pre-wrap break-words rounded border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800 dark:border-red-900 dark:bg-red-950/50 dark:text-red-200"
@@ -994,5 +994,3 @@ export function EntityListCreate({ config }: { config: EntityConfig }) {
     </div>
   );
 }
-
-

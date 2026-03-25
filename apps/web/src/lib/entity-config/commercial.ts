@@ -63,10 +63,10 @@ export const commercialConfigs = {
       { key: "version_status", label: "Version status", options: quoteVersionStatuses },
     ],
     formSections: [
-      { key: "core", label: "Core Info" },
-      { key: "status", label: "Status & Validity" },
-      { key: "totals", label: "Totals" },
-      { key: "notes", label: "Notes" },
+      { key: "core", label: "Core Info", description: "Set the main commercial identity first so the rest of the record has clear context." },
+      { key: "status", label: "Status & Validity", description: "Capture the current commercial state and anything time-sensitive before working on totals." },
+      { key: "totals", label: "Totals", description: "Keep the negotiated numbers together so pricing changes are easy to scan." },
+      { key: "notes", label: "Notes", description: "Use this section for deal context, customer nuance, or handoff details." },
     ],
     fields: [
       { key: "quote_id", label: "Quote", kind: "select", required: true, lookup: quoteLookup, section: "core" },
@@ -139,7 +139,7 @@ export const commercialConfigs = {
       { key: "payment_status", label: "Payment status", options: orderPaymentStatuses },
     ],
     formSections: [
-      { key: "core", label: "Core Info" },
+      { key: "core", label: "Core Info", description: "Set the main commercial identity first so the rest of the record has clear context." },
       { key: "status", label: "Status & Dates" },
       { key: "financials", label: "Financials" },
       { key: "notes", label: "Notes / Context" },
@@ -233,7 +233,7 @@ export const commercialConfigs = {
       { key: "status", label: "Status", options: paymentRecordStatuses },
     ],
     formSections: [
-      { key: "core", label: "Core Info" },
+      { key: "core", label: "Core Info", description: "Set the main commercial identity first so the rest of the record has clear context." },
       { key: "payment", label: "Payment Details" },
       { key: "notes", label: "Notes / Context" },
     ],
@@ -266,3 +266,4 @@ export const commercialNavGroup: AdminNavGroup = {
     { href: "/admin/order-discounts", label: "Order Discounts" },
   ],
 };
+
