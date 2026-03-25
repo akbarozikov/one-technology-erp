@@ -40,6 +40,27 @@ export type EntityTableColumn = {
   format?: "text" | "status" | "date" | "datetime" | "boolean" | "money";
 };
 
+export type EntityListNotice = {
+  title: string;
+  description: string;
+  tone?: "info" | "warning";
+};
+
+export type EntityRecordAction = {
+  key: string;
+  label: string;
+  tone?: "neutral" | "warning" | "danger";
+  actionPathTemplate: string;
+  confirmTitle?: string;
+  confirmDescription?: string;
+  visibleWhen?: {
+    key: string;
+    equals?: string;
+    notEquals?: string;
+  };
+  successMessageTemplate?: string;
+};
+
 export type EntityConfig = {
   title: string;
   apiPath: string;
@@ -55,6 +76,8 @@ export type EntityConfig = {
     label: string;
     options: { value: string; label: string }[];
   }>;
+  listNotice?: EntityListNotice;
+  recordActions?: EntityRecordAction[];
 };
 
 export type EntityConfigMap = Record<string, EntityConfig>;

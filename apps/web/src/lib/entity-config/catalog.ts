@@ -51,6 +51,25 @@ export const catalogConfigs = {
   products: {
     title: "Products",
     apiPath: "/api/products",
+    listNotice: {
+      title: "Archive products instead of deleting them",
+      description:
+        "Archiving keeps quote, order, and stock history readable while removing old products from active day-to-day use.",
+      tone: "warning",
+    },
+    recordActions: [
+      {
+        key: "archive",
+        label: "Archive",
+        tone: "warning",
+        actionPathTemplate: "/api/products/:id/archive",
+        confirmTitle: "Archive this product?",
+        confirmDescription:
+          "This keeps historical sales and warehouse records intact, but the product should no longer appear as an active item.",
+        visibleWhen: { key: "status", notEquals: "archived" },
+        successMessageTemplate: "Product {name|id} has been archived.",
+      },
+    ],
     tableColumns: [
       { key: "name", label: "Product" },
       { key: "sku", label: "SKU" },

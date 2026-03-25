@@ -42,6 +42,12 @@ export const commercialConfigs = {
   quote_versions: {
     title: "Quote versions",
     apiPath: "/api/quote-versions",
+    listNotice: {
+      title: "Only untouched drafts can be deleted",
+      description:
+        "Use the quote-version workflow page to remove a true draft before it has linked orders, reservations, documents, or follow-through history.",
+      tone: "warning",
+    },
     detailBasePath: "/admin/quote-versions",
     detailLabelKey: "version_number",
     tableColumns: [

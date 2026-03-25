@@ -1,7 +1,7 @@
 ﻿"use client";
 
 import Link from "next/link";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { ApiError, apiGet, apiPost, formatApiError, getApiBaseUrl } from "@/lib/api";
 import { DocumentGenerationPanel } from "@/components/admin/DocumentGenerationPanel";
@@ -59,6 +59,7 @@ function money(value: number | null): string {
 
 export default function QuoteVersionDetailPage() {
   const params = useParams<{ id: string }>();
+  const router = useRouter();
   const id = Number(params?.id);
   const [quoteVersion, setQuoteVersion] = useState<QuoteVersionRow | null>(null);
   const [quote, setQuote] = useState<QuoteRow | null>(null);
@@ -70,6 +71,11 @@ export default function QuoteVersionDetailPage() {
   const [creatingOrder, setCreatingOrder] = useState(false);
   const [orderActionError, setOrderActionError] = useState<string | null>(null);
   const [orderActionSuccess, setOrderActionSuccess] = useState<OrderRow | null>(null);
+  const [deleteDraftState, setDeleteDraftState] = useState<{
+    loading: boolean;
+    error: string | null;
+    success: boolean;
+  }>({ loading: false, error: null, success: false });
 
   useEffect(() => {
     let cancelled = false;
@@ -185,6 +191,20 @@ export default function QuoteVersionDetailPage() {
     return items;
   }, [documents.length, linkedOrder, quoteVersion]);
 
+  const deleteDraftDisabledReason = useMemo(() => {
+    if (!quoteVersion) return "Quote version is not loaded.";
+    if (quoteVersion.version_status !== "draft") {
+      return "Only untouched draft versions can be deleted.";
+    }
+    if (linkedOrder) {
+      return "This version already has a linked order, so history should be preserved.";
+    }
+    if (documents.length > 0) {
+      return "This version already has generated documents, so it should be preserved.";
+    }
+    return null;
+  }, [documents.length, linkedOrder, quoteVersion]);
+
   async function handleCreateOrderDraft() {
     if (creatingOrder || !quoteVersion) return;
 
@@ -212,6 +232,38 @@ export default function QuoteVersionDetailPage() {
       );
     } finally {
       setCreatingOrder(false);
+    }
+  }
+
+  async function handleDeleteDraft() {
+    if (!quoteVersion || deleteDraftState.loading || deleteDraftDisabledReason) return;
+
+    const confirmed =
+      typeof window === "undefined" ||
+      window.confirm(
+        "Delete this draft quote version?\n\nThis permanently removes the draft version and its draft lines/discounts. Use this only when the version has not entered any linked workflow history."
+      );
+    if (!confirmed) {
+      return;
+    }
+
+    setDeleteDraftState({ loading: true, error: null, success: false });
+
+    try {
+      await apiPost(`/api/quote-versions/${quoteVersion.id}/delete-draft`, {});
+      setDeleteDraftState({ loading: false, error: null, success: true });
+      router.push("/admin/quote-versions");
+    } catch (err) {
+      setDeleteDraftState({
+        loading: false,
+        error:
+          err instanceof ApiError
+            ? formatApiError(err)
+            : err instanceof Error
+              ? err.message
+              : "Failed to delete draft",
+        success: false,
+      });
     }
   }
 
@@ -391,6 +443,36 @@ export default function QuoteVersionDetailPage() {
             </DetailSection>
 
             <div className="space-y-6">
+              <DetailSection
+                title="Lifecycle"
+                description="Use delete only for an untouched draft. Once linked history exists, preserve the record instead."
+              >
+                <ActionGroup
+                  title="Draft Cleanup"
+                  description="This is the only destructive action on this page, and it is intentionally guarded."
+                  items={[
+                    {
+                      key: "delete-draft",
+                      label: deleteDraftState.loading ? "Deleting draft..." : "Delete Draft",
+                      onClick: handleDeleteDraft,
+                      disabled: deleteDraftState.loading || Boolean(deleteDraftDisabledReason),
+                      primary: false,
+                      helperText:
+                        deleteDraftDisabledReason ??
+                        "Permanently remove this draft version before it becomes part of linked workflow history.",
+                    },
+                  ]}
+                />
+                {deleteDraftState.error && (
+                  <pre
+                    className="mt-4 whitespace-pre-wrap break-words rounded border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800 dark:border-red-900 dark:bg-red-950/50 dark:text-red-200"
+                    role="alert"
+                  >
+                    {deleteDraftState.error}
+                  </pre>
+                )}
+              </DetailSection>
+
               <DetailSection title="Linked Order" description="The order created from this quote version, when one exists.">
                 {linkedOrder ? (
                   <RelatedList

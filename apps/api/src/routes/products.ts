@@ -7,7 +7,7 @@ import { getDb } from "../lib/db";
 import { asSqlFailure } from "../lib/d1-errors";
 import { rowExists } from "../lib/exists";
 import { readJsonObject } from "../lib/json";
-import { badRequest, jsonOk, methodNotAllowed } from "../lib/response";
+import { badRequest, jsonOk, methodNotAllowed, notFound } from "../lib/response";
 import type { Env } from "../types/env";
 import { parseProductCreate } from "../validation/products";
 
@@ -83,6 +83,61 @@ export async function handleProducts(request: Request, env: Env): Promise<Respon
       .first<ProductRow>();
     if (!row) return badRequest("Insert did not return a row");
     return jsonOk({ data: row }, { status: 201 });
+  } catch (err) {
+    return asSqlFailure(err);
+  }
+}
+
+export async function handleProductAction(
+  request: Request,
+  env: Env,
+  productId: number,
+  action: "archive"
+): Promise<Response> {
+  if (action !== "archive") {
+    return notFound();
+  }
+
+  if (request.method !== "POST") {
+    return methodNotAllowed(["POST"]);
+  }
+
+  const db = getDb(env);
+  const product = await db
+    .prepare("SELECT * FROM products WHERE id = ? LIMIT 1")
+    .bind(productId)
+    .first<ProductRow>();
+
+  if (!product) {
+    return notFound(`product ${productId} not found`);
+  }
+
+  if (product.status === "archived") {
+    return jsonOk({
+      data: product,
+      meta: { lifecycle_action: "archive", changed: false },
+    });
+  }
+
+  try {
+    const updated = await db
+      .prepare(
+        `UPDATE products
+         SET status = 'archived'
+         WHERE id = ?
+         RETURNING *`
+      )
+      .bind(productId)
+      .first<ProductRow>();
+
+    if (!updated) {
+      return badRequest("Archive did not return a row");
+    }
+
+    return jsonOk({
+      data: updated,
+      meta: { lifecycle_action: "archive", changed: true },
+    });
   } catch (err) {
     return asSqlFailure(err);
   }

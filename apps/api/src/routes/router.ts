@@ -40,7 +40,7 @@ import { handleProductBundleItems } from "./product-bundle-items";
 import { handleProductBundles } from "./product-bundles";
 import { handleProductCategories } from "./product-categories";
 import { handleProductSuppliers } from "./product-suppliers";
-import { handleProducts } from "./products";
+import { handleProductAction, handleProducts } from "./products";
 import { handlePurchaseReceiptLines } from "./purchase-receipt-lines";
 import { handlePurchaseReceipts } from "./purchase-receipts";
 import { handleQuoteDiscounts } from "./quote-discounts";
@@ -69,7 +69,7 @@ import { handleStockWriteoffs } from "./stock-writeoffs";
 import { handleSuppliers } from "./suppliers";
 import { handleUnits } from "./units";
 import { handleUserRoles } from "./user-roles";
-import { handleUsers } from "./users";
+import { handleUserAction, handleUsers } from "./users";
 import { handleWarehouses } from "./warehouses";
 import { handleWarehousePositions } from "./warehouse-positions";
 
@@ -129,14 +129,37 @@ export async function routeRequest(request: Request, env: Env): Promise<Response
   }
 
   const quoteVersionActionMatch = path.match(
-    /^\/api\/quote-versions\/(\d+)\/(create-order-draft|generate-document)$/
+    /^\/api\/quote-versions\/(\d+)\/(create-order-draft|generate-document|delete-draft)$/
   );
   if (quoteVersionActionMatch) {
     return handleQuoteVersionAction(
       request,
       env,
       Number(quoteVersionActionMatch[1]),
-      quoteVersionActionMatch[2] as "create-order-draft" | "generate-document"
+      quoteVersionActionMatch[2] as
+        | "create-order-draft"
+        | "generate-document"
+        | "delete-draft"
+    );
+  }
+
+  const userActionMatch = path.match(/^\/api\/users\/(\d+)\/(deactivate)$/);
+  if (userActionMatch) {
+    return handleUserAction(
+      request,
+      env,
+      Number(userActionMatch[1]),
+      userActionMatch[2] as "deactivate"
+    );
+  }
+
+  const productActionMatch = path.match(/^\/api\/products\/(\d+)\/(archive)$/);
+  if (productActionMatch) {
+    return handleProductAction(
+      request,
+      env,
+      Number(productActionMatch[1]),
+      productActionMatch[2] as "archive"
     );
   }
 

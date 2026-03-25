@@ -7,6 +7,7 @@ import {
   TABLE_QUOTE_LINES,
   TABLE_QUOTES,
   TABLE_QUOTE_VERSIONS,
+  TABLE_STOCK_RESERVATIONS,
   TABLE_USERS,
   type DocumentTemplateRow,
   type GeneratedDocumentRow,
@@ -115,7 +116,7 @@ export async function handleQuoteVersionAction(
   request: Request,
   env: Env,
   quoteVersionId: number,
-  action: "create-order-draft" | "generate-document"
+  action: "create-order-draft" | "generate-document" | "delete-draft"
 ): Promise<Response> {
   if (action === "create-order-draft") {
     return handleCreateOrderDraft(request, env, quoteVersionId);
@@ -123,6 +124,10 @@ export async function handleQuoteVersionAction(
 
   if (action === "generate-document") {
     return handleGenerateDocument(request, env, quoteVersionId);
+  }
+
+  if (action === "delete-draft") {
+    return handleDeleteDraft(request, env, quoteVersionId);
   }
 
   return notFound();
@@ -451,6 +456,122 @@ async function handleGenerateDocument(
       },
       { status: 201 }
     );
+  } catch (err) {
+    try {
+      await db.exec("ROLLBACK");
+    } catch {
+      // Ignore rollback errors; preserve the original failure.
+    }
+    return asSqlFailure(err);
+  }
+}
+
+async function handleDeleteDraft(
+  request: Request,
+  env: Env,
+  quoteVersionId: number
+): Promise<Response> {
+  if (request.method !== "POST") {
+    return methodNotAllowed(["POST"]);
+  }
+
+  const db = getDb(env);
+  const quoteVersion = await db
+    .prepare("SELECT * FROM quote_versions WHERE id = ? LIMIT 1")
+    .bind(quoteVersionId)
+    .first<QuoteVersionRow>();
+
+  if (!quoteVersion) {
+    return notFound(`quote_version ${quoteVersionId} not found`);
+  }
+
+  if (quoteVersion.version_status !== "draft") {
+    return badRequest(
+      `quote_version ${quoteVersionId} can only be deleted while it is still in draft`
+    );
+  }
+
+  const linkedOrder = await db
+    .prepare("SELECT id FROM orders WHERE quote_version_id = ? LIMIT 1")
+    .bind(quoteVersionId)
+    .first<{ id: number }>();
+  if (linkedOrder) {
+    return badRequest(
+      `quote_version ${quoteVersionId} cannot be deleted because order ${linkedOrder.id} already exists`
+    );
+  }
+
+  const childVersion = await db
+    .prepare("SELECT id FROM quote_versions WHERE based_on_version_id = ? LIMIT 1")
+    .bind(quoteVersionId)
+    .first<{ id: number }>();
+  if (childVersion) {
+    return badRequest(
+      `quote_version ${quoteVersionId} cannot be deleted because version ${childVersion.id} is based on it`
+    );
+  }
+
+  const generatedDocument = await db
+    .prepare(
+      "SELECT id FROM generated_documents WHERE entity_type = 'quote_version' AND entity_id = ? LIMIT 1"
+    )
+    .bind(quoteVersionId)
+    .first<{ id: number }>();
+  if (generatedDocument) {
+    return badRequest(
+      `quote_version ${quoteVersionId} cannot be deleted because generated document ${generatedDocument.id} already exists`
+    );
+  }
+
+  const { results: quoteLines } = await db
+    .prepare("SELECT id FROM quote_lines WHERE quote_version_id = ?")
+    .bind(quoteVersionId)
+    .all<{ id: number }>();
+
+  for (const line of quoteLines ?? []) {
+    const reservation = await db
+      .prepare(
+        `SELECT id FROM stock_reservations
+         WHERE quote_line_id = ?
+         LIMIT 1`
+      )
+      .bind(line.id)
+      .first<{ id: number }>();
+    if (reservation) {
+      return badRequest(
+        `quote_version ${quoteVersionId} cannot be deleted because reservation ${reservation.id} is linked to one of its lines`
+      );
+    }
+  }
+
+  try {
+    await db.exec("BEGIN TRANSACTION");
+
+    await db
+      .prepare(`DELETE FROM quote_discounts WHERE quote_version_id = ?`)
+      .bind(quoteVersionId)
+      .run();
+
+    await db
+      .prepare(`DELETE FROM quote_lines WHERE quote_version_id = ?`)
+      .bind(quoteVersionId)
+      .run();
+
+    await db
+      .prepare(`DELETE FROM quote_versions WHERE id = ?`)
+      .bind(quoteVersionId)
+      .run();
+
+    await db.exec("COMMIT");
+
+    return jsonOk({
+      data: {
+        deleted: true,
+        quote_version_id: quoteVersionId,
+        deleted_line_count: quoteLines?.length ?? 0,
+      },
+      meta: { lifecycle_action: "delete_draft" },
+    });
   } catch (err) {
     try {
       await db.exec("ROLLBACK");

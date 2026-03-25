@@ -1,7 +1,7 @@
 import { getDb } from "../lib/db";
 import { asSqlFailure } from "../lib/d1-errors";
 import { readJsonObject } from "../lib/json";
-import { badRequest, jsonOk, methodNotAllowed } from "../lib/response";
+import { badRequest, jsonOk, methodNotAllowed, notFound } from "../lib/response";
 import type { Env } from "../types/env";
 import type { UserPublicRow } from "../types/user-public";
 import { parseUserCreate } from "../validation/users";
@@ -49,6 +49,64 @@ export async function handleUsers(request: Request, env: Env): Promise<Response>
       return badRequest("Insert did not return a row");
     }
     return jsonOk({ data: row }, { status: 201 });
+  } catch (err) {
+    return asSqlFailure(err);
+  }
+}
+
+export async function handleUserAction(
+  request: Request,
+  env: Env,
+  userId: number,
+  action: "deactivate"
+): Promise<Response> {
+  if (action !== "deactivate") {
+    return notFound();
+  }
+
+  if (request.method !== "POST") {
+    return methodNotAllowed(["POST"]);
+  }
+
+  const db = getDb(env);
+  const user = await db
+    .prepare(
+      `SELECT id, email, phone, status, last_login_at, created_at, updated_at
+       FROM users WHERE id = ? LIMIT 1`
+    )
+    .bind(userId)
+    .first<UserPublicRow>();
+
+  if (!user) {
+    return notFound(`user ${userId} not found`);
+  }
+
+  if (user.status === "inactive") {
+    return jsonOk({
+      data: user,
+      meta: { lifecycle_action: "deactivate", changed: false },
+    });
+  }
+
+  try {
+    const updated = await db
+      .prepare(
+        `UPDATE users
+         SET status = 'inactive', updated_at = datetime('now')
+         WHERE id = ?
+         RETURNING id, email, phone, status, last_login_at, created_at, updated_at`
+      )
+      .bind(userId)
+      .first<UserPublicRow>();
+
+    if (!updated) {
+      return badRequest("Deactivate did not return a row");
+    }
+
+    return jsonOk({
+      data: updated,
+      meta: { lifecycle_action: "deactivate", changed: true },
+    });
   } catch (err) {
     return asSqlFailure(err);
   }

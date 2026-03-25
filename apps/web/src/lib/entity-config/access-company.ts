@@ -35,6 +35,25 @@ export const accessCompanyConfigs = {
   users: {
     title: "Users",
     apiPath: "/api/users",
+    listNotice: {
+      title: "Deactivate instead of delete",
+      description:
+        "Keep login history and linked records intact by deactivating users rather than removing them.",
+      tone: "warning",
+    },
+    recordActions: [
+      {
+        key: "deactivate",
+        label: "Deactivate",
+        tone: "warning",
+        actionPathTemplate: "/api/users/:id/deactivate",
+        confirmTitle: "Deactivate this user?",
+        confirmDescription:
+          "This keeps history and linked records, but the user should no longer be used for normal day-to-day work.",
+        visibleWhen: { key: "status", notEquals: "inactive" },
+        successMessageTemplate: "User {email|id} has been deactivated.",
+      },
+    ],
     fields: [
       { key: "email", label: "Email", kind: "text" },
       { key: "phone", label: "Phone", kind: "text" },

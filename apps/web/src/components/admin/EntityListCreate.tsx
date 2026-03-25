@@ -23,6 +23,53 @@ type FieldGroup = {
   fields: EntityField[];
 };
 
+function resolveActionPathTemplate(
+  template: string,
+  row: Record<string, unknown>
+): string | null {
+  const id = row.id;
+  if (template.includes(":id")) {
+    if (id === null || id === undefined || String(id).trim() === "") {
+      return null;
+    }
+    return template.replaceAll(":id", encodeURIComponent(String(id)));
+  }
+  return template;
+}
+
+function fillMessageTemplate(
+  template: string,
+  row: Record<string, unknown>
+): string {
+  return template.replace(/\{([^}]+)\}/g, (_match, tokenGroup: string) => {
+    const tokens = tokenGroup.split("|").map((token) => token.trim());
+    for (const token of tokens) {
+      const value = row[token];
+      if (value !== null && value !== undefined && String(value).trim() !== "") {
+        return String(value);
+      }
+    }
+    return "";
+  });
+}
+
+function actionIsVisible(
+  action: NonNullable<EntityConfig["recordActions"]>[number],
+  row: Record<string, unknown>
+): boolean {
+  const rule = action.visibleWhen;
+  if (!rule) return true;
+
+  const current = String(row[rule.key] ?? "").toLowerCase();
+  if (rule.equals !== undefined && current !== rule.equals.toLowerCase()) {
+    return false;
+  }
+  if (rule.notEquals !== undefined && current === rule.notEquals.toLowerCase()) {
+    return false;
+  }
+  return true;
+}
+
 function buildPayload(fields: EntityField[], fd: FormData): Record<string, unknown> {
   const out: Record<string, unknown> = {};
   for (const f of fields) {
@@ -405,6 +452,11 @@ export function EntityListCreate({ config }: { config: EntityConfig }) {
   const [lookupOptions, setLookupOptions] = useState<Record<string, LookupOption[]>>(
     {}
   );
+  const [rowActionState, setRowActionState] = useState<{
+    key: string | null;
+    error: string | null;
+    success: string | null;
+  }>({ key: null, error: null, success: null });
 
   const load = useCallback(
     async (options?: { silent?: boolean }) => {
@@ -518,6 +570,56 @@ export function EntityListCreate({ config }: { config: EntityConfig }) {
       setSubmitError(msg);
     } finally {
       setSubmitting(false);
+    }
+  }
+
+  async function handleRowAction(
+    action: NonNullable<EntityConfig["recordActions"]>[number],
+    row: Record<string, unknown>
+  ) {
+    const rowId = String((row as { id?: unknown }).id ?? "row");
+    const actionKey = `${action.key}-${rowId}`;
+    const resolvedPath = resolveActionPathTemplate(action.actionPathTemplate, row);
+    const disabledReason = resolvedPath ? null : "This action is unavailable because the record has no usable id yet.";
+    if (disabledReason) {
+      setRowActionState({ key: actionKey, error: disabledReason, success: null });
+      return;
+    }
+
+    const confirmMessage = [action.confirmTitle, action.confirmDescription]
+      .filter((value): value is string => Boolean(value && value.trim()))
+      .join("\n\n");
+
+    if (confirmMessage && typeof window !== "undefined" && !window.confirm(confirmMessage)) {
+      return;
+    }
+
+    setRowActionState({ key: actionKey, error: null, success: null });
+
+    try {
+      if (!resolvedPath) {
+        throw new Error("This action is unavailable because the record has no usable id yet.");
+      }
+      await apiPost(resolvedPath, {});
+      await load({ silent: true });
+      setRowActionState({
+        key: actionKey,
+        error: null,
+        success: action.successMessageTemplate
+          ? fillMessageTemplate(action.successMessageTemplate, row)
+          : `${action.label} completed.`,
+      });
+    } catch (err) {
+      setRowActionState({
+        key: actionKey,
+        error:
+          err instanceof ApiError
+            ? formatApiError(err)
+            : err instanceof Error
+              ? err.message
+              : `${action.label} failed`,
+        success: null,
+      });
     }
   }
 
@@ -639,6 +741,32 @@ export function EntityListCreate({ config }: { config: EntityConfig }) {
         )}
         {!loading && rows && rows.length > 0 && (
           <div className="space-y-4">
+            {config.listNotice && (
+              <div
+                className={`rounded border px-3 py-3 text-sm ${
+                  config.listNotice.tone === "warning"
+                    ? "border-amber-300 bg-amber-50 text-amber-950 dark:border-amber-700 dark:bg-amber-950/40 dark:text-amber-100"
+                    : "border-sky-200 bg-sky-50 text-sky-950 dark:border-sky-800 dark:bg-sky-950/40 dark:text-sky-100"
+                }`}
+              >
+                <p className="font-semibold">{config.listNotice.title}</p>
+                <p className="mt-1">{config.listNotice.description}</p>
+              </div>
+            )}
+
+            {(rowActionState.error || rowActionState.success) && (
+              <div
+                className={`rounded border px-3 py-2 text-sm ${
+                  rowActionState.error
+                    ? "border-red-200 bg-red-50 text-red-800 dark:border-red-900 dark:bg-red-950/40 dark:text-red-200"
+                    : "border-emerald-200 bg-emerald-50 text-emerald-900 dark:border-emerald-900 dark:bg-emerald-950/40 dark:text-emerald-100"
+                }`}
+                role={rowActionState.error ? "alert" : "status"}
+              >
+                {rowActionState.error || rowActionState.success}
+              </div>
+            )}
+
             {((config.searchKeys && config.searchKeys.length > 0) ||
               (config.filters && config.filters.length > 0)) && (
               <div className="flex flex-col gap-3 rounded border border-zinc-100 bg-zinc-50 p-3 dark:border-zinc-800 dark:bg-zinc-950/40">
@@ -707,6 +835,11 @@ export function EntityListCreate({ config }: { config: EntityConfig }) {
                           {column.label ?? fieldsByKey[column.key]?.label ?? titleCaseKey(column.key)}
                         </th>
                       ))}
+                      {config.recordActions && config.recordActions.length > 0 && (
+                        <th className="whitespace-nowrap px-3 py-2 font-medium text-zinc-700 dark:text-zinc-300">
+                          Actions
+                        </th>
+                      )}
                     </tr>
                   </thead>
                   <tbody>
@@ -753,6 +886,48 @@ export function EntityListCreate({ config }: { config: EntityConfig }) {
                             )}
                           </td>
                         ))}
+                        {config.recordActions && config.recordActions.length > 0 && (
+                          <td className="px-3 py-2 text-xs text-zinc-800 dark:text-zinc-200">
+                            <div className="flex flex-wrap gap-2">
+                              {config.recordActions
+                                .filter((action) => actionIsVisible(action, row as Record<string, unknown>))
+                                .map((action) => {
+                                  const disabledReason = resolveActionPathTemplate(
+                                    action.actionPathTemplate,
+                                    row as Record<string, unknown>
+                                  )
+                                    ? null
+                                    : "This action is unavailable because the record has no usable id yet.";
+                                  const tone =
+                                    action.tone === "danger"
+                                      ? "border-red-300 text-red-700 hover:bg-red-50 dark:border-red-800 dark:text-red-200 dark:hover:bg-red-950/30"
+                                      : action.tone === "warning"
+                                        ? "border-amber-300 text-amber-800 hover:bg-amber-50 dark:border-amber-800 dark:text-amber-200 dark:hover:bg-amber-950/30"
+                                        : "border-zinc-300 text-zinc-700 hover:bg-zinc-50 dark:border-zinc-700 dark:text-zinc-200 dark:hover:bg-zinc-800";
+                                  const actionKey = `${action.key}-${String((row as { id?: unknown }).id ?? "row")}`;
+                                  const isBusy =
+                                    rowActionState.key === actionKey &&
+                                    !rowActionState.error &&
+                                    !rowActionState.success;
+
+                                  return (
+                                    <button
+                                      key={action.key}
+                                      type="button"
+                                      onClick={() =>
+                                        void handleRowAction(action, row as Record<string, unknown>)
+                                      }
+                                      disabled={Boolean(disabledReason) || isBusy}
+                                      title={disabledReason ?? undefined}
+                                      className={`rounded border px-2 py-1 font-medium transition disabled:cursor-not-allowed disabled:opacity-50 ${tone}`}
+                                    >
+                                      {isBusy ? "Working..." : action.label}
+                                    </button>
+                                  );
+                                })}
+                            </div>
+                          </td>
+                        )}
                       </tr>
                     ))}
                   </tbody>
