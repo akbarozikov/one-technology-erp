@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useAdminMode } from "@/components/admin/AdminModeProvider";
 import { BossControlDashboard } from "@/components/admin/easy/BossControlDashboard";
 import { ApiError, apiGet, getApiBaseUrl } from "@/lib/api";
@@ -19,16 +19,6 @@ type RecentGeneratedDocument = {
   entity_type: string;
   generation_status: string;
   generated_at: string;
-};
-
-type RecentStockMovement = {
-  id: number;
-  movement_type: string;
-  status: string;
-  reference_code: string | null;
-  movement_date: string;
-  related_entity_type: string | null;
-  related_entity_id: string | null;
 };
 
 type DashboardOverview = {
@@ -59,7 +49,6 @@ type DashboardOverview = {
   warehouse_summary: {
     total_stock_movements: number;
     counts_by_movement_type: CountItem[];
-    recent_stock_movements: RecentStockMovement[];
   };
   quotes_summary: {
     total_quotes: number;
@@ -85,25 +74,21 @@ function SummaryList({
   keyField?: "status" | "movement_type";
 }) {
   return (
-    <section className="rounded border border-zinc-200 bg-white p-4 shadow-sm dark:border-zinc-700 dark:bg-zinc-900">
-      <h2 className="mb-3 text-lg font-semibold text-zinc-900 dark:text-zinc-50">
-        {title}
-      </h2>
+    <section className="app-panel p-5 lg:p-6">
+      <div className="mb-4 space-y-1.5">
+        <h2 className="app-section-title">{title}</h2>
+      </div>
       {items.length === 0 ? (
-        <p className="text-sm text-zinc-500 dark:text-zinc-400">No data yet.</p>
+        <div className="app-empty text-sm leading-6 text-zinc-600 dark:text-zinc-300">No data yet.</div>
       ) : (
         <div className="space-y-2">
           {items.map((item, index) => (
             <div
               key={`${item[keyField] ?? "item"}-${index}`}
-              className="flex items-center justify-between rounded border border-zinc-100 px-3 py-2 text-sm dark:border-zinc-800"
+              className="app-panel-muted flex items-center justify-between px-3 py-3 text-sm"
             >
-              <span className="font-mono text-zinc-700 dark:text-zinc-200">
-                {String(item[keyField] ?? "-")}
-              </span>
-              <span className="rounded bg-zinc-100 px-2 py-0.5 text-xs font-medium text-zinc-700 dark:bg-zinc-800 dark:text-zinc-200">
-                {item.count}
-              </span>
+              <span className="font-mono text-zinc-700 dark:text-zinc-200">{String(item[keyField] ?? "-")}</span>
+              <span className="app-chip">{item.count}</span>
             </div>
           ))}
         </div>
@@ -155,311 +140,256 @@ export default function AdminOverviewPage() {
     };
   }, []);
 
+  if (mode === "easy" && easyRole === "boss") {
+    return <BossControlDashboard />;
+  }
+
   return (
-    mode === "easy" && easyRole === "boss" ? (
-      <BossControlDashboard />
-    ) : (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-semibold text-zinc-900 dark:text-zinc-50">
-          {mode === "easy" ? "Workspace Dashboard" : "Dashboard"}
-        </h1>
-        <p className="text-sm text-zinc-500 dark:text-zinc-400">
-          {mode === "easy"
-            ? "A simpler daily view of sales, documents, installations, and the next places to work."
-            : "Practical overview of commercial, operational, and document activity."}
-        </p>
-      </div>
-
-      {configHint && (
-        <div
-          className="rounded border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-950 dark:border-amber-700 dark:bg-amber-950/40 dark:text-amber-100"
-          role="status"
-        >
-          Set <code className="rounded bg-amber-100 px-1 dark:bg-amber-900">NEXT_PUBLIC_API_BASE_URL</code>{" "}
-          in <code className="rounded bg-amber-100 px-1 dark:bg-amber-900">.env.local</code>.
-        </div>
-      )}
-
-      {loading && (
-        <section className="rounded border border-zinc-200 bg-white p-4 shadow-sm dark:border-zinc-700 dark:bg-zinc-900">
-          <p className="text-sm text-zinc-500">Loading dashboard...</p>
-        </section>
-      )}
-
-      {!loading && error && (
-        <section className="rounded border border-red-200 bg-red-50 p-4 shadow-sm dark:border-red-900 dark:bg-red-950/40">
-          <p className="text-sm text-red-700 dark:text-red-200">{error}</p>
-        </section>
-      )}
-
-      {!loading && !error && data && (
+    <div className="space-y-6 lg:space-y-8">
+      {mode === "easy" ? (
         <>
-          {mode === "easy" && (
-            <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-              <Link
-                href="/admin/new-sale"
-                className="rounded border border-zinc-200 bg-white p-4 shadow-sm transition hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-900 dark:hover:bg-zinc-800"
-              >
-                <p className="text-xs font-semibold uppercase tracking-wide text-zinc-500">
-                  New Sale
+          <section className="app-panel-strong p-6 lg:p-8">
+            <div className="flex flex-col gap-5 xl:flex-row xl:items-end xl:justify-between">
+              <div className="space-y-3">
+                <p className="app-kicker">Seller workspace</p>
+                <h1 className="app-page-title">Start work fast and keep live deals moving.</h1>
+                <p className="app-page-subtitle">
+                  This home is for today's selling work: start a new sale, resume active ones, open the documents you need, and spot anything waiting on you.
                 </p>
-                <p className="mt-2 text-lg font-semibold text-zinc-900 dark:text-zinc-50">
-                  Start Commercial Work
-                </p>
-                <p className="mt-2 text-sm text-zinc-500 dark:text-zinc-400">
-                  Begin with quotes, products, and prepared versions.
-                </p>
-              </Link>
-              <Link
-                href="/admin/my-sales"
-                className="rounded border border-zinc-200 bg-white p-4 shadow-sm transition hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-900 dark:hover:bg-zinc-800"
-              >
-                <p className="text-xs font-semibold uppercase tracking-wide text-zinc-500">
-                  My Sales
-                </p>
-                <p className="mt-2 text-lg font-semibold text-zinc-900 dark:text-zinc-50">
-                  {data.orders_summary.total_orders} orders in the system
-                </p>
-                <p className="mt-2 text-sm text-zinc-500 dark:text-zinc-400">
-                  Review payment follow-through and active customer commitments.
-                </p>
-              </Link>
-              <Link
-                href="/admin/documents-lite"
-                className="rounded border border-zinc-200 bg-white p-4 shadow-sm transition hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-900 dark:hover:bg-zinc-800"
-              >
-                <p className="text-xs font-semibold uppercase tracking-wide text-zinc-500">
-                  Documents
-                </p>
-                <p className="mt-2 text-lg font-semibold text-zinc-900 dark:text-zinc-50">
-                  {data.documents_summary.total_generated_documents} generated
-                </p>
-                <p className="mt-2 text-sm text-zinc-500 dark:text-zinc-400">
-                  Open proposals, order documents, and installation documents quickly.
-                </p>
-              </Link>
-              <Link
-                href="/admin/installations-lite"
-                className="rounded border border-zinc-200 bg-white p-4 shadow-sm transition hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-900 dark:hover:bg-zinc-800"
-              >
-                <p className="text-xs font-semibold uppercase tracking-wide text-zinc-500">
-                  Installations
-                </p>
-                <p className="mt-2 text-lg font-semibold text-zinc-900 dark:text-zinc-50">
-                  {data.installation_summary.total_jobs} jobs tracked
-                </p>
-                <p className="mt-2 text-sm text-zinc-500 dark:text-zinc-400">
-                  Keep an eye on field work, results, and completion follow-through.
-                </p>
-              </Link>
+              </div>
+              <div className="flex flex-wrap gap-3">
+                <Link href="/admin/new-sale" className="app-button-primary">Start a new sale</Link>
+                <Link href="/admin/my-sales" className="app-button-secondary">Open my sales</Link>
+              </div>
+            </div>
+          </section>
+
+          {configHint && (
+            <div className="rounded-[1.2rem] border border-amber-300 bg-amber-50/90 px-4 py-3 text-sm text-amber-950 dark:border-amber-700 dark:bg-amber-950/40 dark:text-amber-100" role="status">
+              Set <code className="rounded bg-amber-100 px-1 dark:bg-amber-900">NEXT_PUBLIC_API_BASE_URL</code> in <code className="rounded bg-amber-100 px-1 dark:bg-amber-900">.env.local</code>.
+            </div>
+          )}
+
+          {loading && (
+            <section className="app-panel p-5">
+              <p className="text-sm text-zinc-500">Loading seller workspace...</p>
             </section>
           )}
 
-          <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-            <div className="rounded border border-zinc-200 bg-white p-4 shadow-sm dark:border-zinc-700 dark:bg-zinc-900">
-              <p className="text-xs uppercase tracking-wide text-zinc-500">Orders</p>
-              <p className="mt-2 text-2xl font-semibold text-zinc-900 dark:text-zinc-50">
-                {data.orders_summary.total_orders}
-              </p>
-            </div>
-            <div className="rounded border border-zinc-200 bg-white p-4 shadow-sm dark:border-zinc-700 dark:bg-zinc-900">
-              <p className="text-xs uppercase tracking-wide text-zinc-500">Paid Total</p>
-              <p className="mt-2 text-2xl font-semibold text-zinc-900 dark:text-zinc-50">
-                {formatCurrency(data.payments_summary.total_paid_amount)}
-              </p>
-            </div>
-            <div className="rounded border border-zinc-200 bg-white p-4 shadow-sm dark:border-zinc-700 dark:bg-zinc-900">
-              <p className="text-xs uppercase tracking-wide text-zinc-500">
-                Active Reservations
-              </p>
-              <p className="mt-2 text-2xl font-semibold text-zinc-900 dark:text-zinc-50">
-                {data.reservations_summary.active_reservations_count}
-              </p>
-            </div>
-            <div className="rounded border border-zinc-200 bg-white p-4 shadow-sm dark:border-zinc-700 dark:bg-zinc-900">
-              <p className="text-xs uppercase tracking-wide text-zinc-500">
-                Generated Documents
-              </p>
-              <p className="mt-2 text-2xl font-semibold text-zinc-900 dark:text-zinc-50">
-                {data.documents_summary.total_generated_documents}
-              </p>
-            </div>
-          </section>
-
-          <section className="grid gap-4 lg:grid-cols-2">
-            <SummaryList
-              title={`Order Statuses (${data.orders_summary.total_orders})`}
-              items={data.orders_summary.counts_by_status}
-            />
-            <section className="rounded border border-zinc-200 bg-white p-4 shadow-sm dark:border-zinc-700 dark:bg-zinc-900">
-              <h2 className="mb-3 text-lg font-semibold text-zinc-900 dark:text-zinc-50">
-                Payments
-              </h2>
-              <div className="grid gap-3 sm:grid-cols-2">
-                <div className="rounded border border-zinc-100 p-3 dark:border-zinc-800">
-                  <p className="text-xs uppercase tracking-wide text-zinc-500">Grand Total</p>
-                  <p className="mt-1 text-lg font-semibold text-zinc-900 dark:text-zinc-50">
-                    {formatCurrency(data.payments_summary.total_order_grand_total)}
-                  </p>
-                </div>
-                <div className="rounded border border-zinc-100 p-3 dark:border-zinc-800">
-                  <p className="text-xs uppercase tracking-wide text-zinc-500">
-                    Remaining Total
-                  </p>
-                  <p className="mt-1 text-lg font-semibold text-zinc-900 dark:text-zinc-50">
-                    {formatCurrency(data.payments_summary.total_remaining_amount)}
-                  </p>
-                </div>
-              </div>
-              <div className="mt-4 space-y-2">
-                {data.payments_summary.counts_by_payment_status.map((item, index) => (
-                  <div
-                    key={`${item.status ?? "payment"}-${index}`}
-                    className="flex items-center justify-between rounded border border-zinc-100 px-3 py-2 text-sm dark:border-zinc-800"
-                  >
-                    <span className="font-mono text-zinc-700 dark:text-zinc-200">
-                      {item.status}
-                    </span>
-                    <span className="rounded bg-zinc-100 px-2 py-0.5 text-xs font-medium text-zinc-700 dark:bg-zinc-800 dark:text-zinc-200">
-                      {item.count}
-                    </span>
-                  </div>
-                ))}
-              </div>
+          {!loading && error && (
+            <section className="rounded-[1.2rem] border border-red-200 bg-red-50/90 p-5 dark:border-red-900 dark:bg-red-950/40">
+              <p className="text-sm text-red-700 dark:text-red-200">{error}</p>
             </section>
-          </section>
+          )}
 
-          <section className="grid gap-4 lg:grid-cols-3">
-            <SummaryList
-              title={`Reservations (${data.reservations_summary.total_reservations})`}
-              items={data.reservations_summary.counts_by_status}
-            />
-            <section className="rounded border border-zinc-200 bg-white p-4 shadow-sm dark:border-zinc-700 dark:bg-zinc-900">
-              <h2 className="mb-3 text-lg font-semibold text-zinc-900 dark:text-zinc-50">
-                Installation
-              </h2>
-              <p className="mb-3 text-sm text-zinc-500 dark:text-zinc-400">
-                {data.installation_summary.recent_completed_jobs_count} completed in the last 7
-                days.
-              </p>
-              <div className="space-y-2">
-                {data.installation_summary.counts_by_status.map((item, index) => (
-                  <div
-                    key={`${item.status ?? "job"}-${index}`}
-                    className="flex items-center justify-between rounded border border-zinc-100 px-3 py-2 text-sm dark:border-zinc-800"
-                  >
-                    <span className="font-mono text-zinc-700 dark:text-zinc-200">
-                      {item.status}
-                    </span>
-                    <span className="rounded bg-zinc-100 px-2 py-0.5 text-xs font-medium text-zinc-700 dark:bg-zinc-800 dark:text-zinc-200">
-                      {item.count}
-                    </span>
+          {!loading && !error && data && (
+            <>
+              <section className="grid gap-4 xl:grid-cols-[1.25fr_0.75fr]">
+                <section className="app-panel p-5 lg:p-6">
+                  <div className="mb-5 space-y-1.5">
+                    <h2 className="app-section-title">Work that matters today</h2>
+                    <p className="app-section-subtitle">Lead with actions, not system counters.</p>
                   </div>
-                ))}
-              </div>
-            </section>
-            <SummaryList
-              title={`Quotes (${data.quotes_summary.total_quotes})`}
-              items={data.quotes_summary.counts_by_status}
-            />
-          </section>
+                  <div className="grid gap-3 md:grid-cols-2">
+                    <Link href="/admin/new-sale" className="app-button-primary min-h-28 flex-col items-start !rounded-[1.25rem] !px-5 !py-5 text-left">
+                      <span>Start a new sale</span>
+                      <span className="mt-2 text-sm font-normal text-white/80 dark:text-zinc-700">Begin from customer, product, quantity, and price only.</span>
+                    </Link>
+                    <Link href="/admin/my-sales" className="app-panel-muted flex min-h-28 flex-col px-5 py-5 transition hover:-translate-y-0.5">
+                      <span className="text-sm font-semibold text-zinc-950 dark:text-zinc-100">Continue sales in progress</span>
+                      <span className="mt-2 text-sm leading-6 text-zinc-600 dark:text-zinc-300">Pick up deals still waiting for a decision or next step.</span>
+                    </Link>
+                    <Link href="/admin/documents-lite" className="app-panel-muted flex min-h-28 flex-col px-5 py-5 transition hover:-translate-y-0.5">
+                      <span className="text-sm font-semibold text-zinc-950 dark:text-zinc-100">Open my documents</span>
+                      <span className="mt-2 text-sm leading-6 text-zinc-600 dark:text-zinc-300">Jump into proposals, order documents, and generated paperwork quickly.</span>
+                    </Link>
+                    <Link href="/admin/installations-lite" className="app-panel-muted flex min-h-28 flex-col px-5 py-5 transition hover:-translate-y-0.5">
+                      <span className="text-sm font-semibold text-zinc-950 dark:text-zinc-100">Check installations</span>
+                      <span className="mt-2 text-sm leading-6 text-zinc-600 dark:text-zinc-300">See field follow-through and what might affect the customer next.</span>
+                    </Link>
+                  </div>
+                </section>
 
-          <section className="grid gap-4 xl:grid-cols-2">
-            <section className="rounded border border-zinc-200 bg-white p-4 shadow-sm dark:border-zinc-700 dark:bg-zinc-900">
-              <div className="mb-3 flex items-center justify-between gap-3">
-                <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-50">
-                  Recent Generated Documents
-                </h2>
-                <Link
-                  href="/admin/generated-documents"
-                  className="text-sm text-blue-700 underline underline-offset-2 hover:text-blue-900 dark:text-blue-300 dark:hover:text-blue-200"
-                >
-                  View all
-                </Link>
-              </div>
-              {data.documents_summary.recent_generated_documents.length === 0 ? (
-                <p className="text-sm text-zinc-500 dark:text-zinc-400">
-                  No generated documents yet.
-                </p>
-              ) : (
-                <div className="space-y-2">
-                  {data.documents_summary.recent_generated_documents.map((document) => (
-                    <div
-                      key={document.id}
-                      className="rounded border border-zinc-100 px-3 py-2 text-sm dark:border-zinc-800"
-                    >
-                      <Link
-                        href={`/admin/generated-documents/${document.id}`}
-                        className="font-medium text-blue-700 underline underline-offset-2 hover:text-blue-900 dark:text-blue-300 dark:hover:text-blue-200"
-                      >
-                        {document.title || document.document_number || `Document ${document.id}`}
-                      </Link>
-                      <div className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
-                        {document.entity_type} · {document.generation_status} · {document.generated_at}
-                      </div>
+                <section className="app-panel p-5 lg:p-6">
+                  <div className="mb-4 space-y-1.5">
+                    <h2 className="app-section-title">Needs attention</h2>
+                    <p className="app-section-subtitle">A compact read on what may block seller follow-through.</p>
+                  </div>
+                  <div className="space-y-3">
+                    <div className="app-panel-muted px-4 py-4">
+                      <p className="app-kicker">Sales waiting for a decision</p>
+                      <p className="mt-2 text-2xl font-semibold tracking-tight text-zinc-950 dark:text-zinc-50">
+                        {data.quotes_summary.counts_by_status.find((item) => item.status === "sent")?.count ?? 0}
+                      </p>
+                      <p className="mt-2 text-sm leading-6 text-zinc-600 dark:text-zinc-300">Keep customer follow-up moving while approval is still open.</p>
                     </div>
-                  ))}
-                </div>
-              )}
-            </section>
-
-            <section className="rounded border border-zinc-200 bg-white p-4 shadow-sm dark:border-zinc-700 dark:bg-zinc-900">
-              <div className="mb-3 flex items-center justify-between gap-3">
-                <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-50">
-                  Recent Stock Movements
-                </h2>
-                <Link
-                  href="/admin/stock-movements"
-                  className="text-sm text-blue-700 underline underline-offset-2 hover:text-blue-900 dark:text-blue-300 dark:hover:text-blue-200"
-                >
-                  View all
-                </Link>
-              </div>
-              <div className="mb-4 grid gap-2 sm:grid-cols-2">
-                {data.warehouse_summary.counts_by_movement_type.map((item, index) => (
-                  <div
-                    key={`${item.movement_type ?? "movement"}-${index}`}
-                    className="flex items-center justify-between rounded border border-zinc-100 px-3 py-2 text-sm dark:border-zinc-800"
-                  >
-                    <span className="font-mono text-zinc-700 dark:text-zinc-200">
-                      {item.movement_type}
-                    </span>
-                    <span className="rounded bg-zinc-100 px-2 py-0.5 text-xs font-medium text-zinc-700 dark:bg-zinc-800 dark:text-zinc-200">
-                      {item.count}
-                    </span>
-                  </div>
-                ))}
-              </div>
-              {data.warehouse_summary.recent_stock_movements.length === 0 ? (
-                <p className="text-sm text-zinc-500 dark:text-zinc-400">No stock movements yet.</p>
-              ) : (
-                <div className="space-y-2">
-                  {data.warehouse_summary.recent_stock_movements.map((movement) => (
-                    <div
-                      key={movement.id}
-                      className="rounded border border-zinc-100 px-3 py-2 text-sm dark:border-zinc-800"
-                    >
-                      <div className="font-medium text-zinc-900 dark:text-zinc-100">
-                        {movement.reference_code || `Movement ${movement.id}`}
-                      </div>
-                      <div className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
-                        {movement.movement_type} · {movement.status} · {movement.movement_date}
-                      </div>
-                      {(movement.related_entity_type || movement.related_entity_id) && (
-                        <div className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
-                          {movement.related_entity_type || "related"} · {movement.related_entity_id || "-"}
-                        </div>
-                      )}
+                    <div className="app-panel-muted px-4 py-4">
+                      <p className="app-kicker">Open money follow-through</p>
+                      <p className="mt-2 text-2xl font-semibold tracking-tight text-zinc-950 dark:text-zinc-50">
+                        {formatCurrency(data.payments_summary.total_remaining_amount)}
+                      </p>
+                      <p className="mt-2 text-sm leading-6 text-zinc-600 dark:text-zinc-300">Sales already in motion that still need payment attention.</p>
                     </div>
-                  ))}
-                </div>
-              )}
+                    <div className="app-panel-muted px-4 py-4">
+                      <p className="app-kicker">Recent documents ready</p>
+                      <p className="mt-2 text-2xl font-semibold tracking-tight text-zinc-950 dark:text-zinc-50">
+                        {data.documents_summary.recent_generated_documents.length}
+                      </p>
+                      <p className="mt-2 text-sm leading-6 text-zinc-600 dark:text-zinc-300">Open the latest generated documents without digging through lists.</p>
+                    </div>
+                  </div>
+                </section>
+              </section>
+
+              <section className="grid gap-4 xl:grid-cols-[1.2fr_0.8fr]">
+                <section className="app-panel p-5 lg:p-6">
+                  <div className="mb-4 flex items-center justify-between gap-3">
+                    <div className="space-y-1.5">
+                      <h2 className="app-section-title">Recent documents</h2>
+                      <p className="app-section-subtitle">The last customer-facing documents created in the system.</p>
+                    </div>
+                    <Link href="/admin/documents-lite" className="app-link text-sm">Open documents</Link>
+                  </div>
+                  {data.documents_summary.recent_generated_documents.length === 0 ? (
+                    <div className="app-empty text-sm leading-6 text-zinc-600 dark:text-zinc-300">
+                      No generated documents are ready yet.
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      {data.documents_summary.recent_generated_documents.slice(0, 5).map((document) => (
+                        <Link key={document.id} href={`/admin/generated-documents/${document.id}`} className="app-panel-muted block px-4 py-4 transition hover:-translate-y-0.5">
+                          <div className="text-sm font-semibold text-zinc-950 dark:text-zinc-100">
+                            {document.title || document.document_number || `Document ${document.id}`}
+                          </div>
+                          <div className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
+                            {document.entity_type} - {document.generation_status} - {document.generated_at}
+                          </div>
+                        </Link>
+                      ))}
+                    </div>
+                  )}
+                </section>
+
+                <section className="app-panel p-5 lg:p-6">
+                  <div className="mb-4 space-y-1.5">
+                    <h2 className="app-section-title">Quick pulse</h2>
+                    <p className="app-section-subtitle">Just enough system context to help daily selling work.</p>
+                  </div>
+                  <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-1">
+                    <div className="app-panel-muted px-4 py-4">
+                      <p className="app-kicker">Sales in system</p>
+                      <p className="mt-2 text-2xl font-semibold tracking-tight text-zinc-950 dark:text-zinc-50">{data.orders_summary.total_orders}</p>
+                    </div>
+                    <div className="app-panel-muted px-4 py-4">
+                      <p className="app-kicker">Recent completed jobs</p>
+                      <p className="mt-2 text-2xl font-semibold tracking-tight text-zinc-950 dark:text-zinc-50">{data.installation_summary.recent_completed_jobs_count}</p>
+                    </div>
+                    <div className="app-panel-muted px-4 py-4">
+                      <p className="app-kicker">Documents ready</p>
+                      <p className="mt-2 text-2xl font-semibold tracking-tight text-zinc-950 dark:text-zinc-50">{data.documents_summary.total_generated_documents}</p>
+                    </div>
+                  </div>
+                </section>
+              </section>
+            </>
+          )}
+        </>
+      ) : (
+        <>
+          <div className="space-y-2">
+            <h1 className="app-page-title text-[2rem]">Advanced dashboard</h1>
+            <p className="app-page-subtitle">Practical overview of commercial, operational, and document activity.</p>
+          </div>
+
+          {configHint && (
+            <div className="rounded-[1.2rem] border border-amber-300 bg-amber-50/90 px-4 py-3 text-sm text-amber-950 dark:border-amber-700 dark:bg-amber-950/40 dark:text-amber-100" role="status">
+              Set <code className="rounded bg-amber-100 px-1 dark:bg-amber-900">NEXT_PUBLIC_API_BASE_URL</code> in <code className="rounded bg-amber-100 px-1 dark:bg-amber-900">.env.local</code>.
+            </div>
+          )}
+
+          {loading && (
+            <section className="app-panel p-5">
+              <p className="text-sm text-zinc-500">Loading dashboard...</p>
             </section>
-          </section>
+          )}
+
+          {!loading && error && (
+            <section className="rounded-[1.2rem] border border-red-200 bg-red-50/90 p-5 dark:border-red-900 dark:bg-red-950/40">
+              <p className="text-sm text-red-700 dark:text-red-200">{error}</p>
+            </section>
+          )}
+
+          {!loading && !error && data && (
+            <>
+              <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+                <div className="app-stat">
+                  <p className="app-kicker">Orders</p>
+                  <p className="mt-3 text-3xl font-semibold tracking-tight text-zinc-950 dark:text-zinc-50">{data.orders_summary.total_orders}</p>
+                </div>
+                <div className="app-stat">
+                  <p className="app-kicker">Paid total</p>
+                  <p className="mt-3 text-3xl font-semibold tracking-tight text-zinc-950 dark:text-zinc-50">{formatCurrency(data.payments_summary.total_paid_amount)}</p>
+                </div>
+                <div className="app-stat">
+                  <p className="app-kicker">Active reservations</p>
+                  <p className="mt-3 text-3xl font-semibold tracking-tight text-zinc-950 dark:text-zinc-50">{data.reservations_summary.active_reservations_count}</p>
+                </div>
+                <div className="app-stat">
+                  <p className="app-kicker">Generated documents</p>
+                  <p className="mt-3 text-3xl font-semibold tracking-tight text-zinc-950 dark:text-zinc-50">{data.documents_summary.total_generated_documents}</p>
+                </div>
+              </section>
+
+              <section className="grid gap-4 lg:grid-cols-2">
+                <SummaryList title={`Order statuses (${data.orders_summary.total_orders})`} items={data.orders_summary.counts_by_status} />
+                <section className="app-panel p-5 lg:p-6">
+                  <div className="mb-4 space-y-1.5">
+                    <h2 className="app-section-title">Payments</h2>
+                    <p className="app-section-subtitle">Stored order totals and payment status counts.</p>
+                  </div>
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    <div className="app-panel-muted px-4 py-4">
+                      <p className="app-kicker">Grand total</p>
+                      <p className="mt-2 text-xl font-semibold text-zinc-950 dark:text-zinc-50">{formatCurrency(data.payments_summary.total_order_grand_total)}</p>
+                    </div>
+                    <div className="app-panel-muted px-4 py-4">
+                      <p className="app-kicker">Remaining total</p>
+                      <p className="mt-2 text-xl font-semibold text-zinc-950 dark:text-zinc-50">{formatCurrency(data.payments_summary.total_remaining_amount)}</p>
+                    </div>
+                  </div>
+                  <div className="mt-4 space-y-2">
+                    {data.payments_summary.counts_by_payment_status.map((item, index) => (
+                      <div key={`${item.status ?? "payment"}-${index}`} className="app-panel-muted flex items-center justify-between px-3 py-3 text-sm">
+                        <span className="font-mono text-zinc-700 dark:text-zinc-200">{item.status}</span>
+                        <span className="app-chip">{item.count}</span>
+                      </div>
+                    ))}
+                  </div>
+                </section>
+              </section>
+
+              <section className="grid gap-4 lg:grid-cols-3">
+                <SummaryList title={`Reservations (${data.reservations_summary.total_reservations})`} items={data.reservations_summary.counts_by_status} />
+                <section className="app-panel p-5 lg:p-6">
+                  <div className="mb-4 space-y-1.5">
+                    <h2 className="app-section-title">Installation</h2>
+                    <p className="app-section-subtitle">{data.installation_summary.recent_completed_jobs_count} completed in the last 7 days.</p>
+                  </div>
+                  <div className="space-y-2">
+                    {data.installation_summary.counts_by_status.map((item, index) => (
+                      <div key={`${item.status ?? "job"}-${index}`} className="app-panel-muted flex items-center justify-between px-3 py-3 text-sm">
+                        <span className="font-mono text-zinc-700 dark:text-zinc-200">{item.status}</span>
+                        <span className="app-chip">{item.count}</span>
+                      </div>
+                    ))}
+                  </div>
+                </section>
+                <SummaryList title={`Quotes (${data.quotes_summary.total_quotes})`} items={data.quotes_summary.counts_by_status} />
+              </section>
+            </>
+          )}
         </>
       )}
     </div>
-    )
   );
 }
