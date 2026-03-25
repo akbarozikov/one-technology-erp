@@ -147,15 +147,15 @@ export default function ApprovalDetailPage() {
   }
 
   return (
-    <div className="max-w-5xl space-y-6">
-      <section className="rounded border border-zinc-200 bg-white p-5 shadow-sm dark:border-zinc-700 dark:bg-zinc-900">
-        <p className="text-xs font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
+    <div className="max-w-5xl space-y-6 lg:space-y-8">
+      <section className="app-panel-strong p-6 lg:p-8">
+        <p className="app-kicker">
           Boss Mode
         </p>
-        <h1 className="mt-2 text-2xl font-semibold text-zinc-900 dark:text-zinc-50">
+        <h1 className="app-page-title text-[2rem]">
           Review Sale
         </h1>
-        <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-300">
+        <p className="app-page-subtitle">
           Use this secondary view when you want a little more context before making or adjusting a
           decision.
         </p>
@@ -173,7 +173,7 @@ export default function ApprovalDetailPage() {
       )}
 
       {loading && (
-        <section className="rounded border border-zinc-200 bg-white p-4 shadow-sm dark:border-zinc-700 dark:bg-zinc-900">
+        <section className="app-panel p-5">
           <p className="text-sm text-zinc-500">Loading this sale review...</p>
         </section>
       )}
@@ -197,7 +197,7 @@ export default function ApprovalDetailPage() {
           />
 
           <section className="grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
-            <section className="rounded border border-zinc-200 bg-white p-5 shadow-sm dark:border-zinc-700 dark:bg-zinc-900">
+            <section className="app-panel-strong p-6 lg:p-8">
               <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-50">
                 Decision
               </h2>
@@ -242,7 +242,7 @@ export default function ApprovalDetailPage() {
                   value={comment}
                   onChange={(event) => setComment(event.target.value)}
                   rows={4}
-                  className="w-full rounded border border-zinc-300 px-3 py-2 dark:border-zinc-700 dark:bg-zinc-900"
+                  className="app-input"
                   placeholder="Explain the decision or tell the seller what to change"
                 />
               </label>
@@ -257,20 +257,20 @@ export default function ApprovalDetailPage() {
                 <button
                   type="button"
                   onClick={saveDecision}
-                  className="rounded bg-zinc-900 px-4 py-2 text-sm font-medium text-white hover:bg-zinc-800 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-white"
+                  className="app-button-primary"
                 >
                   Save Decision
                 </button>
                 <Link
                   href={sale.advancedHref}
-                  className="rounded border border-zinc-300 px-3 py-2 text-sm text-zinc-700 hover:bg-zinc-50 dark:border-zinc-700 dark:text-zinc-200 dark:hover:bg-zinc-800"
+                  className="app-button-secondary"
                 >
                   Open advanced sales page
                 </Link>
               </div>
             </section>
 
-            <section className="rounded border border-zinc-200 bg-white p-5 shadow-sm dark:border-zinc-700 dark:bg-zinc-900">
+            <section className="app-panel-strong p-6 lg:p-8">
               <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-50">
                 What You Are Reviewing
               </h2>
@@ -288,7 +288,7 @@ export default function ApprovalDetailPage() {
                   {lineDetails.slice(0, 3).map((line) => (
                     <div
                       key={line.id}
-                      className="rounded border border-zinc-200 px-4 py-3 dark:border-zinc-700"
+                      className="app-panel-muted px-4 py-4"
                     >
                       <p className="font-medium text-zinc-900 dark:text-zinc-100">
                         {line.snapshot_product_name || "Sale item"}
@@ -313,3 +313,4 @@ export default function ApprovalDetailPage() {
     </div>
   );
 }
+

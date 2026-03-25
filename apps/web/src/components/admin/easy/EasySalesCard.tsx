@@ -7,7 +7,7 @@ import { type Sale, getSaleStatusTone, formatMoney } from "@/lib/easy-sales";
 function Badge({ value }: { value: Sale["status"] }) {
   return (
     <span
-      className={`inline-flex rounded-full border px-2 py-0.5 text-[11px] font-medium ${getSaleStatusTone(value)}`}
+      className={`inline-flex rounded-full border px-2.5 py-1 text-[11px] font-semibold ${getSaleStatusTone(value)}`}
     >
       {value}
     </span>
@@ -30,65 +30,52 @@ export function EasySalesCard({
   const cardBody = (
     <>
       <div className="flex items-start justify-between gap-3">
-        <div>
-          <div className="font-semibold text-zinc-900 dark:text-zinc-100">
+        <div className="space-y-1.5">
+          <div className="text-lg font-semibold tracking-tight text-zinc-950 dark:text-zinc-50">
             {sale.client}
           </div>
-          {sale.seller && (
-            <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-300">{sale.seller}</p>
-          )}
+          <div className="flex flex-wrap items-center gap-2">
+            {sale.seller && <span className="app-chip">{sale.seller}</span>}
+            {sale.stageLabel && <span className="app-chip">{sale.stageLabel}</span>}
+          </div>
         </div>
-        <div className="flex flex-wrap justify-end gap-1">
+        <div className="flex flex-wrap justify-end gap-1.5">
           <Badge value={sale.status} />
-          {extraBadge && (
-            <span className="inline-flex rounded-full border border-zinc-200 bg-zinc-100 px-2 py-0.5 text-[11px] font-medium text-zinc-700 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-200">
-              {extraBadge}
-            </span>
-          )}
+          {extraBadge && <span className="app-chip">{extraBadge}</span>}
         </div>
       </div>
 
-      <div className="mt-3 grid gap-3 sm:grid-cols-3">
-        <div>
-          <p className="text-[11px] font-semibold uppercase tracking-wide text-zinc-500">
-            Product / Solution
-          </p>
-          <p className="mt-1 text-sm text-zinc-700 dark:text-zinc-200">
-            {sale.product}
-          </p>
+      <div className="mt-5 grid gap-3 md:grid-cols-3">
+        <div className="app-panel-muted px-3 py-3">
+          <p className="app-kicker">Product</p>
+          <p className="mt-2 text-sm font-medium text-zinc-800 dark:text-zinc-100">{sale.product}</p>
         </div>
-        <div>
-          <p className="text-[11px] font-semibold uppercase tracking-wide text-zinc-500">
-            Amount
-          </p>
-          <p className="mt-1 text-sm text-zinc-700 dark:text-zinc-200">
+        <div className="app-panel-muted px-3 py-3">
+          <p className="app-kicker">Amount</p>
+          <p className="mt-2 text-lg font-semibold text-zinc-950 dark:text-zinc-50">
             {formatMoney(sale.amount)}
           </p>
         </div>
-        <div>
-          <p className="text-[11px] font-semibold uppercase tracking-wide text-zinc-500">
-            Updated
-          </p>
-          <p className="mt-1 text-sm text-zinc-700 dark:text-zinc-200">
-            {sale.updatedAt || "-"}
-          </p>
+        <div className="app-panel-muted px-3 py-3">
+          <p className="app-kicker">Updated</p>
+          <p className="mt-2 text-sm font-medium text-zinc-800 dark:text-zinc-100">{sale.updatedAt || "-"}</p>
         </div>
       </div>
 
       {description && (
-        <p className="mt-3 text-sm text-zinc-500 dark:text-zinc-400">{description}</p>
+        <p className="mt-4 text-sm leading-6 text-zinc-600 dark:text-zinc-300">{description}</p>
       )}
 
-      {actions && <div className="mt-4 flex flex-wrap gap-2">{actions}</div>}
+      {actions && <div className="mt-5 flex flex-wrap gap-2">{actions}</div>}
     </>
   );
 
   const cardClassName =
-    "block rounded border border-zinc-200 bg-white p-4 shadow-sm transition dark:border-zinc-700 dark:bg-zinc-900";
+    "app-panel block p-5 transition duration-150 hover:-translate-y-0.5 hover:border-black/15 hover:shadow-[0_18px_36px_rgba(17,24,39,0.08)] dark:hover:border-white/12";
 
   if (href) {
     return (
-      <Link href={href} className={`${cardClassName} hover:bg-zinc-50 dark:hover:bg-zinc-800`}>
+      <Link href={href} className={cardClassName}>
         {cardBody}
       </Link>
     );

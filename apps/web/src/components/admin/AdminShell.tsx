@@ -17,97 +17,98 @@ function AdminShellInner({ children }: { children: React.ReactNode }) {
   const isEasyModePage = easyNavItems.some((item) => isModeNavPath(pathname, item.href));
 
   return (
-    <div className="flex min-h-screen flex-1">
+    <div className="app-shell-bg flex min-h-screen flex-1">
       <AdminSidebar />
       <div className="flex min-h-0 flex-1 flex-col overflow-auto">
-        <header className="shrink-0 border-b border-zinc-200 bg-white px-6 py-4 dark:border-zinc-800 dark:bg-zinc-950">
-          <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-            <div>
-              <p className="text-xs font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
-                {mode === "easy" ? "Easy Mode" : "Advanced Mode"}
-              </p>
-              <h1 className="text-lg font-semibold text-zinc-900 dark:text-zinc-50">
-                {mode === "easy"
-                  ? easyRole === "boss"
-                    ? "One Technology ERP Boss Workspace"
-                    : "One Technology ERP Seller Workspace"
-                  : "One Technology ERP Advanced Workspace"}
-              </h1>
-              <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
-                {mode === "easy"
-                  ? easyRole === "boss"
-                    ? "A management control surface for decisions, oversight, and the next actions that matter today."
-                    : "A simpler working view for everyday sales, documents, approvals, and installations."
-                  : "Full ERP access for detailed commercial, warehouse, constructor, and administration work."}
-              </p>
-              {mode === "easy" && !isEasyModePage && (
-                <p className="mt-2 text-sm text-amber-700 dark:text-amber-300">
-                  Easy mode is active. You are viewing an advanced ERP page that stays available
-                  when deeper control is needed.
+        <header className="border-b border-black/5 bg-white/55 px-5 py-5 backdrop-blur-xl dark:border-white/8 dark:bg-black/10 lg:px-8">
+          <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
+            <div className="space-y-3">
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="app-chip">
+                  {mode === "easy" ? "Easy mode" : "Advanced mode"}
+                </span>
+                {mode === "easy" && (
+                  <span className="app-chip">
+                    {easyRole === "boss" ? "Boss workspace" : "Seller workspace"}
+                  </span>
+                )}
+              </div>
+
+              <div className="space-y-2">
+                <h1 className="app-page-title max-w-4xl text-[1.9rem] lg:text-[2.25rem]">
+                  {mode === "easy"
+                    ? easyRole === "boss"
+                      ? "Control the day, not the database."
+                      : "Keep sales moving without the ERP noise."
+                    : "Advanced workspace for the full operating system."}
+                </h1>
+                <p className="app-page-subtitle">
+                  {mode === "easy"
+                    ? easyRole === "boss"
+                      ? "Decisions, money, documents, and operational exceptions are grouped here so management work feels direct and calm."
+                      : "Daily selling, follow-through, and customer-facing progress stay simple here, while the deeper ERP tools remain one step away."
+                    : "Commercial, warehouse, constructor, document, and administration depth all stay available here, now with cleaner structure and denser visual rhythm."}
                 </p>
-              )}
+                {mode === "easy" && !isEasyModePage && (
+                  <div className="app-panel-muted max-w-3xl px-4 py-3 text-sm text-amber-900 dark:text-amber-100">
+                    Easy mode is active, but this page belongs to the advanced workspace. That is intentional when you need deeper control than the simplified product layer exposes.
+                  </div>
+                )}
+              </div>
             </div>
 
-            <div className="rounded border border-zinc-200 bg-zinc-50 p-1 dark:border-zinc-700 dark:bg-zinc-900">
-              <div className="mb-1 px-2 text-[11px] font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
-                View Mode
-              </div>
-              <div className="flex gap-1">
-                {(["easy", "advanced"] as const).map((option) => {
-                  const active = mode === option;
-                  return (
-                    <button
-                      key={option}
-                      type="button"
-                      onClick={() => setMode(option)}
-                      className={`rounded px-3 py-1.5 text-sm transition ${
-                        active
-                          ? "bg-zinc-900 font-medium text-white dark:bg-zinc-100 dark:text-zinc-900"
-                          : "text-zinc-600 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-800"
-                      }`}
-                      aria-pressed={active}
-                    >
-                      {option === "easy" ? "Easy" : "Advanced"}
-                    </button>
-                  );
-                })}
-              </div>
-              {!ready && (
-                <p className="px-2 pt-1 text-[11px] text-zinc-500 dark:text-zinc-400">
-                  Loading saved preference...
-                </p>
-              )}
-            </div>
-            {mode === "easy" && (
-              <div className="rounded border border-zinc-200 bg-zinc-50 p-1 dark:border-zinc-700 dark:bg-zinc-900">
-                <div className="mb-1 px-2 text-[11px] font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
-                  Easy Role
-                </div>
-                <div className="flex gap-1">
-                  {(["seller", "boss"] as const).map((option) => {
-                    const active = easyRole === option;
+            <div className="grid gap-3 sm:grid-cols-2 xl:min-w-[25rem]">
+              <section className="app-panel px-3 py-3">
+                <div className="app-kicker mb-2 px-1">View</div>
+                <div className="grid grid-cols-2 gap-2">
+                  {(["easy", "advanced"] as const).map((option) => {
+                    const active = mode === option;
                     return (
                       <button
                         key={option}
                         type="button"
-                        onClick={() => setEasyRole(option)}
-                        className={`rounded px-3 py-1.5 text-sm transition ${
-                          active
-                            ? "bg-zinc-900 font-medium text-white dark:bg-zinc-100 dark:text-zinc-900"
-                            : "text-zinc-600 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-800"
-                        }`}
+                        onClick={() => setMode(option)}
+                        className={active ? "app-button-primary w-full" : "app-button-secondary w-full"}
                         aria-pressed={active}
                       >
-                        {option === "seller" ? "Seller" : "Boss"}
+                        {option === "easy" ? "Easy" : "Advanced"}
                       </button>
                     );
                   })}
                 </div>
-              </div>
-            )}
+                {!ready && (
+                  <p className="mt-2 px-1 text-xs text-zinc-500 dark:text-zinc-400">
+                    Loading saved preference...
+                  </p>
+                )}
+              </section>
+
+              {mode === "easy" && (
+                <section className="app-panel px-3 py-3">
+                  <div className="app-kicker mb-2 px-1">Role</div>
+                  <div className="grid grid-cols-2 gap-2">
+                    {(["seller", "boss"] as const).map((option) => {
+                      const active = easyRole === option;
+                      return (
+                        <button
+                          key={option}
+                          type="button"
+                          onClick={() => setEasyRole(option)}
+                          className={active ? "app-button-primary w-full" : "app-button-secondary w-full"}
+                          aria-pressed={active}
+                        >
+                          {option === "seller" ? "Seller" : "Boss"}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </section>
+              )}
+            </div>
           </div>
         </header>
-        <main className="flex-1 p-6">{children}</main>
+
+        <main className="flex-1 px-5 py-6 lg:px-8 lg:py-8">{children}</main>
       </div>
     </div>
   );

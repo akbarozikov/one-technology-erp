@@ -33,7 +33,7 @@ function DebtCard({ item }: { item: PaymentDebtItem }) {
   return (
     <Link
       href={item.advancedHref}
-      className="block rounded border border-zinc-200 bg-white p-4 shadow-sm transition hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-900 dark:hover:bg-zinc-800"
+      className="app-panel block p-4 transition duration-150 hover:-translate-y-0.5 hover:border-black/15 dark:hover:border-white/12"
     >
       <div className="flex items-start justify-between gap-3">
         <div>
@@ -197,12 +197,12 @@ export function BossPaymentsDebtSurface() {
   );
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 lg:space-y-8">
       <div>
-        <h1 className="text-2xl font-semibold text-zinc-900 dark:text-zinc-50">
+        <h1 className="app-page-title text-[2rem]">
           Payments & Debt
         </h1>
-        <p className="text-sm text-zinc-500 dark:text-zinc-400">
+        <p className="app-page-subtitle">
           A boss-facing money view for what is collected, what is still open, and what needs
           attention first.
         </p>
@@ -219,7 +219,7 @@ export function BossPaymentsDebtSurface() {
       )}
 
       {loading && (
-        <section className="rounded border border-zinc-200 bg-white p-4 shadow-sm dark:border-zinc-700 dark:bg-zinc-900">
+        <section className="app-panel p-5">
           <p className="text-sm text-zinc-500">Loading payments and debt...</p>
         </section>
       )}
@@ -233,7 +233,7 @@ export function BossPaymentsDebtSurface() {
       {!loading && !error && (
         <>
           <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
-            <div className="rounded border border-zinc-200 bg-white p-4 shadow-sm dark:border-zinc-700 dark:bg-zinc-900">
+            <div className="app-panel p-5">
               <p className="text-xs font-semibold uppercase tracking-wide text-zinc-500">
                 Outstanding
               </p>
@@ -241,7 +241,7 @@ export function BossPaymentsDebtSurface() {
                 {formatCurrency(outstandingTotal)}
               </p>
             </div>
-            <div className="rounded border border-zinc-200 bg-white p-4 shadow-sm dark:border-zinc-700 dark:bg-zinc-900">
+            <div className="app-panel p-5">
               <p className="text-xs font-semibold uppercase tracking-wide text-zinc-500">
                 Overdue
               </p>
@@ -249,7 +249,7 @@ export function BossPaymentsDebtSurface() {
                 {formatCurrency(overdueTotal)}
               </p>
             </div>
-            <div className="rounded border border-zinc-200 bg-white p-4 shadow-sm dark:border-zinc-700 dark:bg-zinc-900">
+            <div className="app-panel p-5">
               <p className="text-xs font-semibold uppercase tracking-wide text-zinc-500">
                 Partially Paid
               </p>
@@ -257,7 +257,7 @@ export function BossPaymentsDebtSurface() {
                 {partiallyPaid.length}
               </p>
             </div>
-            <div className="rounded border border-zinc-200 bg-white p-4 shadow-sm dark:border-zinc-700 dark:bg-zinc-900">
+            <div className="app-panel p-5">
               <p className="text-xs font-semibold uppercase tracking-wide text-zinc-500">
                 Paid Recently
               </p>
@@ -265,7 +265,7 @@ export function BossPaymentsDebtSurface() {
                 {paidRecently.length}
               </p>
             </div>
-            <div className="rounded border border-zinc-200 bg-white p-4 shadow-sm dark:border-zinc-700 dark:bg-zinc-900">
+            <div className="app-panel p-5">
               <p className="text-xs font-semibold uppercase tracking-wide text-zinc-500">
                 Needs Attention
               </p>
@@ -275,14 +275,14 @@ export function BossPaymentsDebtSurface() {
             </div>
           </section>
 
-          <section className="rounded border border-zinc-200 bg-white p-5 shadow-sm dark:border-zinc-700 dark:bg-zinc-900">
+          <section className="app-panel p-5 lg:p-6">
             <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-50">
               Quick Actions
             </h2>
             <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
               <Link
                 href="/admin/payments"
-                className="rounded border border-zinc-900 bg-zinc-900 px-4 py-3 text-white hover:bg-zinc-800 dark:border-zinc-100 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-white"
+                className="app-button-primary min-h-24 flex-col items-start !rounded-[1.2rem] !px-4 !py-4 text-left"
               >
                 <div className="font-medium">Open advanced payments</div>
                 <p className="mt-1 text-sm text-zinc-100 dark:text-zinc-700">
@@ -291,7 +291,7 @@ export function BossPaymentsDebtSurface() {
               </Link>
               <Link
                 href="/admin/orders"
-                className="rounded border border-zinc-200 px-4 py-3 hover:bg-zinc-50 dark:border-zinc-700 dark:hover:bg-zinc-800"
+                className="app-panel-muted flex min-h-24 flex-col px-4 py-4 transition hover:-translate-y-0.5"
               >
                 <div className="font-medium text-zinc-900 dark:text-zinc-100">Open orders</div>
                 <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
@@ -300,7 +300,7 @@ export function BossPaymentsDebtSurface() {
               </Link>
               <Link
                 href="/admin/approvals"
-                className="rounded border border-zinc-200 px-4 py-3 hover:bg-zinc-50 dark:border-zinc-700 dark:hover:bg-zinc-800"
+                className="app-panel-muted flex min-h-24 flex-col px-4 py-4 transition hover:-translate-y-0.5"
               >
                 <div className="font-medium text-zinc-900 dark:text-zinc-100">Review approvals</div>
                 <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
@@ -309,7 +309,7 @@ export function BossPaymentsDebtSurface() {
               </Link>
               <Link
                 href="/admin"
-                className="rounded border border-zinc-200 px-4 py-3 hover:bg-zinc-50 dark:border-zinc-700 dark:hover:bg-zinc-800"
+                className="app-panel-muted flex min-h-24 flex-col px-4 py-4 transition hover:-translate-y-0.5"
               >
                 <div className="font-medium text-zinc-900 dark:text-zinc-100">Back to boss dashboard</div>
                 <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
@@ -320,7 +320,7 @@ export function BossPaymentsDebtSurface() {
           </section>
 
           <section className="grid gap-4 xl:grid-cols-2">
-            <section className="rounded border border-zinc-200 bg-white p-5 shadow-sm dark:border-zinc-700 dark:bg-zinc-900">
+            <section className="app-panel p-5 lg:p-6">
               <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-50">
                 Needs Attention Now
               </h2>
@@ -329,7 +329,7 @@ export function BossPaymentsDebtSurface() {
               </p>
               <div className="mt-4 space-y-3">
                 {highValueOutstanding.length === 0 ? (
-                  <p className="text-sm text-zinc-500 dark:text-zinc-400">
+                  <p className="app-page-subtitle">
                     No high-value outstanding items are standing out right now.
                   </p>
                 ) : (
@@ -338,7 +338,7 @@ export function BossPaymentsDebtSurface() {
               </div>
             </section>
 
-            <section className="rounded border border-zinc-200 bg-white p-5 shadow-sm dark:border-zinc-700 dark:bg-zinc-900">
+            <section className="app-panel p-5 lg:p-6">
               <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-50">
                 Overdue
               </h2>
@@ -347,7 +347,7 @@ export function BossPaymentsDebtSurface() {
               </p>
               <div className="mt-4 space-y-3">
                 {overdue.length === 0 ? (
-                  <p className="text-sm text-zinc-500 dark:text-zinc-400">
+                  <p className="app-page-subtitle">
                     Nothing looks overdue by the current lightweight rule.
                   </p>
                 ) : (
@@ -358,13 +358,13 @@ export function BossPaymentsDebtSurface() {
           </section>
 
           <section className="grid gap-4 xl:grid-cols-2">
-            <section className="rounded border border-zinc-200 bg-white p-5 shadow-sm dark:border-zinc-700 dark:bg-zinc-900">
+            <section className="app-panel p-5 lg:p-6">
               <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-50">
                 Partially Paid
               </h2>
               <div className="mt-4 space-y-3">
                 {partiallyPaid.length === 0 ? (
-                  <p className="text-sm text-zinc-500 dark:text-zinc-400">
+                  <p className="app-page-subtitle">
                     No partially paid sales are showing right now.
                   </p>
                 ) : (
@@ -373,13 +373,13 @@ export function BossPaymentsDebtSurface() {
               </div>
             </section>
 
-            <section className="rounded border border-zinc-200 bg-white p-5 shadow-sm dark:border-zinc-700 dark:bg-zinc-900">
+            <section className="app-panel p-5 lg:p-6">
               <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-50">
                 Paid Recently
               </h2>
               <div className="mt-4 space-y-3">
                 {paidRecently.length === 0 ? (
-                  <p className="text-sm text-zinc-500 dark:text-zinc-400">
+                  <p className="app-page-subtitle">
                     No recent payments are visible yet.
                   </p>
                 ) : (
@@ -442,3 +442,4 @@ export function BossPaymentsDebtSurface() {
     </div>
   );
 }
+

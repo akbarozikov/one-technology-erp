@@ -33,7 +33,7 @@ function ExpenseCard({ item }: { item: ExpenseViewItem }) {
   return (
     <Link
       href={item.advancedHref}
-      className="block rounded border border-zinc-200 bg-white p-4 shadow-sm transition hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-900 dark:hover:bg-zinc-800"
+      className="app-panel block p-4 transition duration-150 hover:-translate-y-0.5 hover:border-black/15 dark:hover:border-white/12"
     >
       <div className="flex items-start justify-between gap-3">
         <div>
@@ -79,7 +79,7 @@ function InventoryCard({ item }: { item: InventoryAdjustmentViewItem }) {
   return (
     <Link
       href={item.advancedHref}
-      className="block rounded border border-zinc-200 bg-white p-4 shadow-sm transition hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-900 dark:hover:bg-zinc-800"
+      className="app-panel block p-4 transition duration-150 hover:-translate-y-0.5 hover:border-black/15 dark:hover:border-white/12"
     >
       <div className="flex items-start justify-between gap-3">
         <div>
@@ -239,12 +239,12 @@ export function BossOperationsSurface() {
   );
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 lg:space-y-8">
       <div>
-        <h1 className="text-2xl font-semibold text-zinc-900 dark:text-zinc-50">
+        <h1 className="app-page-title text-[2rem]">
           Expenses & Inventory Adjustments
         </h1>
-        <p className="text-sm text-zinc-500 dark:text-zinc-400">
+        <p className="app-page-subtitle">
           A boss-facing view of spend and stock corrections, so unusual operational exceptions are
           easier to spot before they turn into bigger issues.
         </p>
@@ -261,7 +261,7 @@ export function BossOperationsSurface() {
       )}
 
       {loading && (
-        <section className="rounded border border-zinc-200 bg-white p-4 shadow-sm dark:border-zinc-700 dark:bg-zinc-900">
+        <section className="app-stat">
           <p className="text-sm text-zinc-500">Loading operational exceptions...</p>
         </section>
       )}
@@ -275,7 +275,7 @@ export function BossOperationsSurface() {
       {!loading && !error && (
         <>
           <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
-            <div className="rounded border border-zinc-200 bg-white p-4 shadow-sm dark:border-zinc-700 dark:bg-zinc-900">
+            <div className="app-stat">
               <p className="text-xs font-semibold uppercase tracking-wide text-zinc-500">
                 Recent Expenses
               </p>
@@ -283,7 +283,7 @@ export function BossOperationsSurface() {
                 {recentExpenses.length}
               </p>
             </div>
-            <div className="rounded border border-zinc-200 bg-white p-4 shadow-sm dark:border-zinc-700 dark:bg-zinc-900">
+            <div className="app-stat">
               <p className="text-xs font-semibold uppercase tracking-wide text-zinc-500">
                 Large Expenses
               </p>
@@ -291,7 +291,7 @@ export function BossOperationsSurface() {
                 {formatBossCurrency(largeExpenseTotal)}
               </p>
             </div>
-            <div className="rounded border border-zinc-200 bg-white p-4 shadow-sm dark:border-zinc-700 dark:bg-zinc-900">
+            <div className="app-stat">
               <p className="text-xs font-semibold uppercase tracking-wide text-zinc-500">
                 Negative Adjustments
               </p>
@@ -299,7 +299,7 @@ export function BossOperationsSurface() {
                 {negativeAdjustments.length}
               </p>
             </div>
-            <div className="rounded border border-zinc-200 bg-white p-4 shadow-sm dark:border-zinc-700 dark:bg-zinc-900">
+            <div className="app-stat">
               <p className="text-xs font-semibold uppercase tracking-wide text-zinc-500">
                 Needs Review
               </p>
@@ -307,7 +307,7 @@ export function BossOperationsSurface() {
                 {needsReview.length + attentionExpenses.length}
               </p>
             </div>
-            <div className="rounded border border-zinc-200 bg-white p-4 shadow-sm dark:border-zinc-700 dark:bg-zinc-900">
+            <div className="app-stat">
               <p className="text-xs font-semibold uppercase tracking-wide text-zinc-500">
                 Manual Checks
               </p>
@@ -317,12 +317,12 @@ export function BossOperationsSurface() {
             </div>
           </section>
 
-          <section className="rounded border border-zinc-200 bg-white p-5 shadow-sm dark:border-zinc-700 dark:bg-zinc-900">
+          <section className="app-panel p-5 lg:p-6">
             <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-50">Quick Actions</h2>
             <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
               <Link
                 href="/admin/purchase-receipts"
-                className="rounded border border-zinc-900 bg-zinc-900 px-4 py-3 text-white hover:bg-zinc-800 dark:border-zinc-100 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-white"
+                className="app-button-primary min-h-24 flex-col items-start !rounded-[1.2rem] !px-4 !py-4 text-left"
               >
                 <div className="font-medium">Open purchase receipts</div>
                 <p className="mt-1 text-sm text-zinc-100 dark:text-zinc-700">
@@ -331,7 +331,7 @@ export function BossOperationsSurface() {
               </Link>
               <Link
                 href="/admin/stock-adjustments"
-                className="rounded border border-zinc-200 px-4 py-3 hover:bg-zinc-50 dark:border-zinc-700 dark:hover:bg-zinc-800"
+                className="app-panel-muted flex min-h-24 flex-col px-4 py-4 transition hover:-translate-y-0.5"
               >
                 <div className="font-medium text-zinc-900 dark:text-zinc-100">Open stock adjustments</div>
                 <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
@@ -340,7 +340,7 @@ export function BossOperationsSurface() {
               </Link>
               <Link
                 href="/admin/stock-writeoffs"
-                className="rounded border border-zinc-200 px-4 py-3 hover:bg-zinc-50 dark:border-zinc-700 dark:hover:bg-zinc-800"
+                className="app-panel-muted flex min-h-24 flex-col px-4 py-4 transition hover:-translate-y-0.5"
               >
                 <div className="font-medium text-zinc-900 dark:text-zinc-100">Open writeoffs</div>
                 <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
@@ -349,7 +349,7 @@ export function BossOperationsSurface() {
               </Link>
               <Link
                 href="/admin"
-                className="rounded border border-zinc-200 px-4 py-3 hover:bg-zinc-50 dark:border-zinc-700 dark:hover:bg-zinc-800"
+                className="app-panel-muted flex min-h-24 flex-col px-4 py-4 transition hover:-translate-y-0.5"
               >
                 <div className="font-medium text-zinc-900 dark:text-zinc-100">Back to boss dashboard</div>
                 <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
@@ -360,7 +360,7 @@ export function BossOperationsSurface() {
           </section>
 
           <section className="grid gap-4 xl:grid-cols-2">
-            <section className="rounded border border-zinc-200 bg-white p-5 shadow-sm dark:border-zinc-700 dark:bg-zinc-900">
+            <section className="app-panel p-5 lg:p-6">
               <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-50">
                 Large or Unconfirmed Expenses
               </h2>
@@ -369,7 +369,7 @@ export function BossOperationsSurface() {
               </p>
               <div className="mt-4 space-y-3">
                 {largeExpenses.length === 0 ? (
-                  <p className="text-sm text-zinc-500 dark:text-zinc-400">
+                  <p className="app-page-subtitle">
                     No supplier spend stands out right now.
                   </p>
                 ) : (
@@ -378,7 +378,7 @@ export function BossOperationsSurface() {
               </div>
             </section>
 
-            <section className="rounded border border-zinc-200 bg-white p-5 shadow-sm dark:border-zinc-700 dark:bg-zinc-900">
+            <section className="app-panel p-5 lg:p-6">
               <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-50">
                 Recent Expenses
               </h2>
@@ -387,7 +387,7 @@ export function BossOperationsSurface() {
               </p>
               <div className="mt-4 space-y-3">
                 {recentExpenses.length === 0 ? (
-                  <p className="text-sm text-zinc-500 dark:text-zinc-400">
+                  <p className="app-page-subtitle">
                     No recent purchase receipts are visible yet.
                   </p>
                 ) : (
@@ -398,7 +398,7 @@ export function BossOperationsSurface() {
           </section>
 
           <section className="grid gap-4 xl:grid-cols-2">
-            <section className="rounded border border-zinc-200 bg-white p-5 shadow-sm dark:border-zinc-700 dark:bg-zinc-900">
+            <section className="app-panel p-5 lg:p-6">
               <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-50">
                 Negative Adjustments
               </h2>
@@ -407,7 +407,7 @@ export function BossOperationsSurface() {
               </p>
               <div className="mt-4 space-y-3">
                 {negativeAdjustments.length === 0 ? (
-                  <p className="text-sm text-zinc-500 dark:text-zinc-400">
+                  <p className="app-page-subtitle">
                     No negative stock changes stand out right now.
                   </p>
                 ) : (
@@ -418,7 +418,7 @@ export function BossOperationsSurface() {
               </div>
             </section>
 
-            <section className="rounded border border-zinc-200 bg-white p-5 shadow-sm dark:border-zinc-700 dark:bg-zinc-900">
+            <section className="app-panel p-5 lg:p-6">
               <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-50">
                 Manual or Review-Needed Corrections
               </h2>
@@ -427,7 +427,7 @@ export function BossOperationsSurface() {
               </p>
               <div className="mt-4 space-y-3">
                 {unusualAdjustments.length === 0 ? (
-                  <p className="text-sm text-zinc-500 dark:text-zinc-400">
+                  <p className="app-page-subtitle">
                     No manual or review-needed stock exceptions are visible right now.
                   </p>
                 ) : (
@@ -443,3 +443,4 @@ export function BossOperationsSurface() {
     </div>
   );
 }
+

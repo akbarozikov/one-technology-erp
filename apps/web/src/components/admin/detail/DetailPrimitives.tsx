@@ -39,17 +39,11 @@ export function DetailSection({
   action?: ReactNode;
 }) {
   return (
-    <section className="rounded border border-zinc-200 bg-white p-4 shadow-sm dark:border-zinc-700 dark:bg-zinc-900">
-      <div className="mb-3 flex items-start justify-between gap-3">
-        <div>
-          <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-50">
-            {title}
-          </h2>
-          {description && (
-            <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
-              {description}
-            </p>
-          )}
+    <section className="app-panel p-5 lg:p-6">
+      <div className="mb-4 flex items-start justify-between gap-3">
+        <div className="space-y-1.5">
+          <h2 className="app-section-title">{title}</h2>
+          {description && <p className="app-section-subtitle">{description}</p>}
         </div>
         {action}
       </div>
@@ -62,19 +56,12 @@ export function SummaryGrid({ items }: { items: SummaryItem[] }) {
   return (
     <dl className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
       {items.map((item) => (
-        <div
-          key={item.label}
-          className="rounded border border-zinc-100 px-4 py-3 dark:border-zinc-800"
-        >
-          <dt className="text-xs font-semibold uppercase tracking-wide text-zinc-500">
-            {item.label}
-          </dt>
-          <dd className="mt-2 text-lg font-semibold text-zinc-900 dark:text-zinc-50">
+        <div key={item.label} className="app-panel-muted px-4 py-4">
+          <dt className="app-kicker">{item.label}</dt>
+          <dd className="mt-2 text-lg font-semibold tracking-tight text-zinc-950 dark:text-zinc-50">
             {item.value}
           </dd>
-          {item.hint && (
-            <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">{item.hint}</p>
-          )}
+          {item.hint && <p className="mt-2 text-xs leading-5 text-zinc-500 dark:text-zinc-400">{item.hint}</p>}
         </div>
       ))}
     </dl>
@@ -92,8 +79,8 @@ export function RelatedList({
 }) {
   if (items.length === 0) {
     return (
-      <div className="rounded border border-dashed border-zinc-200 px-4 py-4 dark:border-zinc-700">
-        <p className="text-sm text-zinc-500 dark:text-zinc-400">{emptyMessage}</p>
+      <div className="app-empty">
+        <p className="text-sm leading-6 text-zinc-600 dark:text-zinc-300">{emptyMessage}</p>
         {emptyAction && <div className="mt-3">{emptyAction}</div>}
       </div>
     );
@@ -104,35 +91,18 @@ export function RelatedList({
       {items.map((item) => {
         const content = (
           <>
-            <div className="font-medium text-zinc-900 dark:text-zinc-100">
-              {item.title}
-            </div>
-            {item.meta && (
-              <div className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
-                {item.meta}
-              </div>
-            )}
-            {item.description && (
-              <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
-                {item.description}
-              </p>
-            )}
+            <div className="text-sm font-semibold text-zinc-950 dark:text-zinc-100">{item.title}</div>
+            {item.meta && <div className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">{item.meta}</div>}
+            {item.description && <p className="mt-2 text-sm leading-6 text-zinc-600 dark:text-zinc-300">{item.description}</p>}
           </>
         );
 
         return item.href ? (
-          <Link
-            key={item.key}
-            href={item.href}
-            className="block rounded border border-zinc-100 px-4 py-3 transition hover:bg-zinc-50 dark:border-zinc-800 dark:hover:bg-zinc-800"
-          >
+          <Link key={item.key} href={item.href} className="app-panel-muted block px-4 py-4 transition hover:-translate-y-0.5 hover:border-black/12 dark:hover:border-white/12">
             {content}
           </Link>
         ) : (
-          <div
-            key={item.key}
-            className="rounded border border-zinc-100 px-4 py-3 dark:border-zinc-800"
-          >
+          <div key={item.key} className="app-panel-muted px-4 py-4">
             {content}
           </div>
         );
@@ -148,7 +118,7 @@ export function AttentionList({
 }) {
   if (items.length === 0) {
     return (
-      <div className="rounded border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-900 dark:border-emerald-900 dark:bg-emerald-950/40 dark:text-emerald-100">
+      <div className="rounded-[1.2rem] border border-emerald-200/70 bg-emerald-50/80 px-4 py-4 text-sm text-emerald-950 dark:border-emerald-900 dark:bg-emerald-950/30 dark:text-emerald-100">
         Nothing urgent stands out right now. This record looks ready to continue normally.
       </div>
     );
@@ -157,16 +127,9 @@ export function AttentionList({
   return (
     <div className="space-y-3">
       {items.map((item) => (
-        <div
-          key={item.key}
-          className="rounded border border-amber-200 bg-amber-50 px-4 py-3 dark:border-amber-900 dark:bg-amber-950/40"
-        >
-          <div className="font-medium text-amber-950 dark:text-amber-100">
-            {item.title}
-          </div>
-          <p className="mt-1 text-sm text-amber-900 dark:text-amber-200">
-            {item.description}
-          </p>
+        <div key={item.key} className="rounded-[1.2rem] border border-amber-200/80 bg-amber-50/85 px-4 py-4 dark:border-amber-900 dark:bg-amber-950/30">
+          <div className="text-sm font-semibold text-amber-950 dark:text-amber-100">{item.title}</div>
+          <p className="mt-2 text-sm leading-6 text-amber-900 dark:text-amber-200">{item.description}</p>
         </div>
       ))}
     </div>
@@ -183,20 +146,13 @@ export function ActionGroup({
   items: ActionItem[];
 }) {
   return (
-    <div className="rounded border border-zinc-100 p-4 dark:border-zinc-800">
-      <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">{title}</h3>
-      {description && (
-        <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">{description}</p>
-      )}
-      <div className="mt-3 flex flex-wrap gap-2">
+    <div className="app-panel-muted px-4 py-4">
+      <h3 className="text-sm font-semibold text-zinc-950 dark:text-zinc-100">{title}</h3>
+      {description && <p className="mt-1 text-sm leading-6 text-zinc-600 dark:text-zinc-300">{description}</p>}
+      <div className="mt-4 flex flex-wrap gap-3">
         {items.map((item) => {
-          const className = item.primary
-            ? "rounded bg-zinc-900 px-4 py-2 text-sm font-medium text-white hover:bg-zinc-800 disabled:opacity-50 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-white"
-            : "rounded border border-zinc-300 px-3 py-1.5 text-sm text-zinc-700 hover:bg-zinc-50 disabled:opacity-50 dark:border-zinc-700 dark:text-zinc-200 dark:hover:bg-zinc-800";
-
-          const helper = item.helperText ? (
-            <p className="mt-2 text-xs text-zinc-500 dark:text-zinc-400">{item.helperText}</p>
-          ) : null;
+          const className = item.primary ? "app-button-primary" : "app-button-secondary";
+          const helper = item.helperText ? <p className="mt-2 max-w-xs text-xs leading-5 text-zinc-500 dark:text-zinc-400">{item.helperText}</p> : null;
 
           if (item.href) {
             return (
@@ -211,12 +167,7 @@ export function ActionGroup({
 
           return (
             <div key={item.key}>
-              <button
-                type="button"
-                onClick={item.onClick}
-                disabled={item.disabled}
-                className={className}
-              >
+              <button type="button" onClick={item.onClick} disabled={item.disabled} className={className}>
                 {item.label}
               </button>
               {helper}

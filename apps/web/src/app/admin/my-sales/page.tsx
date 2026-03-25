@@ -75,15 +75,15 @@ export default function MySalesPage() {
   );
 
   return (
-    <div className="max-w-6xl space-y-6">
-      <section className="rounded border border-zinc-200 bg-white p-5 shadow-sm dark:border-zinc-700 dark:bg-zinc-900">
-        <p className="text-xs font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
+    <div className="max-w-6xl space-y-6 lg:space-y-8">
+      <section className="app-panel-strong p-6 lg:p-8">
+        <p className="app-kicker">
           Easy Mode
         </p>
-        <h1 className="mt-2 text-2xl font-semibold text-zinc-900 dark:text-zinc-50">
+        <h1 className="app-page-title text-[2rem]">
           My Sales
         </h1>
-        <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-300">
+        <p className="app-page-subtitle">
           Track your sales in one place without switching between technical commercial screens.
         </p>
       </section>
@@ -100,7 +100,7 @@ export default function MySalesPage() {
       )}
 
       {loading && (
-        <section className="rounded border border-zinc-200 bg-white p-4 shadow-sm dark:border-zinc-700 dark:bg-zinc-900">
+        <section className="app-panel p-5">
           <p className="text-sm text-zinc-500">Loading your sales view...</p>
         </section>
       )}
@@ -114,53 +114,53 @@ export default function MySalesPage() {
       {!loading && !error && (
         <>
           <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-            <div className="rounded border border-zinc-200 bg-white p-4 shadow-sm dark:border-zinc-700 dark:bg-zinc-900">
+            <div className="app-panel p-5">
               <p className="text-xs font-semibold uppercase tracking-wide text-zinc-500">
                 Active Sales
               </p>
-              <p className="mt-2 text-2xl font-semibold text-zinc-900 dark:text-zinc-50">
+              <p className="app-page-title text-[2rem]">
                 {sales.length}
               </p>
               <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
                 Sales currently in your workflow
               </p>
             </div>
-            <div className="rounded border border-zinc-200 bg-white p-4 shadow-sm dark:border-zinc-700 dark:bg-zinc-900">
+            <div className="app-panel p-5">
               <p className="text-xs font-semibold uppercase tracking-wide text-zinc-500">
                 Pending
               </p>
-              <p className="mt-2 text-2xl font-semibold text-zinc-900 dark:text-zinc-50">
+              <p className="app-page-title text-[2rem]">
                 {pendingSales.filter((sale) => sale.status === "Pending").length}
               </p>
               <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
                 Still waiting for a decision
               </p>
             </div>
-            <div className="rounded border border-zinc-200 bg-white p-4 shadow-sm dark:border-zinc-700 dark:bg-zinc-900">
+            <div className="app-panel p-5">
               <p className="text-xs font-semibold uppercase tracking-wide text-zinc-500">
                 Needs Changes
               </p>
-              <p className="mt-2 text-2xl font-semibold text-zinc-900 dark:text-zinc-50">
+              <p className="app-page-title text-[2rem]">
                 {needsChangesCount}
               </p>
               <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
                 Sales that need another pass
               </p>
             </div>
-            <div className="rounded border border-zinc-200 bg-white p-4 shadow-sm dark:border-zinc-700 dark:bg-zinc-900">
+            <div className="app-panel p-5">
               <p className="text-xs font-semibold uppercase tracking-wide text-zinc-500">
                 Quick Actions
               </p>
               <div className="mt-3 flex flex-wrap gap-2">
                 <Link
                   href="/admin/new-sale"
-                  className="rounded bg-zinc-900 px-3 py-1.5 text-sm font-medium text-white hover:bg-zinc-800 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-white"
+                  className="app-button-primary !px-4 !py-2"
                 >
                   New Sale
                 </Link>
                 <Link
                   href="/admin/quote-versions"
-                  className="rounded border border-zinc-300 px-3 py-1.5 text-sm text-zinc-700 hover:bg-zinc-50 dark:border-zinc-700 dark:text-zinc-200 dark:hover:bg-zinc-800"
+                  className="app-button-secondary !px-4 !py-2"
                 >
                   Advanced Sales
                 </Link>
@@ -168,7 +168,7 @@ export default function MySalesPage() {
             </div>
           </section>
 
-          <section className="rounded border border-zinc-200 bg-white p-5 shadow-sm dark:border-zinc-700 dark:bg-zinc-900">
+          <section className="app-panel-strong p-6 lg:p-8">
             <div className="mb-4 flex items-center justify-between gap-3">
               <div>
                 <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-50">
@@ -180,21 +180,21 @@ export default function MySalesPage() {
               </div>
               <Link
                 href="/admin/new-sale"
-                className="text-sm text-blue-700 underline underline-offset-2 hover:text-blue-900 dark:text-blue-300 dark:hover:text-blue-200"
+                className="app-link text-sm"
               >
                 Start another sale
               </Link>
             </div>
 
             {pendingSales.length === 0 ? (
-              <div className="rounded border border-dashed border-zinc-200 px-4 py-4 dark:border-zinc-700">
+              <div className="app-empty">
                 <p className="text-sm text-zinc-500 dark:text-zinc-400">
                   Nothing needs your attention right now.
                 </p>
                 <div className="mt-3">
                   <Link
                     href="/admin/new-sale"
-                    className="text-sm text-blue-700 underline underline-offset-2 hover:text-blue-900 dark:text-blue-300 dark:hover:text-blue-200"
+                    className="app-link text-sm"
                   >
                     Start a new sale
                   </Link>
@@ -214,7 +214,7 @@ export default function MySalesPage() {
             )}
           </section>
 
-          <section className="rounded border border-zinc-200 bg-white p-5 shadow-sm dark:border-zinc-700 dark:bg-zinc-900">
+          <section className="app-panel-strong p-6 lg:p-8">
             <div className="mb-4 flex items-center justify-between gap-3">
               <div>
                 <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-50">
@@ -227,7 +227,7 @@ export default function MySalesPage() {
             </div>
 
             {approvedSales.length === 0 ? (
-              <div className="rounded border border-dashed border-zinc-200 px-4 py-4 dark:border-zinc-700">
+              <div className="app-empty">
                 <p className="text-sm text-zinc-500 dark:text-zinc-400">
                   No approved sales are showing yet.
                 </p>
@@ -250,3 +250,4 @@ export default function MySalesPage() {
     </div>
   );
 }
+

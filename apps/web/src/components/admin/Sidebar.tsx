@@ -9,95 +9,110 @@ function isActivePath(pathname: string, href: string): boolean {
   return pathname === href || pathname.startsWith(`${href}/`);
 }
 
+function navItemClass(active: boolean): string {
+  return active ? "app-sidebar-link app-sidebar-link-active" : "app-sidebar-link";
+}
+
 export function AdminSidebar() {
   const pathname = usePathname();
   const { mode, easyRole } = useAdminMode();
   const easyNavItems = easyRole === "boss" ? easyBossNavItems : easySellerNavItems;
 
   return (
-    <aside className="w-64 shrink-0 border-r border-zinc-200 bg-zinc-50 p-4 dark:border-zinc-800 dark:bg-zinc-950">
-      <nav className="flex flex-col gap-4">
-        {mode === "easy" ? (
-          <>
-            <div>
-              <div className="mb-1 px-3 text-[11px] font-semibold uppercase tracking-wide text-zinc-500">
-                {easyRole === "boss" ? "Boss Workspace" : "Seller Workspace"}
-              </div>
-              <div className="flex flex-col gap-1">
-                {easyNavItems.map((item) => (
-                  <Link
-                    key={item.href}
-                    href={item.href}
-                    className={`rounded px-3 py-2 text-sm ${
-                      isActivePath(pathname, item.href)
-                        ? "bg-zinc-200 font-medium dark:bg-zinc-800"
-                        : "text-zinc-700 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-900"
-                    }`}
-                  >
-                    {item.label}
-                  </Link>
-                ))}
-              </div>
-            </div>
+    <aside className="app-sidebar-panel hidden w-72 shrink-0 lg:flex lg:flex-col">
+      <div className="flex h-full flex-col gap-6 p-5">
+        <div className="rounded-[1.25rem] border border-white/8 bg-white/4 px-4 py-4 backdrop-blur-sm">
+          <div className="text-[0.68rem] font-semibold uppercase tracking-[0.16em] text-white/45">
+            One Technology ERP
+          </div>
+          <div className="mt-2 text-lg font-semibold text-white/95">
+            {mode === "easy"
+              ? easyRole === "boss"
+                ? "Boss control"
+                : "Seller workspace"
+              : "Advanced ERP"}
+          </div>
+          <p className="mt-2 text-sm leading-6 text-white/58">
+            {mode === "easy"
+              ? easyRole === "boss"
+                ? "Daily decisions, oversight, and follow-through."
+                : "Simple selling surfaces with deeper tools still available when needed."
+              : "Detailed commercial, warehouse, constructor, document, and admin control."}
+          </p>
+        </div>
 
-            <div className="rounded border border-dashed border-zinc-300 px-3 py-3 text-sm text-zinc-600 dark:border-zinc-700 dark:text-zinc-300">
-              Need deeper control?
-              <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
-                Switch to Advanced mode for warehouse structure, constructor tools, detailed entity
-                records, and administration pages.
-              </p>
-            </div>
-          </>
-        ) : (
-          <>
-            <Link
-              href="/admin"
-              className={`rounded px-3 py-2 text-sm ${
-                pathname === "/admin"
-                  ? "bg-zinc-200 font-medium dark:bg-zinc-800"
-                  : "text-zinc-700 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-900"
-              }`}
-            >
-              Dashboard
-            </Link>
-            {adminNavGroups.map((group) => (
-              <div key={group.label}>
-                {group.href ? (
-                  <Link
-                    href={group.href}
-                    className={`mb-1 block rounded px-3 py-1 text-[11px] font-semibold uppercase tracking-wide ${
-                      isActivePath(pathname, group.href)
-                        ? "bg-zinc-200 text-zinc-900 dark:bg-zinc-800 dark:text-zinc-100"
-                        : "text-zinc-500 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-900"
-                    }`}
-                  >
-                    {group.label}
-                  </Link>
-                ) : (
-                  <div className="mb-1 px-3 text-[11px] font-semibold uppercase tracking-wide text-zinc-500">
-                    {group.label}
-                  </div>
-                )}
-                <div className="flex flex-col gap-1">
-                  {group.items.map((item) => (
+        <nav className="flex flex-1 flex-col gap-5 overflow-y-auto pr-1">
+          {mode === "easy" ? (
+            <>
+              <div>
+                <div className="app-sidebar-group-label mb-2 px-2">
+                  {easyRole === "boss" ? "Boss workspace" : "Seller workspace"}
+                </div>
+                <div className="flex flex-col gap-1.5">
+                  {easyNavItems.map((item) => (
                     <Link
                       key={item.href}
                       href={item.href}
-                      className={`rounded px-3 py-2 text-sm ${
-                        isActivePath(pathname, item.href)
-                          ? "bg-zinc-200 font-medium dark:bg-zinc-800"
-                          : "text-zinc-700 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-900"
-                      }`}
+                      className={navItemClass(isActivePath(pathname, item.href))}
                     >
                       {item.label}
                     </Link>
                   ))}
                 </div>
               </div>
-            ))}
-          </>
-        )}
-      </nav>
+
+              <div className="rounded-[1.2rem] border border-dashed border-white/10 bg-white/4 px-4 py-4 text-sm text-white/70">
+                <div className="font-medium text-white/90">Need deeper control?</div>
+                <p className="mt-2 text-sm leading-6 text-white/56">
+                  Switch to Advanced mode for warehouse structure, detailed entity records, lifecycle tools, and administration pages.
+                </p>
+              </div>
+            </>
+          ) : (
+            <>
+              <div>
+                <div className="app-sidebar-group-label mb-2 px-2">Overview</div>
+                <Link
+                  href="/admin"
+                  className={navItemClass(pathname === "/admin")}
+                >
+                  Dashboard
+                </Link>
+              </div>
+
+              {adminNavGroups.map((group) => (
+                <div key={group.label}>
+                  {group.href ? (
+                    <Link
+                      href={group.href}
+                      className={`mb-2 block rounded-full px-2 py-1 text-[0.68rem] font-semibold uppercase tracking-[0.14em] transition ${
+                        isActivePath(pathname, group.href)
+                          ? "bg-white/9 text-white/94"
+                          : "text-white/42 hover:bg-white/5 hover:text-white/72"
+                      }`}
+                    >
+                      {group.label}
+                    </Link>
+                  ) : (
+                    <div className="app-sidebar-group-label mb-2 px-2">{group.label}</div>
+                  )}
+                  <div className="flex flex-col gap-1.5">
+                    {group.items.map((item) => (
+                      <Link
+                        key={item.href}
+                        href={item.href}
+                        className={navItemClass(isActivePath(pathname, item.href))}
+                      >
+                        {item.label}
+                      </Link>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </>
+          )}
+        </nav>
+      </div>
     </aside>
   );
 }

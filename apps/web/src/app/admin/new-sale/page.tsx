@@ -331,15 +331,15 @@ export default function NewSalePage() {
   const quickPickProducts = products.slice(0, 6);
 
   return (
-    <div className="max-w-6xl space-y-6">
-      <section className="rounded border border-zinc-200 bg-white p-5 shadow-sm dark:border-zinc-700 dark:bg-zinc-900">
-        <p className="text-xs font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
+    <div className="max-w-6xl space-y-6 lg:space-y-8">
+      <section className="app-panel-strong p-6 lg:p-8">
+        <p className="app-kicker">
           Easy Mode
         </p>
-        <h1 className="mt-2 text-2xl font-semibold text-zinc-900 dark:text-zinc-50">
+        <h1 className="app-page-title text-[2rem]">
           New Sale
         </h1>
-        <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-300">
+        <p className="app-page-subtitle">
           Start a sale from the basic customer and product details only. The deeper commercial
           workflow stays available behind the scenes when you need it.
         </p>
@@ -357,7 +357,7 @@ export default function NewSalePage() {
       )}
 
       {loading && (
-        <section className="rounded border border-zinc-200 bg-white p-4 shadow-sm dark:border-zinc-700 dark:bg-zinc-900">
+        <section className="app-panel p-5">
           <p className="text-sm text-zinc-500">Loading the sales starter...</p>
         </section>
       )}
@@ -371,7 +371,7 @@ export default function NewSalePage() {
       {!loading && !error && (
         <>
           <div className="grid gap-6 xl:grid-cols-[1.35fr_0.85fr]">
-            <section className="rounded border border-zinc-200 bg-white p-5 shadow-sm dark:border-zinc-700 dark:bg-zinc-900">
+            <section className="app-panel-strong p-6 lg:p-8">
               <div className="mb-4">
                 <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-50">
                   Sale Details
@@ -391,7 +391,7 @@ export default function NewSalePage() {
                     <input
                       value={clientName}
                       onChange={(event) => setClientName(event.target.value)}
-                      className="w-full rounded border border-zinc-300 px-3 py-2 dark:border-zinc-700 dark:bg-zinc-900"
+                      className="app-input"
                       placeholder="Customer name or company"
                     />
                   </label>
@@ -406,7 +406,7 @@ export default function NewSalePage() {
                         setProductId(event.target.value);
                         setTouchedPrice(false);
                       }}
-                      className="w-full rounded border border-zinc-300 px-3 py-2 dark:border-zinc-700 dark:bg-zinc-900"
+                      className="app-input"
                     >
                       <option value="">Choose a product</option>
                       {products.map((product) => (
@@ -427,7 +427,7 @@ export default function NewSalePage() {
                       type="number"
                       min="0.000001"
                       step="any"
-                      className="w-full rounded border border-zinc-300 px-3 py-2 dark:border-zinc-700 dark:bg-zinc-900"
+                      className="app-input"
                     />
                   </label>
 
@@ -444,7 +444,7 @@ export default function NewSalePage() {
                       type="number"
                       min="0.000001"
                       step="any"
-                      className="w-full rounded border border-zinc-300 px-3 py-2 dark:border-zinc-700 dark:bg-zinc-900"
+                      className="app-input"
                     />
                   </label>
                 </div>
@@ -457,7 +457,7 @@ export default function NewSalePage() {
                     value={notes}
                     onChange={(event) => setNotes(event.target.value)}
                     rows={4}
-                    className="w-full rounded border border-zinc-300 px-3 py-2 dark:border-zinc-700 dark:bg-zinc-900"
+                    className="app-input"
                     placeholder="Anything the next person should know about this sale"
                   />
                 </label>
@@ -532,7 +532,7 @@ export default function NewSalePage() {
                   </button>
                   <Link
                     href="/admin/quote-versions"
-                    className="rounded border border-zinc-300 px-3 py-2 text-sm text-zinc-700 hover:bg-zinc-50 dark:border-zinc-700 dark:text-zinc-200 dark:hover:bg-zinc-800"
+                    className="app-button-secondary"
                   >
                     Open advanced sales
                   </Link>
@@ -541,7 +541,7 @@ export default function NewSalePage() {
             </section>
 
             <div className="space-y-6">
-              <section className="rounded border border-zinc-200 bg-white p-5 shadow-sm dark:border-zinc-700 dark:bg-zinc-900">
+              <section className="app-panel-strong p-6 lg:p-8">
                 <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-50">
                   Selected Item
                 </h2>
@@ -556,7 +556,7 @@ export default function NewSalePage() {
                       </p>
                     </div>
                     <div className="grid gap-3 sm:grid-cols-2">
-                      <div className="rounded border border-zinc-100 px-3 py-2 dark:border-zinc-800">
+                      <div className="app-panel-muted px-3 py-3">
                         <p className="text-[11px] font-semibold uppercase tracking-wide text-zinc-500">
                           Default unit
                         </p>
@@ -564,7 +564,7 @@ export default function NewSalePage() {
                           {selectedUnit ? selectedUnit.symbol || selectedUnit.name : "-"}
                         </p>
                       </div>
-                      <div className="rounded border border-zinc-100 px-3 py-2 dark:border-zinc-800">
+                      <div className="app-panel-muted px-3 py-3">
                         <p className="text-[11px] font-semibold uppercase tracking-wide text-zinc-500">
                           Suggested price
                         </p>
@@ -594,7 +594,7 @@ export default function NewSalePage() {
                 )}
               </section>
 
-              <section className="rounded border border-zinc-200 bg-white p-5 shadow-sm dark:border-zinc-700 dark:bg-zinc-900">
+              <section className="app-panel-strong p-6 lg:p-8">
                 <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-50">
                   What Happens Next
                 </h2>
@@ -607,7 +607,7 @@ export default function NewSalePage() {
             </div>
           </div>
 
-          <section className="rounded border border-zinc-200 bg-white p-5 shadow-sm dark:border-zinc-700 dark:bg-zinc-900">
+          <section className="app-panel-strong p-6 lg:p-8">
             <div className="flex items-center justify-between gap-3">
               <div>
                 <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-50">
@@ -619,7 +619,7 @@ export default function NewSalePage() {
               </div>
               <Link
                 href="/admin/products"
-                className="text-sm text-blue-700 underline underline-offset-2 hover:text-blue-900 dark:text-blue-300 dark:hover:text-blue-200"
+                className="app-link text-sm"
               >
                 Open products
               </Link>
@@ -668,3 +668,4 @@ export default function NewSalePage() {
     </div>
   );
 }
+

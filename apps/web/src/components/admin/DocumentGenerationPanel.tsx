@@ -130,9 +130,7 @@ export function DocumentGenerationPanel({
 
         setEntity(found);
         setTemplates(compatibleTemplates);
-        setSelectedTemplateId((current) =>
-          current || String(compatibleTemplates[0]?.id ?? "")
-        );
+        setSelectedTemplateId((current) => current || String(compatibleTemplates[0]?.id ?? ""));
       } catch (err) {
         if (cancelled) return;
         setError(
@@ -154,7 +152,7 @@ export function DocumentGenerationPanel({
     return () => {
       cancelled = true;
     };
-  }, [entityId, entityLabel, entityListPath, templateEntityType, templateTypeKey]);
+  }, [entityId, entityLabel, entityListPath, templateEntityType, templateTypeKey, templateTypes]);
 
   const selectedTemplate = useMemo(
     () => templates.find((template) => String(template.id) === selectedTemplateId) ?? null,
@@ -206,23 +204,20 @@ export function DocumentGenerationPanel({
   return (
     <div className="space-y-6">
       {showConfigHint && configHint && (
-        <div
-          className="rounded border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-950 dark:border-amber-700 dark:bg-amber-950/40 dark:text-amber-100"
-          role="status"
-        >
+        <div className="rounded-[1.2rem] border border-amber-300 bg-amber-50/90 px-4 py-3 text-sm text-amber-950 dark:border-amber-700 dark:bg-amber-950/40 dark:text-amber-100" role="status">
           Set <code className="rounded bg-amber-100 px-1 dark:bg-amber-900">NEXT_PUBLIC_API_BASE_URL</code>{" "}
           in <code className="rounded bg-amber-100 px-1 dark:bg-amber-900">.env.local</code>.
         </div>
       )}
 
       {loading && (
-        <section className="rounded border border-zinc-200 bg-white p-4 shadow-sm dark:border-zinc-700 dark:bg-zinc-900">
+        <section className="app-panel p-5">
           <p className="text-sm text-zinc-500">Loading document options...</p>
         </section>
       )}
 
       {!loading && error && (
-        <section className="rounded border border-red-200 bg-red-50 p-4 shadow-sm dark:border-red-900 dark:bg-red-950/40">
+        <section className="rounded-[1.2rem] border border-red-200 bg-red-50/90 p-5 dark:border-red-900 dark:bg-red-950/40">
           <p className="text-sm text-red-700 dark:text-red-200">{error}</p>
         </section>
       )}
@@ -230,17 +225,16 @@ export function DocumentGenerationPanel({
       {!loading && !error && entity && (
         <>
           {showSummary && (
-            <section className="rounded border border-zinc-200 bg-white p-4 shadow-sm dark:border-zinc-700 dark:bg-zinc-900">
-              <h2 className="mb-3 text-lg font-semibold text-zinc-900 dark:text-zinc-50">
-                {entityLabel} Snapshot
-              </h2>
-              <dl className="grid gap-3 sm:grid-cols-2">
+            <section className="app-panel p-5 lg:p-6">
+              <div className="mb-4 space-y-1.5">
+                <h2 className="app-section-title">{entityLabel} snapshot</h2>
+                <p className="app-section-subtitle">Review the current record before generating a document from it.</p>
+              </div>
+              <dl className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
                 {summaryFields.map((field) => (
-                  <div key={field.key}>
-                    <dt className="text-xs uppercase tracking-wide text-zinc-500">
-                      {field.label}
-                    </dt>
-                    <dd className="text-sm text-zinc-900 dark:text-zinc-100">
+                  <div key={field.key} className="app-panel-muted px-4 py-4">
+                    <dt className="app-kicker">{field.label}</dt>
+                    <dd className="mt-2 text-sm font-semibold text-zinc-900 dark:text-zinc-100">
                       {displayValue(entity[field.key])}
                     </dd>
                   </div>
@@ -249,120 +243,105 @@ export function DocumentGenerationPanel({
             </section>
           )}
 
-          <section className="rounded border border-zinc-200 bg-white p-4 shadow-sm dark:border-zinc-700 dark:bg-zinc-900">
-            <h2 className="mb-3 text-lg font-semibold text-zinc-900 dark:text-zinc-50">
-              {panelTitle}
-            </h2>
-            {panelDescription && (
-              <p className="mb-3 text-sm text-zinc-500 dark:text-zinc-400">
-                {panelDescription}
+          <section className="app-panel-strong p-5 lg:p-6">
+            <div className="mb-5 space-y-1.5">
+              <h2 className="app-section-title">{panelTitle}</h2>
+              <p className="app-section-subtitle">
+                {panelDescription || "Pick the right template, optionally adjust the title or number, and store a readable document snapshot for this workflow record."}
               </p>
-            )}
+            </div>
 
             {templates.length === 0 ? (
-              <div className="space-y-2 text-sm text-zinc-500 dark:text-zinc-400">
+              <div className="app-empty space-y-2 text-sm leading-6 text-zinc-600 dark:text-zinc-300">
                 <p>No active templates match this record yet.</p>
                 <p>
-                  Create or activate a compatible template in{" "}
-                  <Link
-                    href="/admin/document-templates"
-                    className="text-blue-700 underline underline-offset-2 hover:text-blue-900 dark:text-blue-300 dark:hover:text-blue-200"
-                  >
+                  Create or activate a compatible template in {" "}
+                  <Link href="/admin/document-templates" className="app-link">
                     Document Templates
                   </Link>
                   .
                 </p>
               </div>
             ) : (
-              <form className="max-w-xl space-y-3" onSubmit={handleSubmit}>
-                <label className="block text-sm">
-                  <span className="mb-1 block font-medium text-zinc-700 dark:text-zinc-300">
-                    Template *
-                  </span>
-                  <select
-                    value={selectedTemplateId}
-                    onChange={(event) => setSelectedTemplateId(event.target.value)}
-                    required
-                    className="w-full rounded border border-zinc-300 px-2 py-1.5 text-zinc-900 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100"
-                  >
-                    {templates.map((template) => (
-                      <option key={template.id} value={template.id}>
-                        {template.name || `Template ${template.id}`}
-                        {template.code ? ` (${template.code})` : ""}
-                      </option>
-                    ))}
-                  </select>
-                </label>
+              <form className="max-w-3xl space-y-4" onSubmit={handleSubmit}>
+                <div className="grid gap-4 md:grid-cols-2">
+                  <label className="block text-sm">
+                    <span className="mb-1.5 block font-medium text-zinc-700 dark:text-zinc-300">Template *</span>
+                    <select
+                      value={selectedTemplateId}
+                      onChange={(event) => setSelectedTemplateId(event.target.value)}
+                      required
+                      className="app-input"
+                    >
+                      {templates.map((template) => (
+                        <option key={template.id} value={template.id}>
+                          {template.name || `Template ${template.id}`}
+                          {template.code ? ` (${template.code})` : ""}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
 
-                {selectedTemplate && (
-                  <p className="text-xs text-zinc-500 dark:text-zinc-400">
-                    This template is set up for{" "}
-                    <span className="font-mono">{displayValue(selectedTemplate.entity_type)}</span>{" "}
-                    documents of type{" "}
-                    <span className="font-mono">{displayValue(selectedTemplate.template_type)}</span>.
-                  </p>
-                )}
+                  <div className="app-panel-muted px-4 py-4">
+                    <p className="app-kicker">Compatibility</p>
+                    <p className="mt-2 text-sm leading-6 text-zinc-600 dark:text-zinc-300">
+                      {selectedTemplate
+                        ? `Ready for ${displayValue(selectedTemplate.entity_type)} documents in the ${displayValue(selectedTemplate.template_type)} family.`
+                        : "Choose a template to confirm the document type."}
+                    </p>
+                  </div>
+                </div>
 
-                <label className="block text-sm">
-                  <span className="mb-1 block font-medium text-zinc-700 dark:text-zinc-300">
-                    Document Number
-                  </span>
-                  <input
-                    type="text"
-                    value={documentNumber}
-                    onChange={(event) => setDocumentNumber(event.target.value)}
-                    className="w-full rounded border border-zinc-300 px-2 py-1.5 text-zinc-900 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100"
-                  />
-                  <span className="mt-1 block text-xs text-zinc-500 dark:text-zinc-400">
-                    Leave this blank to use the backend default.
-                  </span>
-                </label>
+                <div className="grid gap-4 md:grid-cols-2">
+                  <label className="block text-sm">
+                    <span className="mb-1.5 block font-medium text-zinc-700 dark:text-zinc-300">Document Number</span>
+                    <input
+                      type="text"
+                      value={documentNumber}
+                      onChange={(event) => setDocumentNumber(event.target.value)}
+                      className="app-input"
+                    />
+                    <span className="mt-1.5 block text-xs text-zinc-500 dark:text-zinc-400">
+                      Leave blank to use the backend default.
+                    </span>
+                  </label>
 
-                <label className="block text-sm">
-                  <span className="mb-1 block font-medium text-zinc-700 dark:text-zinc-300">
-                    Title
-                  </span>
-                  <input
-                    type="text"
-                    value={title}
-                    onChange={(event) => setTitle(event.target.value)}
-                    className="w-full rounded border border-zinc-300 px-2 py-1.5 text-zinc-900 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100"
-                  />
-                  <span className="mt-1 block text-xs text-zinc-500 dark:text-zinc-400">
-                    Add a custom title only when you want something clearer than the default.
-                  </span>
-                </label>
+                  <label className="block text-sm">
+                    <span className="mb-1.5 block font-medium text-zinc-700 dark:text-zinc-300">Title</span>
+                    <input
+                      type="text"
+                      value={title}
+                      onChange={(event) => setTitle(event.target.value)}
+                      className="app-input"
+                    />
+                    <span className="mt-1.5 block text-xs text-zinc-500 dark:text-zinc-400">
+                      Override the default title only when you need something clearer.
+                    </span>
+                  </label>
+                </div>
 
                 {submitError && (
-                  <pre
-                    className="whitespace-pre-wrap break-words rounded border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800 dark:border-red-900 dark:bg-red-950/50 dark:text-red-200"
-                    role="alert"
-                  >
+                  <pre className="whitespace-pre-wrap break-words rounded-[1.2rem] border border-red-200 bg-red-50/90 px-4 py-3 text-sm text-red-800 dark:border-red-900 dark:bg-red-950/40 dark:text-red-200" role="alert">
                     {submitError}
                   </pre>
                 )}
 
                 {success && (
-                  <div className="rounded border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-900 dark:border-emerald-900 dark:bg-emerald-950/40 dark:text-emerald-100">
+                  <div className="rounded-[1.2rem] border border-emerald-200 bg-emerald-50/90 px-4 py-3 text-sm text-emerald-900 dark:border-emerald-900 dark:bg-emerald-950/40 dark:text-emerald-100">
                     <p>{success.message}</p>
                     {success.generatedDocument?.id ? (
-                      <Link
-                        href={`/admin/generated-documents/${success.generatedDocument.id}`}
-                        className="mt-2 inline-block text-blue-700 underline underline-offset-2 hover:text-blue-900 dark:text-blue-300 dark:hover:text-blue-200"
-                      >
+                      <Link href={`/admin/generated-documents/${success.generatedDocument.id}`} className="app-link mt-2 inline-block">
                         Open the generated document
                       </Link>
                     ) : null}
                   </div>
                 )}
 
-                <button
-                  type="submit"
-                  disabled={submitting || !selectedTemplateId}
-                  className="rounded bg-zinc-900 px-4 py-2 text-sm font-medium text-white hover:bg-zinc-800 disabled:opacity-50 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-white"
-                >
-                  {submitting ? "Generating..." : "Generate document"}
-                </button>
+                <div className="flex flex-wrap gap-3">
+                  <button type="submit" disabled={submitting || !selectedTemplateId} className="app-button-primary disabled:cursor-not-allowed disabled:opacity-50">
+                    {submitting ? "Generating..." : "Generate document"}
+                  </button>
+                </div>
               </form>
             )}
           </section>
