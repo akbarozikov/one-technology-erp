@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useAdminMode } from "@/components/admin/AdminModeProvider";
-import { adminNavGroups, easyNavItems } from "@/lib/entity-config";
+import { adminNavGroups, easyBossNavItems, easySellerNavItems } from "@/lib/entity-config";
 
 function isActivePath(pathname: string, href: string): boolean {
   return pathname === href || pathname.startsWith(`${href}/`);
@@ -11,7 +11,8 @@ function isActivePath(pathname: string, href: string): boolean {
 
 export function AdminSidebar() {
   const pathname = usePathname();
-  const { mode } = useAdminMode();
+  const { mode, easyRole } = useAdminMode();
+  const easyNavItems = easyRole === "boss" ? easyBossNavItems : easySellerNavItems;
 
   return (
     <aside className="w-64 shrink-0 border-r border-zinc-200 bg-zinc-50 p-4 dark:border-zinc-800 dark:bg-zinc-950">
@@ -20,7 +21,7 @@ export function AdminSidebar() {
           <>
             <div>
               <div className="mb-1 px-3 text-[11px] font-semibold uppercase tracking-wide text-zinc-500">
-                Easy Workspace
+                {easyRole === "boss" ? "Boss Workspace" : "Seller Workspace"}
               </div>
               <div className="flex flex-col gap-1">
                 {easyNavItems.map((item) => (

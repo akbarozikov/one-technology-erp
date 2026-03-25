@@ -30,11 +30,20 @@ export const adminNavGroups = [
   accessCompanyNavGroup,
 ];
 
-export const easyNavItems = [
+export const easySellerNavItems = [
   { href: "/admin", label: "Dashboard" },
   { href: "/admin/new-sale", label: "New Sale" },
   { href: "/admin/my-sales", label: "My Sales" },
-  { href: "/admin/approvals", label: "Awaiting Approval" },
   { href: "/admin/documents-lite", label: "Documents" },
   { href: "/admin/installations-lite", label: "Installations" },
 ];
+
+export const easyBossNavItems = [
+  { href: "/admin", label: "Dashboard" },
+  { href: "/admin/approvals", label: "Awaiting Approval" },
+  { href: "/admin/my-sales", label: "Sales Overview" },
+  { href: "/admin/documents-lite", label: "Documents" },
+  { href: "/admin/installations-lite", label: "Installations" },
+];
+
+export const easyNavItems = easySellerNavItems;

@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useAdminMode } from "@/components/admin/AdminModeProvider";
+import { BossControlDashboard } from "@/components/admin/easy/BossControlDashboard";
 import { ApiError, apiGet, getApiBaseUrl } from "@/lib/api";
 
 type CountItem = {
@@ -112,7 +113,7 @@ function SummaryList({
 }
 
 export default function AdminOverviewPage() {
-  const { mode } = useAdminMode();
+  const { mode, easyRole } = useAdminMode();
   const [data, setData] = useState<DashboardOverview | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -155,6 +156,9 @@ export default function AdminOverviewPage() {
   }, []);
 
   return (
+    mode === "easy" && easyRole === "boss" ? (
+      <BossControlDashboard />
+    ) : (
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-semibold text-zinc-900 dark:text-zinc-50">
@@ -456,5 +460,6 @@ export default function AdminOverviewPage() {
         </>
       )}
     </div>
+    )
   );
 }
