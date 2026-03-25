@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
@@ -250,11 +250,11 @@ function buildLookupLabel(
     })
     .map((value) => String(value).trim());
 
-  const main = parts.length > 0 ? parts.join(" · ") : String(row.id ?? "");
+  const main = parts.length > 0 ? parts.join(" - ") : String(row.id ?? "");
   if (lookup.includeIdInLabel === false || row.id === undefined) {
     return main;
   }
-  return `${row.id} · ${main}`;
+  return `${row.id} - ${main}`;
 }
 
 function resolveLookupCell(
@@ -357,7 +357,7 @@ function renderField(
           name={f.key}
           required={f.required}
           rows={3}
-          className="w-full rounded border border-zinc-300 px-2 py-1.5 text-zinc-900 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100"
+          className="app-input"
         />
       )}
       {f.kind === "text" && (
@@ -366,7 +366,7 @@ function renderField(
           type="text"
           required={f.required}
           autoComplete="off"
-          className="w-full rounded border border-zinc-300 px-2 py-1.5 text-zinc-900 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100"
+          className="app-input"
         />
       )}
       {f.kind === "date" && (
@@ -374,7 +374,7 @@ function renderField(
           name={f.key}
           type="date"
           required={f.required}
-          className="w-full rounded border border-zinc-300 px-2 py-1.5 text-zinc-900 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100"
+          className="app-input"
         />
       )}
       {f.kind === "datetime-local" && (
@@ -382,7 +382,7 @@ function renderField(
           name={f.key}
           type="datetime-local"
           required={f.required}
-          className="w-full rounded border border-zinc-300 px-2 py-1.5 text-zinc-900 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100"
+          className="app-input"
         />
       )}
       {f.kind === "number" && (
@@ -392,7 +392,7 @@ function renderField(
           required={f.required}
           min={f.min ?? (f.key === "sort_order" ? 0 : f.required ? 1 : undefined)}
           step={f.step ?? 1}
-          className="w-full rounded border border-zinc-300 px-2 py-1.5 text-zinc-900 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100"
+          className="app-input"
         />
       )}
       {f.kind === "checkbox" && (
@@ -400,7 +400,7 @@ function renderField(
           name={f.key}
           type="checkbox"
           defaultChecked={f.defaultChecked ?? false}
-          className="h-4 w-4 rounded border-zinc-300 text-zinc-900"
+          className="mt-1 h-4 w-4 rounded border-zinc-300 text-zinc-900"
         />
       )}
       {f.kind === "select" && (
@@ -414,7 +414,7 @@ function renderField(
                   : (f.options?.[0]?.value ?? ""))
               : ""
           }
-          className="w-full rounded border border-zinc-300 px-2 py-1.5 text-zinc-900 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100"
+          className="app-input"
         >
           {!f.required && <option value="">-</option>}
           {(f.lookup ? (lookupOptions[f.key] ?? []) : (f.options ?? [])).map((o) => (
@@ -428,7 +428,7 @@ function renderField(
         <select
           name={f.key}
           defaultValue=""
-          className="w-full rounded border border-zinc-300 px-2 py-1.5 text-zinc-900 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100"
+          className="app-input"
         >
           <option value="">-</option>
           <option value="true">true</option>
@@ -722,7 +722,7 @@ export function EntityListCreate({ config }: { config: EntityConfig }) {
         </div>
       )}
 
-      <section className="rounded border border-zinc-200 bg-white p-4 shadow-sm dark:border-zinc-700 dark:bg-zinc-900">
+      <section className="app-panel p-5 lg:p-6">
         <h2 className="mb-3 text-lg font-semibold text-zinc-900 dark:text-zinc-50">
           Current {config.title.toLowerCase()}
         </h2>
@@ -737,7 +737,7 @@ export function EntityListCreate({ config }: { config: EntityConfig }) {
           </p>
         )}
         {!loading && !error && rows && rows.length === 0 && (
-          <p className="text-sm text-zinc-500">Nothing has been added here yet.</p>
+          <p className="text-sm leading-6 text-zinc-500">Nothing has been added here yet.</p>
         )}
         {!loading && rows && rows.length > 0 && (
           <div className="space-y-4">
@@ -769,7 +769,7 @@ export function EntityListCreate({ config }: { config: EntityConfig }) {
 
             {((config.searchKeys && config.searchKeys.length > 0) ||
               (config.filters && config.filters.length > 0)) && (
-              <div className="flex flex-col gap-3 rounded border border-zinc-100 bg-zinc-50 p-3 dark:border-zinc-800 dark:bg-zinc-950/40">
+              <div className="app-panel-muted flex flex-col gap-3 p-4">
                 {config.searchKeys && config.searchKeys.length > 0 && (
                   <label className="block text-sm">
                     <span className="mb-1 block font-medium text-zinc-700 dark:text-zinc-300">
@@ -780,7 +780,7 @@ export function EntityListCreate({ config }: { config: EntityConfig }) {
                       value={searchTerm}
                       onChange={(event) => setSearchTerm(event.target.value)}
                       placeholder={`Search ${config.title.toLowerCase()}...`}
-                      className="w-full rounded border border-zinc-300 px-2 py-1.5 text-zinc-900 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100"
+                      className="app-input"
                     />
                   </label>
                 )}
@@ -799,7 +799,7 @@ export function EntityListCreate({ config }: { config: EntityConfig }) {
                               [filter.key]: event.target.value,
                             }))
                           }
-                          className="w-full rounded border border-zinc-300 px-2 py-1.5 text-zinc-900 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100"
+                          className="app-input"
                         >
                           <option value="">All</option>
                           {filter.options.map((option) => (
@@ -823,7 +823,7 @@ export function EntityListCreate({ config }: { config: EntityConfig }) {
                 No items match the current search or filters.
               </p>
             ) : (
-              <div className="overflow-x-auto">
+              <div className="app-table-wrap overflow-x-auto">
                 <table className="min-w-full border-collapse text-left text-sm">
                   <thead>
                     <tr className="border-b border-zinc-200 dark:border-zinc-600">
@@ -939,22 +939,22 @@ export function EntityListCreate({ config }: { config: EntityConfig }) {
       </section>
 
       {createEnabled && (
-        <section className="rounded border border-zinc-200 bg-white p-4 shadow-sm dark:border-zinc-700 dark:bg-zinc-900">
+        <section className="app-panel p-5 lg:p-6">
         <h2 className="mb-3 text-lg font-semibold text-zinc-900 dark:text-zinc-50">
           Add {config.title}
         </h2>
-        <p className="mb-4 text-sm text-zinc-500 dark:text-zinc-400">
+        <p className="mb-5 text-sm leading-6 text-zinc-500 dark:text-zinc-400">
           Fill in the main details below, then save to create a new record.
         </p>
           <form
-            className="max-w-xl space-y-3"
+            className="max-w-3xl space-y-4"
             onSubmit={onSubmit}
             aria-busy={submitting}
           >
             {fieldGroups.map((group) => (
               <section
                 key={group.key}
-                className="rounded border border-zinc-100 p-4 dark:border-zinc-800"
+                className="app-panel-muted p-4"
               >
                 {config.formSections && (
                   <div className="mb-3">
@@ -984,7 +984,7 @@ export function EntityListCreate({ config }: { config: EntityConfig }) {
             <button
               type="submit"
               disabled={submitting}
-              className="rounded bg-zinc-900 px-4 py-2 text-sm font-medium text-white hover:bg-zinc-800 disabled:opacity-50 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-white"
+              className="app-button-primary disabled:cursor-not-allowed disabled:opacity-50"
             >
               {submitting ? "Saving..." : "Save"}
             </button>
@@ -994,4 +994,5 @@ export function EntityListCreate({ config }: { config: EntityConfig }) {
     </div>
   );
 }
+
 
