@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { ApiError, apiGet, apiPost, formatApiError, getApiBaseUrl } from "@/lib/api";
+import { formatMoney } from "@/lib/easy-sales";
 
 type ProductRow = {
   id: number;
@@ -47,11 +48,6 @@ type SubmissionState = {
   quoteLine: QuoteLineRow | null;
 };
 
-function currency(value: number | null | undefined): string {
-  if (value === null || value === undefined || Number.isNaN(value)) return "-";
-  return value.toFixed(2);
-}
-
 function buildQuoteNumber(clientName: string): string {
   const now = new Date();
   const stamp = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, "0")}${String(
@@ -75,6 +71,15 @@ function buildNotes(clientName: string, notes: string): string | null {
   return parts.length > 0 ? parts.join("\n") : null;
 }
 
+const emptySubmission: SubmissionState = {
+  loading: false,
+  error: null,
+  partialMessage: null,
+  quote: null,
+  quoteVersion: null,
+  quoteLine: null,
+};
+
 export default function NewSalePage() {
   const [products, setProducts] = useState<ProductRow[]>([]);
   const [units, setUnits] = useState<UnitRow[]>([]);
@@ -88,14 +93,7 @@ export default function NewSalePage() {
   const [unitPrice, setUnitPrice] = useState("");
   const [notes, setNotes] = useState("");
   const [touchedPrice, setTouchedPrice] = useState(false);
-  const [submission, setSubmission] = useState<SubmissionState>({
-    loading: false,
-    error: null,
-    partialMessage: null,
-    quote: null,
-    quoteVersion: null,
-    quoteLine: null,
-  });
+  const [submission, setSubmission] = useState<SubmissionState>(emptySubmission);
 
   useEffect(() => {
     let cancelled = false;
@@ -168,6 +166,16 @@ export default function NewSalePage() {
         : ""
     );
   }, [selectedProduct, touchedPrice]);
+
+  function resetForm() {
+    setClientName("");
+    setProductId("");
+    setQuantity("1");
+    setUnitPrice("");
+    setNotes("");
+    setTouchedPrice(false);
+    setSubmission(emptySubmission);
+  }
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -303,15 +311,15 @@ export default function NewSalePage() {
       setSubmission({
         loading: false,
         error: createdVersion
-          ? `${baseMessage}\nThe quote and quote version were created, but the first line still needs attention.`
+          ? `${baseMessage}\nThe sale was started, but the first item still needs attention in advanced mode.`
           : createdQuote
-            ? `${baseMessage}\nThe quote was created, but the version or line still needs attention.`
+            ? `${baseMessage}\nThe sale shell was created, but the next commercial step still needs attention.`
             : baseMessage,
         partialMessage:
           createdVersion !== null
-            ? "Open the created quote version and finish the sale from the advanced workflow."
+            ? "Open the advanced sale details to finish the setup."
             : createdQuote !== null
-              ? "Open the quote list and continue from the partially created sale."
+              ? "Open the advanced commercial list and continue from the partially created sale."
               : null,
         quote: createdQuote,
         quoteVersion: createdVersion,
@@ -332,7 +340,7 @@ export default function NewSalePage() {
           New Sale
         </h1>
         <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-300">
-          Start a sale from the basic customer and product details only. The full commercial
+          Start a sale from the basic customer and product details only. The deeper commercial
           workflow stays available behind the scenes when you need it.
         </p>
       </section>
@@ -370,7 +378,7 @@ export default function NewSalePage() {
                 </h2>
                 <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
                   Capture the customer, product, quantity, and price. The system will start the
-                  quote flow for you.
+                  sale record for you behind the scenes.
                 </p>
               </div>
 
@@ -403,7 +411,7 @@ export default function NewSalePage() {
                       <option value="">Choose a product</option>
                       {products.map((product) => (
                         <option key={product.id} value={product.id}>
-                          {product.name} · {product.sku}
+                          {product.name} - {product.sku}
                         </option>
                       ))}
                     </select>
@@ -472,7 +480,7 @@ export default function NewSalePage() {
                           href={`/admin/quote-versions/${submission.quoteVersion.id}`}
                           className="text-blue-700 underline underline-offset-2 hover:text-blue-900 dark:text-blue-300 dark:hover:text-blue-200"
                         >
-                          Open quote version
+                          Open advanced sale details
                         </Link>
                       )}
                       {submission.quote && (
@@ -480,7 +488,7 @@ export default function NewSalePage() {
                           href="/admin/quotes"
                           className="text-blue-700 underline underline-offset-2 hover:text-blue-900 dark:text-blue-300 dark:hover:text-blue-200"
                         >
-                          Open quotes
+                          Open advanced commercial list
                         </Link>
                       )}
                     </div>
@@ -489,20 +497,27 @@ export default function NewSalePage() {
 
                 {submission.quote && submission.quoteVersion && submission.quoteLine && (
                   <div className="rounded border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-900 dark:border-emerald-900 dark:bg-emerald-950/40 dark:text-emerald-100">
-                    <p>Sale draft started successfully.</p>
+                    <p>Your sale draft is ready.</p>
                     <div className="mt-2 flex flex-wrap gap-3">
                       <Link
                         href={`/admin/quote-versions/${submission.quoteVersion.id}`}
                         className="text-blue-700 underline underline-offset-2 hover:text-blue-900 dark:text-blue-300 dark:hover:text-blue-200"
                       >
-                        Continue in quote version
+                        Open advanced details
                       </Link>
                       <Link
                         href="/admin/my-sales"
                         className="text-blue-700 underline underline-offset-2 hover:text-blue-900 dark:text-blue-300 dark:hover:text-blue-200"
                       >
-                        Go to My Sales
+                        View My Sales
                       </Link>
+                      <button
+                        type="button"
+                        onClick={resetForm}
+                        className="text-blue-700 underline underline-offset-2 hover:text-blue-900 dark:text-blue-300 dark:hover:text-blue-200"
+                      >
+                        Create another
+                      </button>
                     </div>
                   </div>
                 )}
@@ -519,7 +534,7 @@ export default function NewSalePage() {
                     href="/admin/quote-versions"
                     className="rounded border border-zinc-300 px-3 py-2 text-sm text-zinc-700 hover:bg-zinc-50 dark:border-zinc-700 dark:text-zinc-200 dark:hover:bg-zinc-800"
                   >
-                    Open advanced quotes
+                    Open advanced sales
                   </Link>
                 </div>
               </form>
@@ -554,7 +569,7 @@ export default function NewSalePage() {
                           Suggested price
                         </p>
                         <p className="mt-1 text-sm text-zinc-700 dark:text-zinc-200">
-                          {currency(selectedProduct.minimum_sale_price)}
+                          {formatMoney(selectedProduct.minimum_sale_price)}
                         </p>
                       </div>
                       <div className="rounded border border-zinc-100 px-3 py-2 dark:border-zinc-800 sm:col-span-2">
@@ -562,7 +577,7 @@ export default function NewSalePage() {
                           Estimated total
                         </p>
                         <p className="mt-1 text-lg font-semibold text-zinc-900 dark:text-zinc-50">
-                          {currency(saleTotal)}
+                          {formatMoney(saleTotal)}
                         </p>
                       </div>
                     </div>
@@ -584,9 +599,9 @@ export default function NewSalePage() {
                   What Happens Next
                 </h2>
                 <div className="mt-4 space-y-3 text-sm text-zinc-500 dark:text-zinc-400">
-                  <p>1. The system starts a quote and the first quote version for this sale.</p>
-                  <p>2. The selected product is added as the first sale line with your price and quantity.</p>
-                  <p>3. You can continue from the quote-version workflow when you need proposal, order, or detailed follow-through actions.</p>
+                  <p>1. The system starts the first commercial record for this sale.</p>
+                  <p>2. Your selected product is added with the quantity and price you entered.</p>
+                  <p>3. When you need proposal, order, or detailed follow-through tools, you can continue in the advanced sales workflow.</p>
                 </div>
               </section>
             </div>
@@ -642,7 +657,7 @@ export default function NewSalePage() {
                         : "text-zinc-500 dark:text-zinc-400"
                     }`}
                   >
-                    Suggested price: {currency(product.minimum_sale_price)}
+                    Suggested price: {formatMoney(product.minimum_sale_price)}
                   </p>
                 </button>
               ))}

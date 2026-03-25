@@ -34,7 +34,7 @@ export const easyNavItems = [
   { href: "/admin", label: "Dashboard" },
   { href: "/admin/new-sale", label: "New Sale" },
   { href: "/admin/my-sales", label: "My Sales" },
-  { href: "/admin/approvals", label: "Approvals" },
+  { href: "/admin/approvals", label: "Awaiting Approval" },
   { href: "/admin/documents-lite", label: "Documents" },
   { href: "/admin/installations-lite", label: "Installations" },
 ];
