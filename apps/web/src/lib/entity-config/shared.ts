@@ -1,4 +1,4 @@
-﻿export type FieldKind =
+export type FieldKind =
   | "text"
   | "textarea"
   | "number"
@@ -443,6 +443,17 @@ export const documentLinkRoles = [
   { value: "related", label: "related" },
 ];
 
+export const roleLookup = {
+  apiPath: "/api/roles",
+  labelKeys: ["name", "code"],
+  includeIdInLabel: true,
+} as const satisfies EntityLookup;
+
+export const permissionLookup = {
+  apiPath: "/api/permissions",
+  labelKeys: ["name", "code", "module"],
+  includeIdInLabel: true,
+} as const satisfies EntityLookup;
 export const userLookup = {
   apiPath: "/api/users",
   labelKeys: ["email", "phone"],

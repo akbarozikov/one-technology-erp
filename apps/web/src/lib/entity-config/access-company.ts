@@ -1,5 +1,13 @@
 import type { AdminNavGroup, EntityConfigMap } from "./shared";
-import { branchTypes, employeeTypes, locationTypes, userStatuses } from "./shared";
+import {
+  branchTypes,
+  employeeTypes,
+  locationTypes,
+  permissionLookup,
+  roleLookup,
+  userLookup,
+  userStatuses,
+} from "./shared";
 
 export const accessCompanyConfigs = {
   roles: {
@@ -18,11 +26,29 @@ export const accessCompanyConfigs = {
     title: "Permissions",
     apiPath: "/api/permissions",
     viewPermissions: ["roles.manage", "settings.manage"],
-    createPermissions: ["roles.manage", "settings.manage"],
+    createEnabled: false,
+    listSection: {
+      kicker: "Catalog",
+      title: "System permission catalog",
+      description:
+        "Review the stable permission codes the ERP uses for navigation, page access, and action visibility.",
+    },
+    listNotice: {
+      title: "System-managed catalog",
+      description:
+        "Core permission codes are synced from the app automatically. Use Roles and Role Permissions to assign access instead of creating permission codes by hand.",
+      tone: "info",
+    },
+    tableColumns: [
+      { key: "name", label: "Permission" },
+      { key: "code", label: "Code" },
+      { key: "module", label: "Group" },
+      { key: "description", label: "Description" },
+    ],
     fields: [
       { key: "name", label: "Name", kind: "text", required: true },
       { key: "code", label: "Code", kind: "text", required: true },
-      { key: "module", label: "Module", kind: "text", required: true },
+      { key: "module", label: "Group", kind: "text", required: true },
       { key: "description", label: "Description", kind: "textarea" },
     ],
   },
@@ -73,9 +99,15 @@ export const accessCompanyConfigs = {
     apiPath: "/api/user-roles",
     viewPermissions: ["users.manage", "roles.manage"],
     createPermissions: ["users.manage", "roles.manage"],
+    listNotice: {
+      title: "Assign existing roles",
+      description:
+        "The baseline role catalog is synced automatically. Use this page to assign those roles to users rather than inventing permissions from scratch.",
+      tone: "info",
+    },
     fields: [
-      { key: "user_id", label: "User ID", kind: "number", required: true },
-      { key: "role_id", label: "Role ID", kind: "number", required: true },
+      { key: "user_id", label: "User", kind: "select", required: true, lookup: userLookup },
+      { key: "role_id", label: "Role", kind: "select", required: true, lookup: roleLookup },
     ],
   },
   role_permissions: {
@@ -83,9 +115,15 @@ export const accessCompanyConfigs = {
     apiPath: "/api/role-permissions",
     viewPermissions: ["roles.manage", "settings.manage"],
     createPermissions: ["roles.manage", "settings.manage"],
+    listNotice: {
+      title: "Work from the catalog",
+      description:
+        "The permission catalog is system-managed and auto-synced. Use this page to decide which existing permissions each role should carry.",
+      tone: "info",
+    },
     fields: [
-      { key: "role_id", label: "Role ID", kind: "number", required: true },
-      { key: "permission_id", label: "Permission ID", kind: "number", required: true },
+      { key: "role_id", label: "Role", kind: "select", required: true, lookup: roleLookup },
+      { key: "permission_id", label: "Permission", kind: "select", required: true, lookup: permissionLookup },
     ],
   },
   employees: {

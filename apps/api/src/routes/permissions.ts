@@ -16,7 +16,7 @@ export async function handlePermissions(
 
   if (request.method === "GET") {
     const { results } = await db
-      .prepare("SELECT * FROM permissions ORDER BY id ASC")
+      .prepare("SELECT * FROM permissions ORDER BY module ASC, name ASC, id ASC")
       .all<PermissionRow>();
     return jsonOk({ data: results ?? [] });
   }

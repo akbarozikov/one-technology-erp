@@ -1,26 +1,19 @@
-﻿import type {
+import type {
   PermissionRow,
   RolePermissionRow,
   RoleRow,
   UserRoleRow,
   UserRow,
 } from "@one-technology/db";
+import {
+  BASELINE_ROLE_CATALOG,
+  SYSTEM_PERMISSION_CATALOG,
+} from "@one-technology/shared";
 import { getDb } from "./db";
 import type { Env } from "../types/env";
 
-type PermissionSeed = {
-  code: string;
-  name: string;
-  module: string;
-  description: string;
-};
-
-type RoleSeed = {
-  code: string;
-  name: string;
-  description: string;
-  permissionCodes: string[];
-};
+type PermissionSeed = (typeof SYSTEM_PERMISSION_CATALOG)[number];
+type RoleSeed = (typeof BASELINE_ROLE_CATALOG)[number];
 
 export type AccessBootstrapSummary = {
   permissions_created: number;
@@ -31,122 +24,6 @@ export type AccessBootstrapSummary = {
   user_roles_created: number;
   admin_user_status_changed: boolean;
 };
-
-export const APP_PERMISSION_SEEDS: PermissionSeed[] = [
-  {
-    code: "dashboard.view",
-    name: "View Dashboard",
-    module: "dashboard",
-    description: "Open the main ERP dashboard and workspace entry surfaces.",
-  },
-  {
-    code: "sales.create",
-    name: "Create Sales",
-    module: "sales",
-    description: "Start new sales from the seller workflow and advanced commercial flows.",
-  },
-  {
-    code: "sales.view_own",
-    name: "View Own Sales",
-    module: "sales",
-    description: "View seller-facing sales that belong to the current user.",
-  },
-  {
-    code: "sales.view_all",
-    name: "View All Sales",
-    module: "sales",
-    description: "View the full commercial pipeline across quotes, versions, orders, and related workflows.",
-  },
-  {
-    code: "approvals.review",
-    name: "Review Approvals",
-    module: "approvals",
-    description: "Open boss approval queues and make sales decisions.",
-  },
-  {
-    code: "documents.view",
-    name: "View Documents",
-    module: "documents",
-    description: "Access generated documents, document templates, and document preview surfaces.",
-  },
-  {
-    code: "installations.view",
-    name: "View Installations",
-    module: "installations",
-    description: "Access installation jobs, results, and installation-oriented workflow pages.",
-  },
-  {
-    code: "payments.view",
-    name: "View Payments",
-    module: "payments",
-    description: "Access payment records, debt visibility, and money follow-through surfaces.",
-  },
-  {
-    code: "operations.view",
-    name: "View Operations",
-    module: "operations",
-    description: "Access warehouse, reservations, stock movements, and operational exception views.",
-  },
-  {
-    code: "products.manage",
-    name: "Manage Products",
-    module: "catalog",
-    description: "Manage products, catalog structures, constructor-related product data, and related setup.",
-  },
-  {
-    code: "users.manage",
-    name: "Manage Users",
-    module: "admin",
-    description: "Manage users and user lifecycle actions.",
-  },
-  {
-    code: "roles.manage",
-    name: "Manage Roles",
-    module: "admin",
-    description: "Manage roles, user-role assignments, permissions, and role-permission mappings.",
-  },
-  {
-    code: "settings.manage",
-    name: "Manage Settings",
-    module: "admin",
-    description: "Access broader settings and company/admin configuration surfaces.",
-  },
-];
-
-export const BASELINE_ROLE_SEEDS: RoleSeed[] = [
-  {
-    code: "admin",
-    name: "Admin",
-    description: "Full core ERP access for administration, setup, and operational oversight.",
-    permissionCodes: APP_PERMISSION_SEEDS.map((permission) => permission.code),
-  },
-  {
-    code: "seller",
-    name: "Seller",
-    description: "Seller workflow access for day-to-day sales work and follow-through.",
-    permissionCodes: [
-      "dashboard.view",
-      "sales.create",
-      "sales.view_own",
-      "documents.view",
-      "installations.view",
-    ],
-  },
-  {
-    code: "boss",
-    name: "Boss",
-    description: "Management oversight access for approvals, money visibility, and operational control.",
-    permissionCodes: [
-      "dashboard.view",
-      "sales.view_all",
-      "approvals.review",
-      "documents.view",
-      "installations.view",
-      "payments.view",
-      "operations.view",
-    ],
-  },
-];
 
 function normalizeIdentifier(value: string): string {
   return value.trim().toLowerCase();
@@ -192,7 +69,7 @@ async function ensurePermission(
         `INSERT OR IGNORE INTO permissions (name, code, module, description)
          VALUES (?, ?, ?, ?)`
       )
-      .bind(seed.name, seed.code, seed.module, seed.description)
+      .bind(seed.label, seed.code, seed.group, seed.description)
       .run();
 
     const created = await db
@@ -209,8 +86,8 @@ async function ensurePermission(
   }
 
   if (
-    existing.name !== seed.name ||
-    existing.module !== seed.module ||
+    existing.name !== seed.label ||
+    existing.module !== seed.group ||
     (existing.description ?? null) !== seed.description
   ) {
     const updated = await db
@@ -220,7 +97,7 @@ async function ensurePermission(
          WHERE id = ?
          RETURNING *`
       )
-      .bind(seed.name, seed.module, seed.description, existing.id)
+      .bind(seed.label, seed.group, seed.description, existing.id)
       .first<PermissionRow>();
 
     if (!updated) {
@@ -240,7 +117,7 @@ async function ensureRole(
   summary: AccessBootstrapSummary
 ): Promise<RoleRow> {
   const normalizedCode = normalizeIdentifier(seed.code);
-  const normalizedName = normalizeIdentifier(seed.name);
+  const normalizedName = normalizeIdentifier(seed.label);
 
   const existing = await db
     .prepare(
@@ -258,7 +135,7 @@ async function ensureRole(
         `INSERT OR IGNORE INTO roles (name, code, description, is_active)
          VALUES (?, ?, ?, 1)`
       )
-      .bind(seed.name, seed.code, seed.description)
+      .bind(seed.label, seed.code, seed.description)
       .run();
 
     const created = await db
@@ -280,7 +157,7 @@ async function ensureRole(
   }
 
   if (
-    existing.name !== seed.name ||
+    existing.name !== seed.label ||
     existing.code !== seed.code ||
     (existing.description ?? null) !== seed.description ||
     Number(existing.is_active) !== 1
@@ -292,7 +169,7 @@ async function ensureRole(
          WHERE id = ?
          RETURNING *`
       )
-      .bind(seed.name, seed.code, seed.description, existing.id)
+      .bind(seed.label, seed.code, seed.description, existing.id)
       .first<RoleRow>();
 
     if (!updated) {
@@ -446,13 +323,13 @@ export async function ensureAccessBaseline(
   const summary = createSummary();
 
   const permissionsByCode = new Map<string, PermissionRow>();
-  for (const permissionSeed of APP_PERMISSION_SEEDS) {
+  for (const permissionSeed of SYSTEM_PERMISSION_CATALOG) {
     const permission = await ensurePermission(db, permissionSeed, summary);
     permissionsByCode.set(permission.code, permission);
   }
 
   const rolesByCode = new Map<string, RoleRow>();
-  for (const roleSeed of BASELINE_ROLE_SEEDS) {
+  for (const roleSeed of BASELINE_ROLE_CATALOG) {
     const role = await ensureRole(db, roleSeed, summary);
     rolesByCode.set(role.code, role);
 
@@ -495,10 +372,10 @@ export async function ensureAccessBaseline(
   }
 
   return {
-    permissions: APP_PERMISSION_SEEDS.map((permission) => permission.code),
-    roles: BASELINE_ROLE_SEEDS.map((role) => ({
+    permissions: SYSTEM_PERMISSION_CATALOG.map((permission) => permission.code),
+    roles: BASELINE_ROLE_CATALOG.map((role) => ({
       code: role.code,
-      permission_codes: role.permissionCodes,
+      permission_codes: [...role.permissionCodes],
     })),
     admin_identifier: adminIdentifier,
     admin_user: adminUser,

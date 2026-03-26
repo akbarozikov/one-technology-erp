@@ -1,55 +1,36 @@
-﻿import type { AuthSession } from "@/lib/auth/shared";
+import type { AuthSession } from "@/lib/auth/shared";
+import {
+  BASELINE_ROLE_CATALOG,
+  SYSTEM_PERMISSION_CATALOG,
+  SYSTEM_PERMISSION_CODES,
+} from "@one-technology/shared";
 
-export const KNOWN_PERMISSION_CODES = [
-  "dashboard.view",
-  "sales.create",
-  "sales.view_own",
-  "sales.view_all",
-  "approvals.review",
-  "documents.view",
-  "installations.view",
-  "payments.view",
-  "operations.view",
-  "products.manage",
-  "users.manage",
-  "roles.manage",
-  "settings.manage",
-] as const;
+export const KNOWN_PERMISSION_CODES = [...SYSTEM_PERMISSION_CODES];
 
-export type PermissionCode = (typeof KNOWN_PERMISSION_CODES)[number];
+export type PermissionCode = (typeof SYSTEM_PERMISSION_CATALOG)[number]["code"];
 
 type AccessRule = {
   anyOf?: string[];
   allOf?: string[];
 };
 
+const adminBaselinePermissions =
+  BASELINE_ROLE_CATALOG.find((role) => role.code === "admin")?.permissionCodes ??
+  KNOWN_PERMISSION_CODES;
+
 export const ROLE_PERMISSION_PRESETS: Record<string, string[]> = {
   seller: ["dashboard.view", "sales.create", "sales.view_own", "documents.view", "installations.view"],
   sales: ["dashboard.view", "sales.create", "sales.view_own", "documents.view", "installations.view"],
   manager: ["dashboard.view", "sales.view_all", "approvals.review", "documents.view", "installations.view", "payments.view", "operations.view"],
   boss: ["dashboard.view", "sales.view_all", "approvals.review", "documents.view", "installations.view", "payments.view", "operations.view"],
-  admin: [...KNOWN_PERMISSION_CODES],
-  superadmin: [...KNOWN_PERMISSION_CODES],
+  admin: [...adminBaselinePermissions],
+  superadmin: [...adminBaselinePermissions],
   product_manager: ["dashboard.view", "products.manage"],
   catalog_manager: ["dashboard.view", "products.manage"],
   access_admin: ["dashboard.view", "users.manage", "roles.manage", "settings.manage"],
 };
 
-export const BOOTSTRAP_ADMIN_PERMISSIONS = [
-  "dashboard.view",
-  "sales.create",
-  "sales.view_own",
-  "sales.view_all",
-  "approvals.review",
-  "documents.view",
-  "installations.view",
-  "payments.view",
-  "operations.view",
-  "products.manage",
-  "users.manage",
-  "roles.manage",
-  "settings.manage",
-] as const;
+export const BOOTSTRAP_ADMIN_PERMISSIONS = [...adminBaselinePermissions] as readonly string[];
 
 export const HREF_ACCESS_RULES: Array<{ prefix: string; rule: AccessRule }> = [
   { prefix: "/admin/new-sale", rule: { anyOf: ["sales.create"] } },
