@@ -1,9 +1,10 @@
-"use client";
+﻿"use client";
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
-import { ApiError, apiGet, getApiBaseUrl } from "@/lib/api";
+import { useAuth } from "@/components/admin/AuthProvider";
 import { EasySalesCard } from "@/components/admin/easy/EasySalesCard";
+import { ApiError, apiGet, getApiBaseUrl } from "@/lib/api";
 import {
   buildSales,
   formatMoney,
@@ -17,15 +18,10 @@ import {
 } from "@/lib/easy-sales";
 import { loadEasyApprovalRecords } from "@/lib/easy-approvals";
 
-type CountItem = {
-  status?: string;
-  count: number;
-};
-
 type DashboardOverview = {
   orders_summary: {
     total_orders: number;
-    counts_by_status: CountItem[];
+    counts_by_status: Array<{ status?: string; count: number }>;
   };
   payments_summary: {
     total_paid_amount: number;
@@ -49,6 +45,7 @@ function formatCurrency(value: number): string {
 }
 
 export function BossControlDashboard() {
+  const { hasAnyPermission } = useAuth();
   const [overview, setOverview] = useState<DashboardOverview | null>(null);
   const [sales, setSales] = useState<Sale[]>([]);
   const [loading, setLoading] = useState(true);
@@ -123,6 +120,12 @@ export function BossControlDashboard() {
     [sales]
   );
 
+  const canReviewApprovals = hasAnyPermission(["approvals.review"]);
+  const canViewSales = hasAnyPermission(["sales.view_all", "sales.view_own"]);
+  const canViewPayments = hasAnyPermission(["payments.view"]);
+  const canViewOperations = hasAnyPermission(["operations.view"]);
+  const canViewDocuments = hasAnyPermission(["documents.view"]);
+
   return (
     <div className="space-y-6 lg:space-y-8">
       <section className="app-panel-strong p-6 lg:p-8">
@@ -135,8 +138,12 @@ export function BossControlDashboard() {
             </p>
           </div>
           <div className="flex flex-wrap gap-3">
-            <Link href="/admin/approvals" className="app-button-primary">Review approvals</Link>
-            <Link href="/admin/quote-versions" className="app-button-secondary">Open advanced ERP</Link>
+            {canReviewApprovals && (
+              <Link href="/admin/approvals" className="app-button-primary">Review approvals</Link>
+            )}
+            {canViewSales && (
+              <Link href="/admin/quote-versions" className="app-button-secondary">Open advanced ERP</Link>
+            )}
           </div>
         </div>
       </section>
@@ -162,26 +169,34 @@ export function BossControlDashboard() {
       {!loading && !error && overview && (
         <>
           <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-            <div className="app-stat">
-              <p className="app-kicker">Awaiting approval</p>
-              <p className="mt-3 text-3xl font-semibold tracking-tight text-zinc-950 dark:text-zinc-50">{awaitingApproval.length}</p>
-              <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-300">Sales waiting for a manager call.</p>
-            </div>
-            <div className="app-stat">
-              <p className="app-kicker">Sales in progress</p>
-              <p className="mt-3 text-3xl font-semibold tracking-tight text-zinc-950 dark:text-zinc-50">{salesInProgress.length}</p>
-              <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-300">Active opportunities still moving forward.</p>
-            </div>
-            <div className="app-stat">
-              <p className="app-kicker">Needs attention</p>
-              <p className="mt-3 text-3xl font-semibold tracking-tight text-zinc-950 dark:text-zinc-50">{needsAttention.length}</p>
-              <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-300">Sales already sent back for another pass.</p>
-            </div>
-            <div className="app-stat">
-              <p className="app-kicker">Cash still outstanding</p>
-              <p className="mt-3 text-3xl font-semibold tracking-tight text-zinc-950 dark:text-zinc-50">{formatCurrency(overview.payments_summary.total_remaining_amount)}</p>
-              <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-300">Remaining across current orders.</p>
-            </div>
+            {canReviewApprovals && (
+              <div className="app-stat">
+                <p className="app-kicker">Awaiting approval</p>
+                <p className="mt-3 text-3xl font-semibold tracking-tight text-zinc-950 dark:text-zinc-50">{awaitingApproval.length}</p>
+                <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-300">Sales waiting for a manager call.</p>
+              </div>
+            )}
+            {canViewSales && (
+              <div className="app-stat">
+                <p className="app-kicker">Sales in progress</p>
+                <p className="mt-3 text-3xl font-semibold tracking-tight text-zinc-950 dark:text-zinc-50">{salesInProgress.length}</p>
+                <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-300">Active opportunities still moving forward.</p>
+              </div>
+            )}
+            {canReviewApprovals && (
+              <div className="app-stat">
+                <p className="app-kicker">Needs attention</p>
+                <p className="mt-3 text-3xl font-semibold tracking-tight text-zinc-950 dark:text-zinc-50">{needsAttention.length}</p>
+                <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-300">Sales already sent back for another pass.</p>
+              </div>
+            )}
+            {canViewPayments && (
+              <div className="app-stat">
+                <p className="app-kicker">Cash still outstanding</p>
+                <p className="mt-3 text-3xl font-semibold tracking-tight text-zinc-950 dark:text-zinc-50">{formatCurrency(overview.payments_summary.total_remaining_amount)}</p>
+                <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-300">Remaining across current orders.</p>
+              </div>
+            )}
           </section>
 
           <section className="app-panel p-5 lg:p-6">
@@ -190,50 +205,62 @@ export function BossControlDashboard() {
               <p className="app-section-subtitle">Start from a management intent, then hand off into the deeper ERP only when the situation truly needs it.</p>
             </div>
             <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-5">
-              <Link href="/admin/approvals" className="app-button-primary min-h-24 flex-col items-start !rounded-[1.2rem] !px-4 !py-4 text-left">
-                <span>Review approvals</span>
-                <span className="mt-1 text-sm font-normal text-white/80 dark:text-zinc-700">Go straight to the decision inbox.</span>
-              </Link>
-              <Link href="/admin/my-sales" className="app-panel-muted flex min-h-24 flex-col px-4 py-4 transition hover:-translate-y-0.5">
-                <span className="text-sm font-semibold text-zinc-950 dark:text-zinc-100">Open sales in progress</span>
-                <span className="mt-2 text-sm leading-6 text-zinc-600 dark:text-zinc-300">Check the active sales pipeline in product terms.</span>
-              </Link>
-              <Link href="/admin/payments-debt" className="app-panel-muted flex min-h-24 flex-col px-4 py-4 transition hover:-translate-y-0.5">
-                <span className="text-sm font-semibold text-zinc-950 dark:text-zinc-100">Check payments & debt</span>
-                <span className="mt-2 text-sm leading-6 text-zinc-600 dark:text-zinc-300">See what is paid, open, overdue, or risky.</span>
-              </Link>
-              <Link href="/admin/expenses-adjustments" className="app-panel-muted flex min-h-24 flex-col px-4 py-4 transition hover:-translate-y-0.5">
-                <span className="text-sm font-semibold text-zinc-950 dark:text-zinc-100">Check expenses & inventory</span>
-                <span className="mt-2 text-sm leading-6 text-zinc-600 dark:text-zinc-300">Review supplier spend, writeoffs, and manual corrections.</span>
-              </Link>
-              <Link href="/admin/documents-lite" className="app-panel-muted flex min-h-24 flex-col px-4 py-4 transition hover:-translate-y-0.5">
-                <span className="text-sm font-semibold text-zinc-950 dark:text-zinc-100">Check documents</span>
-                <span className="mt-2 text-sm leading-6 text-zinc-600 dark:text-zinc-300">Open proposals, orders, and field-ready documents quickly.</span>
-              </Link>
+              {canReviewApprovals && (
+                <Link href="/admin/approvals" className="app-button-primary min-h-24 flex-col items-start !rounded-[1.2rem] !px-4 !py-4 text-left">
+                  <span>Review approvals</span>
+                  <span className="mt-1 text-sm font-normal text-white/80 dark:text-zinc-700">Go straight to the decision inbox.</span>
+                </Link>
+              )}
+              {canViewSales && (
+                <Link href="/admin/my-sales" className="app-panel-muted flex min-h-24 flex-col px-4 py-4 transition hover:-translate-y-0.5">
+                  <span className="text-sm font-semibold text-zinc-950 dark:text-zinc-100">Open sales in progress</span>
+                  <span className="mt-2 text-sm leading-6 text-zinc-600 dark:text-zinc-300">Check the active sales pipeline in product terms.</span>
+                </Link>
+              )}
+              {canViewPayments && (
+                <Link href="/admin/payments-debt" className="app-panel-muted flex min-h-24 flex-col px-4 py-4 transition hover:-translate-y-0.5">
+                  <span className="text-sm font-semibold text-zinc-950 dark:text-zinc-100">Check payments & debt</span>
+                  <span className="mt-2 text-sm leading-6 text-zinc-600 dark:text-zinc-300">See what is paid, open, overdue, or risky.</span>
+                </Link>
+              )}
+              {canViewOperations && (
+                <Link href="/admin/expenses-adjustments" className="app-panel-muted flex min-h-24 flex-col px-4 py-4 transition hover:-translate-y-0.5">
+                  <span className="text-sm font-semibold text-zinc-950 dark:text-zinc-100">Check expenses & inventory</span>
+                  <span className="mt-2 text-sm leading-6 text-zinc-600 dark:text-zinc-300">Review supplier spend, writeoffs, and manual corrections.</span>
+                </Link>
+              )}
+              {canViewDocuments && (
+                <Link href="/admin/documents-lite" className="app-panel-muted flex min-h-24 flex-col px-4 py-4 transition hover:-translate-y-0.5">
+                  <span className="text-sm font-semibold text-zinc-950 dark:text-zinc-100">Check documents</span>
+                  <span className="mt-2 text-sm leading-6 text-zinc-600 dark:text-zinc-300">Open proposals, orders, and field-ready documents quickly.</span>
+                </Link>
+              )}
             </div>
           </section>
 
           <section className="grid gap-4 xl:grid-cols-[1.25fr_0.75fr]">
-            <section className="app-panel p-5 lg:p-6">
-              <div className="mb-4 flex items-center justify-between gap-3">
-                <div className="space-y-1.5">
-                  <h2 className="app-section-title">Awaiting approval</h2>
-                  <p className="app-section-subtitle">The next sales decisions that need a boss response.</p>
-                </div>
-                <Link href="/admin/approvals" className="app-link text-sm">Open inbox</Link>
-              </div>
-              <div className="space-y-3">
-                {awaitingApproval.length === 0 ? (
-                  <div className="app-empty text-sm leading-6 text-zinc-600 dark:text-zinc-300">
-                    No sales are waiting for approval right now.
+            {canReviewApprovals && (
+              <section className="app-panel p-5 lg:p-6">
+                <div className="mb-4 flex items-center justify-between gap-3">
+                  <div className="space-y-1.5">
+                    <h2 className="app-section-title">Awaiting approval</h2>
+                    <p className="app-section-subtitle">The next sales decisions that need a boss response.</p>
                   </div>
-                ) : (
-                  awaitingApproval.slice(0, 3).map((sale) => (
-                    <EasySalesCard key={sale.id} sale={sale} href={sale.detailHref} extraBadge={sale.seller || sale.stageLabel} description="Open the decision inbox to approve, send back, or reject." />
-                  ))
-                )}
-              </div>
-            </section>
+                  <Link href="/admin/approvals" className="app-link text-sm">Open inbox</Link>
+                </div>
+                <div className="space-y-3">
+                  {awaitingApproval.length === 0 ? (
+                    <div className="app-empty text-sm leading-6 text-zinc-600 dark:text-zinc-300">
+                      No sales are waiting for approval right now.
+                    </div>
+                  ) : (
+                    awaitingApproval.slice(0, 3).map((sale) => (
+                      <EasySalesCard key={sale.id} sale={sale} href={sale.detailHref} extraBadge={sale.seller || sale.stageLabel} description="Open the decision inbox to approve, send back, or reject." />
+                    ))
+                  )}
+                </div>
+              </section>
+            )}
 
             <section className="app-panel p-5 lg:p-6">
               <div className="mb-4 space-y-1.5">
@@ -241,69 +268,81 @@ export function BossControlDashboard() {
                 <p className="app-section-subtitle">A compact read on commercial activity, cash, documents, and field completion.</p>
               </div>
               <div className="grid gap-3 sm:grid-cols-2">
-                <div className="app-panel-muted px-4 py-4">
-                  <p className="app-kicker">Orders tracked</p>
-                  <p className="mt-2 text-2xl font-semibold tracking-tight text-zinc-950 dark:text-zinc-50">{overview.orders_summary.total_orders}</p>
-                </div>
-                <div className="app-panel-muted px-4 py-4">
-                  <p className="app-kicker">Documents ready</p>
-                  <p className="mt-2 text-2xl font-semibold tracking-tight text-zinc-950 dark:text-zinc-50">{overview.documents_summary.total_generated_documents}</p>
-                </div>
-                <div className="app-panel-muted px-4 py-4">
-                  <p className="app-kicker">Cash received</p>
-                  <p className="mt-2 text-2xl font-semibold tracking-tight text-zinc-950 dark:text-zinc-50">{formatCurrency(overview.payments_summary.total_paid_amount)}</p>
-                </div>
-                <div className="app-panel-muted px-4 py-4">
-                  <p className="app-kicker">Recent completions</p>
-                  <p className="mt-2 text-2xl font-semibold tracking-tight text-zinc-950 dark:text-zinc-50">{overview.installation_summary.recent_completed_jobs_count}</p>
-                </div>
-              </div>
-            </section>
-          </section>
-
-          <section className="grid gap-4 xl:grid-cols-2">
-            <section className="app-panel p-5 lg:p-6">
-              <div className="mb-4 space-y-1.5">
-                <h2 className="app-section-title">Recently approved</h2>
-                <p className="app-section-subtitle">Sales that already cleared the main decision step.</p>
-              </div>
-              <div className="space-y-3">
-                {recentlyApproved.length === 0 ? (
-                  <div className="app-empty text-sm leading-6 text-zinc-600 dark:text-zinc-300">
-                    No recent approvals have been recorded in the lightweight control layer yet.
+                {canViewSales && (
+                  <div className="app-panel-muted px-4 py-4">
+                    <p className="app-kicker">Orders tracked</p>
+                    <p className="mt-2 text-2xl font-semibold tracking-tight text-zinc-950 dark:text-zinc-50">{overview.orders_summary.total_orders}</p>
                   </div>
-                ) : (
-                  recentlyApproved.map((sale) => (
-                    <EasySalesCard key={sale.id} sale={sale} href={sale.advancedHref} extraBadge={sale.seller || sale.stageLabel} description={`Approved amount: ${formatMoney(sale.amount)}.`} />
-                  ))
                 )}
-              </div>
-            </section>
-
-            <section className="app-panel p-5 lg:p-6">
-              <div className="mb-4 space-y-1.5">
-                <h2 className="app-section-title">Recently rejected</h2>
-                <p className="app-section-subtitle">Decisions that may need follow-up or clearer direction back to the team.</p>
-              </div>
-              <div className="space-y-3">
-                {recentlyRejected.length === 0 ? (
-                  <div className="app-empty text-sm leading-6 text-zinc-600 dark:text-zinc-300">
-                    No recent rejections are showing right now.
+                {canViewDocuments && (
+                  <div className="app-panel-muted px-4 py-4">
+                    <p className="app-kicker">Documents ready</p>
+                    <p className="mt-2 text-2xl font-semibold tracking-tight text-zinc-950 dark:text-zinc-50">{overview.documents_summary.total_generated_documents}</p>
                   </div>
-                ) : (
-                  recentlyRejected.map((sale) => (
-                    <EasySalesCard
-                      key={sale.id}
-                      sale={sale}
-                      href={sale.detailHref}
-                      extraBadge={sale.seller || sale.stageLabel}
-                      description={sale.decisionComment ? `Reason: ${sale.decisionComment}` : "Open the review page if you want to revisit the decision note."}
-                    />
-                  ))
+                )}
+                {canViewPayments && (
+                  <div className="app-panel-muted px-4 py-4">
+                    <p className="app-kicker">Cash received</p>
+                    <p className="mt-2 text-2xl font-semibold tracking-tight text-zinc-950 dark:text-zinc-50">{formatCurrency(overview.payments_summary.total_paid_amount)}</p>
+                  </div>
+                )}
+                {canViewOperations && (
+                  <div className="app-panel-muted px-4 py-4">
+                    <p className="app-kicker">Recent completions</p>
+                    <p className="mt-2 text-2xl font-semibold tracking-tight text-zinc-950 dark:text-zinc-50">{overview.installation_summary.recent_completed_jobs_count}</p>
+                  </div>
                 )}
               </div>
             </section>
           </section>
+
+          {canViewSales && (
+            <section className="grid gap-4 xl:grid-cols-2">
+              <section className="app-panel p-5 lg:p-6">
+                <div className="mb-4 space-y-1.5">
+                  <h2 className="app-section-title">Recently approved</h2>
+                  <p className="app-section-subtitle">Sales that already cleared the main decision step.</p>
+                </div>
+                <div className="space-y-3">
+                  {recentlyApproved.length === 0 ? (
+                    <div className="app-empty text-sm leading-6 text-zinc-600 dark:text-zinc-300">
+                      No recent approvals have been recorded in the lightweight control layer yet.
+                    </div>
+                  ) : (
+                    recentlyApproved.map((sale) => (
+                      <EasySalesCard key={sale.id} sale={sale} href={sale.advancedHref} extraBadge={sale.seller || sale.stageLabel} description={`Approved amount: ${formatMoney(sale.amount)}.`} />
+                    ))
+                  )}
+                </div>
+              </section>
+
+              {canReviewApprovals && (
+                <section className="app-panel p-5 lg:p-6">
+                  <div className="mb-4 space-y-1.5">
+                    <h2 className="app-section-title">Recently rejected</h2>
+                    <p className="app-section-subtitle">Decisions that may need follow-up or clearer direction back to the team.</p>
+                  </div>
+                  <div className="space-y-3">
+                    {recentlyRejected.length === 0 ? (
+                      <div className="app-empty text-sm leading-6 text-zinc-600 dark:text-zinc-300">
+                        No recent rejections are showing right now.
+                      </div>
+                    ) : (
+                      recentlyRejected.map((sale) => (
+                        <EasySalesCard
+                          key={sale.id}
+                          sale={sale}
+                          href={sale.detailHref}
+                          extraBadge={sale.seller || sale.stageLabel}
+                          description={sale.decisionComment ? `Reason: ${sale.decisionComment}` : "Open the review page if you want to revisit the decision note."}
+                        />
+                      ))
+                    )}
+                  </div>
+                </section>
+              )}
+            </section>
+          )}
         </>
       )}
     </div>

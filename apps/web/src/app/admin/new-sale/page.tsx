@@ -1,7 +1,8 @@
-"use client";
+﻿"use client";
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
+import { useAuth } from "@/components/admin/AuthProvider";
 import { ApiError, apiGet, apiPost, formatApiError, getApiBaseUrl } from "@/lib/api";
 import { formatMoney } from "@/lib/easy-sales";
 
@@ -81,6 +82,7 @@ const emptySubmission: SubmissionState = {
 };
 
 export default function NewSalePage() {
+  const { hasAnyPermission } = useAuth();
   const [products, setProducts] = useState<ProductRow[]>([]);
   const [units, setUnits] = useState<UnitRow[]>([]);
   const [loading, setLoading] = useState(true);
@@ -94,6 +96,8 @@ export default function NewSalePage() {
   const [notes, setNotes] = useState("");
   const [touchedPrice, setTouchedPrice] = useState(false);
   const [submission, setSubmission] = useState<SubmissionState>(emptySubmission);
+  const canOpenAdvancedSales = hasAnyPermission(["sales.view_own", "sales.view_all"]);
+  const canManageProducts = hasAnyPermission(["products.manage"]);
 
   useEffect(() => {
     let cancelled = false;
@@ -333,12 +337,8 @@ export default function NewSalePage() {
   return (
     <div className="max-w-6xl space-y-6 lg:space-y-8">
       <section className="app-panel-strong p-6 lg:p-8">
-        <p className="app-kicker">
-          Easy Mode
-        </p>
-        <h1 className="app-page-title text-[2rem]">
-          New Sale
-        </h1>
+        <p className="app-kicker">Easy Mode</p>
+        <h1 className="app-page-title text-[2rem]">New Sale</h1>
         <p className="app-page-subtitle">
           Start a sale from the basic customer and product details only. The deeper commercial
           workflow stays available behind the scenes when you need it.
@@ -475,7 +475,7 @@ export default function NewSalePage() {
                   <div className="rounded border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900 dark:border-amber-900 dark:bg-amber-950/40 dark:text-amber-100">
                     {submission.partialMessage}
                     <div className="mt-2 flex flex-wrap gap-3">
-                      {submission.quoteVersion && (
+                      {submission.quoteVersion && canOpenAdvancedSales && (
                         <Link
                           href={`/admin/quote-versions/${submission.quoteVersion.id}`}
                           className="text-blue-700 underline underline-offset-2 hover:text-blue-900 dark:text-blue-300 dark:hover:text-blue-200"
@@ -483,7 +483,7 @@ export default function NewSalePage() {
                           Open advanced sale details
                         </Link>
                       )}
-                      {submission.quote && (
+                      {submission.quote && canOpenAdvancedSales && (
                         <Link
                           href="/admin/quotes"
                           className="text-blue-700 underline underline-offset-2 hover:text-blue-900 dark:text-blue-300 dark:hover:text-blue-200"
@@ -499,12 +499,14 @@ export default function NewSalePage() {
                   <div className="rounded border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-900 dark:border-emerald-900 dark:bg-emerald-950/40 dark:text-emerald-100">
                     <p>Your sale draft is ready.</p>
                     <div className="mt-2 flex flex-wrap gap-3">
-                      <Link
-                        href={`/admin/quote-versions/${submission.quoteVersion.id}`}
-                        className="text-blue-700 underline underline-offset-2 hover:text-blue-900 dark:text-blue-300 dark:hover:text-blue-200"
-                      >
-                        Open advanced details
-                      </Link>
+                      {canOpenAdvancedSales && (
+                        <Link
+                          href={`/admin/quote-versions/${submission.quoteVersion.id}`}
+                          className="text-blue-700 underline underline-offset-2 hover:text-blue-900 dark:text-blue-300 dark:hover:text-blue-200"
+                        >
+                          Open advanced details
+                        </Link>
+                      )}
                       <Link
                         href="/admin/my-sales"
                         className="text-blue-700 underline underline-offset-2 hover:text-blue-900 dark:text-blue-300 dark:hover:text-blue-200"
@@ -530,12 +532,11 @@ export default function NewSalePage() {
                   >
                     {submission.loading ? "Starting sale..." : "Start Sale"}
                   </button>
-                  <Link
-                    href="/admin/quote-versions"
-                    className="app-button-secondary"
-                  >
-                    Open advanced sales
-                  </Link>
+                  {canOpenAdvancedSales && (
+                    <Link href="/admin/quote-versions" className="app-button-secondary">
+                      Open advanced sales
+                    </Link>
+                  )}
                 </div>
               </form>
             </section>
@@ -617,12 +618,11 @@ export default function NewSalePage() {
                   Pick one of the most accessible active products to speed up the sale start.
                 </p>
               </div>
-              <Link
-                href="/admin/products"
-                className="app-link text-sm"
-              >
-                Open products
-              </Link>
+              {canManageProducts && (
+                <Link href="/admin/products" className="app-link text-sm">
+                  Open products
+                </Link>
+              )}
             </div>
 
             <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
@@ -668,4 +668,3 @@ export default function NewSalePage() {
     </div>
   );
 }
-

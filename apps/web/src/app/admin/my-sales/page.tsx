@@ -1,12 +1,22 @@
-"use client";
+﻿"use client";
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
-import { ApiError, apiGet, getApiBaseUrl } from "@/lib/api";
+import { useAuth } from "@/components/admin/AuthProvider";
 import { EasySalesCard } from "@/components/admin/easy/EasySalesCard";
-import { buildSales, type Sale, type SaleOrderLineRow, type SaleOrderRow, type SaleQuoteLineRow, type SaleQuoteRow, type SaleQuoteVersionRow } from "@/lib/easy-sales";
+import { ApiError, apiGet, getApiBaseUrl } from "@/lib/api";
+import {
+  buildSales,
+  type Sale,
+  type SaleOrderLineRow,
+  type SaleOrderRow,
+  type SaleQuoteLineRow,
+  type SaleQuoteRow,
+  type SaleQuoteVersionRow,
+} from "@/lib/easy-sales";
 
 export default function MySalesPage() {
+  const { session, hasPermission, hasAnyPermission } = useAuth();
   const [sales, setSales] = useState<Sale[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -64,25 +74,36 @@ export default function MySalesPage() {
     };
   }, []);
 
+  const visibleSales = useMemo(() => {
+    if (hasPermission("sales.view_all")) {
+      return sales;
+    }
+    if (hasPermission("sales.view_own")) {
+      return sales.filter((sale) => sale.ownerUserId === session.userId);
+    }
+    return [];
+  }, [hasPermission, sales, session.userId]);
+
   const pendingSales = useMemo(
-    () => sales.filter((sale) => sale.status === "Pending" || sale.status === "Needs changes"),
-    [sales]
+    () => visibleSales.filter((sale) => sale.status === "Pending" || sale.status === "Needs changes"),
+    [visibleSales]
   );
-  const approvedSales = useMemo(() => sales.filter((sale) => sale.status === "Approved"), [sales]);
+  const approvedSales = useMemo(
+    () => visibleSales.filter((sale) => sale.status === "Approved"),
+    [visibleSales]
+  );
   const needsChangesCount = useMemo(
-    () => sales.filter((sale) => sale.status === "Needs changes").length,
-    [sales]
+    () => visibleSales.filter((sale) => sale.status === "Needs changes").length,
+    [visibleSales]
   );
+  const canStartSale = hasPermission("sales.create");
+  const canOpenAdvancedSales = hasAnyPermission(["sales.view_all", "sales.view_own"]);
 
   return (
     <div className="max-w-6xl space-y-6 lg:space-y-8">
       <section className="app-panel-strong p-6 lg:p-8">
-        <p className="app-kicker">
-          Easy Mode
-        </p>
-        <h1 className="app-page-title text-[2rem]">
-          My Sales
-        </h1>
+        <p className="app-kicker">Easy Mode</p>
+        <h1 className="app-page-title text-[2rem]">My Sales</h1>
         <p className="app-page-subtitle">
           Track your sales in one place without switching between technical commercial screens.
         </p>
@@ -118,9 +139,7 @@ export default function MySalesPage() {
               <p className="text-xs font-semibold uppercase tracking-wide text-zinc-500">
                 Active Sales
               </p>
-              <p className="app-page-title text-[2rem]">
-                {sales.length}
-              </p>
+              <p className="app-page-title text-[2rem]">{visibleSales.length}</p>
               <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
                 Sales currently in your workflow
               </p>
@@ -140,9 +159,7 @@ export default function MySalesPage() {
               <p className="text-xs font-semibold uppercase tracking-wide text-zinc-500">
                 Needs Changes
               </p>
-              <p className="app-page-title text-[2rem]">
-                {needsChangesCount}
-              </p>
+              <p className="app-page-title text-[2rem]">{needsChangesCount}</p>
               <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
                 Sales that need another pass
               </p>
@@ -152,18 +169,16 @@ export default function MySalesPage() {
                 Quick Actions
               </p>
               <div className="mt-3 flex flex-wrap gap-2">
-                <Link
-                  href="/admin/new-sale"
-                  className="app-button-primary !px-4 !py-2"
-                >
-                  New Sale
-                </Link>
-                <Link
-                  href="/admin/quote-versions"
-                  className="app-button-secondary !px-4 !py-2"
-                >
-                  Advanced Sales
-                </Link>
+                {canStartSale && (
+                  <Link href="/admin/new-sale" className="app-button-primary !px-4 !py-2">
+                    New Sale
+                  </Link>
+                )}
+                {canOpenAdvancedSales && (
+                  <Link href="/admin/quote-versions" className="app-button-secondary !px-4 !py-2">
+                    Advanced Sales
+                  </Link>
+                )}
               </div>
             </div>
           </section>
@@ -178,12 +193,11 @@ export default function MySalesPage() {
                   Keep the next customer conversations moving from one simple list.
                 </p>
               </div>
-              <Link
-                href="/admin/new-sale"
-                className="app-link text-sm"
-              >
-                Start another sale
-              </Link>
+              {canStartSale && (
+                <Link href="/admin/new-sale" className="app-link text-sm">
+                  Start another sale
+                </Link>
+              )}
             </div>
 
             {pendingSales.length === 0 ? (
@@ -191,14 +205,13 @@ export default function MySalesPage() {
                 <p className="text-sm text-zinc-500 dark:text-zinc-400">
                   Nothing needs your attention right now.
                 </p>
-                <div className="mt-3">
-                  <Link
-                    href="/admin/new-sale"
-                    className="app-link text-sm"
-                  >
-                    Start a new sale
-                  </Link>
-                </div>
+                {canStartSale && (
+                  <div className="mt-3">
+                    <Link href="/admin/new-sale" className="app-link text-sm">
+                      Start a new sale
+                    </Link>
+                  </div>
+                )}
               </div>
             ) : (
               <div className="grid gap-3 lg:grid-cols-2">
@@ -250,4 +263,3 @@ export default function MySalesPage() {
     </div>
   );
 }
-

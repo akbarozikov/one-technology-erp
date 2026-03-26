@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
+import { useAuth } from "@/components/admin/AuthProvider";
 import { ApiError, apiGet, getApiBaseUrl } from "@/lib/api";
 import {
   buildSales,
@@ -86,6 +87,7 @@ function DebtCard({ item }: { item: PaymentDebtItem }) {
 }
 
 export function BossPaymentsDebtSurface() {
+  const { hasAnyPermission } = useAuth();
   const [items, setItems] = useState<PaymentDebtItem[]>([]);
   const [recentPayments, setRecentPayments] = useState<RecentPaymentRow[]>([]);
   const [sales, setSales] = useState<Sale[]>([]);
@@ -195,6 +197,8 @@ export function BossPaymentsDebtSurface() {
     () => overdue.reduce((sum, item) => sum + (item.remainingAmount ?? 0), 0),
     [overdue]
   );
+  const canReviewApprovals = hasAnyPermission(["approvals.review"]);
+  const canViewSales = hasAnyPermission(["sales.view_all", "sales.view_own"]);
 
   return (
     <div className="space-y-6 lg:space-y-8">
@@ -289,7 +293,7 @@ export function BossPaymentsDebtSurface() {
                   Go to the detailed payment records when you need the full ERP screen.
                 </p>
               </Link>
-              <Link
+              {canViewSales && <Link
                 href="/admin/orders"
                 className="app-panel-muted flex min-h-24 flex-col px-4 py-4 transition hover:-translate-y-0.5"
               >
@@ -297,8 +301,8 @@ export function BossPaymentsDebtSurface() {
                 <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
                   Follow through on the sales that still have money open.
                 </p>
-              </Link>
-              <Link
+              </Link>}
+              {canReviewApprovals && <Link
                 href="/admin/approvals"
                 className="app-panel-muted flex min-h-24 flex-col px-4 py-4 transition hover:-translate-y-0.5"
               >
@@ -306,7 +310,7 @@ export function BossPaymentsDebtSurface() {
                 <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
                   Check the sales pipeline before debt builds up.
                 </p>
-              </Link>
+              </Link>}
               <Link
                 href="/admin"
                 className="app-panel-muted flex min-h-24 flex-col px-4 py-4 transition hover:-translate-y-0.5"

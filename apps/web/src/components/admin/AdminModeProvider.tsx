@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import {
   createContext,
@@ -25,9 +25,17 @@ const STORAGE_KEY = "ot-erp-admin-mode";
 const ROLE_STORAGE_KEY = "ot-erp-easy-role";
 const AdminModeContext = createContext<AdminModeContextValue | null>(null);
 
-export function AdminModeProvider({ children }: { children: ReactNode }) {
-  const [mode, setModeState] = useState<AdminMode>("easy");
-  const [easyRole, setEasyRoleState] = useState<EasyRole>("seller");
+export function AdminModeProvider({
+  defaultMode = "easy",
+  defaultEasyRole = "seller",
+  children,
+}: {
+  defaultMode?: AdminMode;
+  defaultEasyRole?: EasyRole;
+  children: ReactNode;
+}) {
+  const [mode, setModeState] = useState<AdminMode>(defaultMode);
+  const [easyRole, setEasyRoleState] = useState<EasyRole>(defaultEasyRole);
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
@@ -35,17 +43,22 @@ export function AdminModeProvider({ children }: { children: ReactNode }) {
       const stored = window.localStorage.getItem(STORAGE_KEY);
       if (stored === "easy" || stored === "advanced") {
         setModeState(stored);
+      } else {
+        setModeState(defaultMode);
       }
       const storedRole = window.localStorage.getItem(ROLE_STORAGE_KEY);
       if (storedRole === "seller" || storedRole === "boss") {
         setEasyRoleState(storedRole);
+      } else {
+        setEasyRoleState(defaultEasyRole);
       }
     } catch {
-      // Ignore localStorage issues and keep the default mode.
+      setModeState(defaultMode);
+      setEasyRoleState(defaultEasyRole);
     } finally {
       setReady(true);
     }
-  }, []);
+  }, [defaultEasyRole, defaultMode]);
 
   const setMode = useCallback((nextMode: AdminMode) => {
     setModeState(nextMode);

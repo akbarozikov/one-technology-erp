@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
+import { useAuth } from "@/components/admin/AuthProvider";
 import { ApiError, apiGet, getApiBaseUrl } from "@/lib/api";
 import { EasySalesCard } from "@/components/admin/easy/EasySalesCard";
 import {
@@ -51,6 +52,7 @@ function QuickActionButton({
 }
 
 export default function ApprovalsPage() {
+  const { hasAnyPermission } = useAuth();
   const [sales, setSales] = useState<Sale[]>([]);
   const [approvalRecords, setApprovalRecords] = useState<Record<string, EasyApprovalRecord>>({});
   const [loading, setLoading] = useState(true);
@@ -152,6 +154,7 @@ export default function ApprovalsPage() {
     () => Object.keys(approvalRecords).length,
     [approvalRecords]
   );
+  const canOpenAdvancedSales = hasAnyPermission(["sales.view_all", "sales.view_own"]);
 
   return (
     <div className="max-w-6xl space-y-6 lg:space-y-8">
@@ -248,12 +251,14 @@ export default function ApprovalsPage() {
                   review page only if you need more context.
                 </p>
               </div>
-              <Link
-                href="/admin/quote-versions"
-                className="app-link text-sm"
-              >
-                Open advanced commercial records
-              </Link>
+              {canOpenAdvancedSales && (
+                <Link
+                  href="/admin/quote-versions"
+                  className="app-link text-sm"
+                >
+                  Open advanced commercial records
+                </Link>
+              )}
             </div>
 
             {visibleSales.length === 0 ? (

@@ -51,6 +51,7 @@ export type EntityRecordAction = {
   label: string;
   tone?: "neutral" | "warning" | "danger";
   actionPathTemplate: string;
+  requiredPermissions?: string[];
   confirmTitle?: string;
   confirmDescription?: string;
   visibleWhen?: {
@@ -71,6 +72,8 @@ export type EntityConfig = {
   title: string;
   apiPath: string;
   fields: EntityField[];
+  viewPermissions?: string[];
+  createPermissions?: string[];
   formSections?: EntityFormSection[];
   formSectionLayout?: "grid" | "stacked";
   tableColumns?: EntityTableColumn[];

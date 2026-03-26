@@ -1,3 +1,4 @@
+import { ensureAccessBaseline } from "../lib/access-bootstrap";
 import { getDb } from "../lib/db";
 import { asSqlFailure } from "../lib/d1-errors";
 import { readJsonObject } from "../lib/json";
@@ -8,6 +9,7 @@ import { parseUserCreate } from "../validation/users";
 
 export async function handleUsers(request: Request, env: Env): Promise<Response> {
   const db = getDb(env);
+  await ensureAccessBaseline(env);
 
   if (request.method === "GET") {
     const { results } = await db

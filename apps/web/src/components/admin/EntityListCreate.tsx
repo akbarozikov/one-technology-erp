@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { useAuth } from "@/components/admin/AuthProvider";
 import {
   ApiError,
   apiGet,
@@ -440,7 +441,16 @@ function renderField(
 }
 
 export function EntityListCreate({ config }: { config: EntityConfig }) {
-  const createEnabled = config.createEnabled ?? true;
+  const { hasAnyPermission } = useAuth();
+  const canView =
+    !config.viewPermissions || config.viewPermissions.length === 0
+      ? true
+      : hasAnyPermission(config.viewPermissions);
+  const createEnabled =
+    (config.createEnabled ?? true) &&
+    (!config.createPermissions || config.createPermissions.length === 0
+      ? true
+      : hasAnyPermission(config.createPermissions));
   const [rows, setRows] = useState<Record<string, unknown>[] | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -490,10 +500,20 @@ export function EntityListCreate({ config }: { config: EntityConfig }) {
   );
 
   useEffect(() => {
+    if (!canView) {
+      setRows([]);
+      setLoading(false);
+      setError(null);
+      return;
+    }
     load();
-  }, [load]);
+  }, [canView, load]);
 
   useEffect(() => {
+    if (!canView) {
+      setLookupOptions({});
+      return;
+    }
     let cancelled = false;
 
     const fieldsWithLookup = config.fields.filter((field) => field.lookup);
@@ -542,7 +562,22 @@ export function EntityListCreate({ config }: { config: EntityConfig }) {
     return () => {
       cancelled = true;
     };
-  }, [config.fields]);
+  }, [canView, config.fields]);
+
+  if (!canView) {
+    return (
+      <section className="app-panel p-6 lg:p-7">
+        <div className="max-w-2xl space-y-3">
+          <p className="app-kicker">Access limited</p>
+          <h1 className="app-section-title text-[1.35rem]">You do not have access to this area.</h1>
+          <p className="app-section-subtitle">
+            Your current roles do not include the permission needed for this page. If you should be
+            able to work here, ask an administrator to update your role assignments.
+          </p>
+        </div>
+      </section>
+    );
+  }
 
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -912,7 +947,13 @@ export function EntityListCreate({ config }: { config: EntityConfig }) {
                           <td className="px-3 py-2 text-xs text-zinc-800 dark:text-zinc-200">
                             <div className="flex flex-wrap gap-2">
                               {config.recordActions
-                                .filter((action) => actionIsVisible(action, row as Record<string, unknown>))
+                                .filter(
+                                  (action) =>
+                                    (!action.requiredPermissions ||
+                                      action.requiredPermissions.length === 0 ||
+                                      hasAnyPermission(action.requiredPermissions)) &&
+                                    actionIsVisible(action, row as Record<string, unknown>)
+                                )
                                 .map((action) => {
                                   const disabledReason = resolveActionPathTemplate(
                                     action.actionPathTemplate,

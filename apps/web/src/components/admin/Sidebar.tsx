@@ -4,6 +4,8 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { useAdminMode } from "@/components/admin/AdminModeProvider";
+import { useAuth } from "@/components/admin/AuthProvider";
+import { canAccessHref } from "@/lib/auth/permissions";
 import { adminNavGroups, easyBossNavItems, easySellerNavItems } from "@/lib/entity-config";
 
 function isActivePath(pathname: string, href: string): boolean {
@@ -17,18 +19,35 @@ function navItemClass(active: boolean): string {
 export function AdminSidebar() {
   const pathname = usePathname();
   const { mode, easyRole } = useAdminMode();
-  const easyNavItems = easyRole === "boss" ? easyBossNavItems : easySellerNavItems;
+  const { permissions } = useAuth();
+  const easyNavItems = useMemo(
+    () =>
+      (easyRole === "boss" ? easyBossNavItems : easySellerNavItems).filter((item) =>
+        canAccessHref(permissions, item.href)
+      ),
+    [easyRole, permissions]
+  );
+  const visibleAdvancedGroups = useMemo(
+    () =>
+      adminNavGroups
+        .map((group) => ({
+          ...group,
+          items: group.items.filter((item) => canAccessHref(permissions, item.href)),
+        }))
+        .filter((group) => (group.href ? canAccessHref(permissions, group.href) : true) || group.items.length > 0),
+    [permissions]
+  );
 
   const activeAdvancedGroups = useMemo(
     () =>
-      adminNavGroups
+      visibleAdvancedGroups
         .filter(
           (group) =>
             (group.href && isActivePath(pathname, group.href)) ||
             group.items.some((item) => isActivePath(pathname, item.href))
         )
         .map((group) => group.label),
-    [pathname]
+    [pathname, visibleAdvancedGroups]
   );
 
   const [collapsedGroups, setCollapsedGroups] = useState<Record<string, boolean>>({});
@@ -36,7 +55,7 @@ export function AdminSidebar() {
   useEffect(() => {
     setCollapsedGroups((current) => {
       const next = { ...current };
-      for (const group of adminNavGroups) {
+      for (const group of visibleAdvancedGroups) {
         if (activeAdvancedGroups.includes(group.label)) {
           next[group.label] = false;
         } else if (!(group.label in next)) {
@@ -45,7 +64,7 @@ export function AdminSidebar() {
       }
       return next;
     });
-  }, [activeAdvancedGroups]);
+  }, [activeAdvancedGroups, visibleAdvancedGroups]);
 
   function toggleGroup(label: string) {
     setCollapsedGroups((current) => ({
@@ -111,7 +130,7 @@ export function AdminSidebar() {
 
               <div className="app-sidebar-group-label px-2">Business areas</div>
 
-              {adminNavGroups.map((group) => {
+              {visibleAdvancedGroups.map((group) => {
                 const isActiveGroup = activeAdvancedGroups.includes(group.label);
                 const collapsed = collapsedGroups[group.label] ?? !isActiveGroup;
 

@@ -24,6 +24,8 @@ export const commercialConfigs = {
   quotes: {
     title: "Quotes",
     apiPath: "/api/quotes",
+    viewPermissions: ["sales.view_own", "sales.view_all"],
+    createPermissions: ["sales.create", "sales.view_all"],
     tableColumns: [
       { key: "quote_number", label: "Quote" },
       { key: "status", label: "Status", format: "status" },
@@ -69,6 +71,8 @@ export const commercialConfigs = {
   quote_versions: {
     title: "Quote versions",
     apiPath: "/api/quote-versions",
+    viewPermissions: ["sales.view_own", "sales.view_all"],
+    createPermissions: ["sales.create", "sales.view_all"],
     listNotice: {
       title: "Only untouched drafts can be deleted",
       description:
@@ -149,6 +153,8 @@ export const commercialConfigs = {
   orders: {
     title: "Orders",
     apiPath: "/api/orders",
+    viewPermissions: ["sales.view_own", "sales.view_all"],
+    createPermissions: ["sales.create", "sales.view_all"],
     detailBasePath: "/admin/orders",
     detailLabelKey: "order_number",
     tableColumns: [
@@ -246,6 +252,8 @@ export const commercialConfigs = {
   payments: {
     title: "Payments",
     apiPath: "/api/payments",
+    viewPermissions: ["payments.view"],
+    createPermissions: ["payments.view"],
     tableColumns: [
       { key: "order_id", label: "Order" },
       { key: "payment_method_id", label: "Method" },

@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
+import { useAuth } from "@/components/admin/AuthProvider";
 import { ApiError, apiGet, getApiBaseUrl } from "@/lib/api";
 import {
   buildExpenseItems,
@@ -126,6 +127,7 @@ function InventoryCard({ item }: { item: InventoryAdjustmentViewItem }) {
 }
 
 export function BossOperationsSurface() {
+  const { hasAnyPermission } = useAuth();
   const [expenses, setExpenses] = useState<ExpenseViewItem[]>([]);
   const [adjustments, setAdjustments] = useState<InventoryAdjustmentViewItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -237,6 +239,7 @@ export function BossOperationsSurface() {
     () => largeExpenses.reduce((sum, item) => sum + (item.amount ?? 0), 0),
     [largeExpenses]
   );
+  const canViewCatalog = hasAnyPermission(["products.manage"]);
 
   return (
     <div className="space-y-6 lg:space-y-8">
@@ -347,6 +350,15 @@ export function BossOperationsSurface() {
                   Inspect damage, loss, defect, and other stock reductions.
                 </p>
               </Link>
+              {canViewCatalog && <Link
+                href="/admin/products"
+                className="app-panel-muted flex min-h-24 flex-col px-4 py-4 transition hover:-translate-y-0.5"
+              >
+                <div className="font-medium text-zinc-900 dark:text-zinc-100">Open products</div>
+                <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
+                  Cross-check the affected catalog items behind these operational exceptions.
+                </p>
+              </Link>}
               <Link
                 href="/admin"
                 className="app-panel-muted flex min-h-24 flex-col px-4 py-4 transition hover:-translate-y-0.5"

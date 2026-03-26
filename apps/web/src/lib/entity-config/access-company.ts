@@ -5,6 +5,8 @@ export const accessCompanyConfigs = {
   roles: {
     title: "Roles",
     apiPath: "/api/roles",
+    viewPermissions: ["roles.manage"],
+    createPermissions: ["roles.manage"],
     fields: [
       { key: "name", label: "Name", kind: "text", required: true },
       { key: "code", label: "Code", kind: "text", required: true },
@@ -15,6 +17,8 @@ export const accessCompanyConfigs = {
   permissions: {
     title: "Permissions",
     apiPath: "/api/permissions",
+    viewPermissions: ["roles.manage", "settings.manage"],
+    createPermissions: ["roles.manage", "settings.manage"],
     fields: [
       { key: "name", label: "Name", kind: "text", required: true },
       { key: "code", label: "Code", kind: "text", required: true },
@@ -35,6 +39,8 @@ export const accessCompanyConfigs = {
   users: {
     title: "Users",
     apiPath: "/api/users",
+    viewPermissions: ["users.manage"],
+    createPermissions: ["users.manage"],
     listNotice: {
       title: "Deactivate instead of delete",
       description:
@@ -47,6 +53,7 @@ export const accessCompanyConfigs = {
         label: "Deactivate",
         tone: "warning",
         actionPathTemplate: "/api/users/:id/deactivate",
+        requiredPermissions: ["users.manage"],
         confirmTitle: "Deactivate this user?",
         confirmDescription:
           "This keeps history and linked records, but the user should no longer be used for normal day-to-day work.",
@@ -64,6 +71,8 @@ export const accessCompanyConfigs = {
   user_roles: {
     title: "User roles",
     apiPath: "/api/user-roles",
+    viewPermissions: ["users.manage", "roles.manage"],
+    createPermissions: ["users.manage", "roles.manage"],
     fields: [
       { key: "user_id", label: "User ID", kind: "number", required: true },
       { key: "role_id", label: "Role ID", kind: "number", required: true },
@@ -72,6 +81,8 @@ export const accessCompanyConfigs = {
   role_permissions: {
     title: "Role permissions",
     apiPath: "/api/role-permissions",
+    viewPermissions: ["roles.manage", "settings.manage"],
+    createPermissions: ["roles.manage", "settings.manage"],
     fields: [
       { key: "role_id", label: "Role ID", kind: "number", required: true },
       { key: "permission_id", label: "Permission ID", kind: "number", required: true },

@@ -3,6 +3,7 @@ import {
   TABLE_ROLES,
   type RolePermissionRow,
 } from "@one-technology/db";
+import { ensureAccessBaseline } from "../lib/access-bootstrap";
 import { getDb } from "../lib/db";
 import { asSqlFailure } from "../lib/d1-errors";
 import { rowExists } from "../lib/exists";
@@ -16,6 +17,7 @@ export async function handleRolePermissions(
   env: Env
 ): Promise<Response> {
   const db = getDb(env);
+  await ensureAccessBaseline(env);
 
   if (request.method === "GET") {
     const { results } = await db

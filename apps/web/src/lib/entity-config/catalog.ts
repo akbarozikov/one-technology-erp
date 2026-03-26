@@ -51,6 +51,8 @@ export const catalogConfigs = {
   products: {
     title: "Products",
     apiPath: "/api/products",
+    viewPermissions: ["products.manage"],
+    createPermissions: ["products.manage"],
     listNotice: {
       title: "Archive products instead of deleting them",
       description:
@@ -63,6 +65,7 @@ export const catalogConfigs = {
         label: "Archive",
         tone: "warning",
         actionPathTemplate: "/api/products/:id/archive",
+        requiredPermissions: ["products.manage"],
         confirmTitle: "Archive this product?",
         confirmDescription:
           "This keeps historical sales and warehouse records intact, but the product should no longer appear as an active item.",

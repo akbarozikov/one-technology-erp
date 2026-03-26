@@ -34,6 +34,7 @@ import { handleOrderAction, handleOrders } from "./orders";
 import { handlePaymentMethods } from "./payment-methods";
 import { handlePayments } from "./payments";
 import { handlePermissions } from "./permissions";
+import { handleAccessBootstrapSeed } from "./access-bootstrap";
 import { handleProductAttributeValues } from "./product-attribute-values";
 import { handleProductAttributes } from "./product-attributes";
 import { handleProductBundleItems } from "./product-bundle-items";
@@ -201,6 +202,8 @@ export async function routeRequest(request: Request, env: Env): Promise<Response
       return handleDebugBindings(request, env);
     case "/api/dashboard/overview":
       return handleDashboardOverview(request, env);
+    case "/api/access/bootstrap-seed":
+      return handleAccessBootstrapSeed(request, env);
     case "/api/roles":
       return handleRoles(request, env);
     case "/api/permissions":

@@ -1,8 +1,9 @@
 ﻿"use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { useAdminMode } from "@/components/admin/AdminModeProvider";
+import { useAuth } from "@/components/admin/AuthProvider";
 import { BossControlDashboard } from "@/components/admin/easy/BossControlDashboard";
 import { ApiError, apiGet, getApiBaseUrl } from "@/lib/api";
 
@@ -64,41 +65,9 @@ function formatCurrency(value: number): string {
   }).format(value);
 }
 
-function SummaryList({
-  title,
-  items,
-  keyField = "status",
-}: {
-  title: string;
-  items: CountItem[];
-  keyField?: "status" | "movement_type";
-}) {
-  return (
-    <section className="app-panel p-5 lg:p-6">
-      <div className="mb-4 space-y-1.5">
-        <h2 className="app-section-title">{title}</h2>
-      </div>
-      {items.length === 0 ? (
-        <div className="app-empty text-sm leading-6 text-zinc-600 dark:text-zinc-300">No data yet.</div>
-      ) : (
-        <div className="space-y-2">
-          {items.map((item, index) => (
-            <div
-              key={`${item[keyField] ?? "item"}-${index}`}
-              className="app-panel-muted flex items-center justify-between px-3 py-3 text-sm"
-            >
-              <span className="font-mono text-zinc-700 dark:text-zinc-200">{String(item[keyField] ?? "-")}</span>
-              <span className="app-chip">{item.count}</span>
-            </div>
-          ))}
-        </div>
-      )}
-    </section>
-  );
-}
-
 export default function AdminOverviewPage() {
   const { mode, easyRole } = useAdminMode();
+  const { hasAnyPermission } = useAuth();
   const [data, setData] = useState<DashboardOverview | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -144,6 +113,14 @@ export default function AdminOverviewPage() {
     return <BossControlDashboard />;
   }
 
+  const canCreateSales = hasAnyPermission(["sales.create"]);
+  const canViewSales = hasAnyPermission(["sales.view_own", "sales.view_all"]);
+  const canReviewApprovals = hasAnyPermission(["approvals.review"]);
+  const canViewPayments = hasAnyPermission(["payments.view"]);
+  const canViewDocuments = hasAnyPermission(["documents.view"]);
+  const canViewInstallations = hasAnyPermission(["installations.view"]);
+  const canViewOperations = hasAnyPermission(["operations.view"]);
+
   return (
     <div className="space-y-6 lg:space-y-8">
       {mode === "easy" ? (
@@ -180,52 +157,64 @@ export default function AdminOverviewPage() {
                     </p>
                   </div>
                   <div className="flex flex-wrap gap-3 xl:justify-end">
-                    <Link href="/admin/new-sale" className="app-button-primary">
-                      Start a new sale
-                    </Link>
-                    <Link href="/admin/my-sales" className="app-button-secondary">
-                      Open my sales
-                    </Link>
+                    {canCreateSales && (
+                      <Link href="/admin/new-sale" className="app-button-primary">
+                        Start a new sale
+                      </Link>
+                    )}
+                    {canViewSales && (
+                      <Link href="/admin/my-sales" className="app-button-secondary">
+                        Open my sales
+                      </Link>
+                    )}
                   </div>
                 </div>
 
                 <div className="mt-6 grid gap-3 lg:grid-cols-[1.15fr_0.85fr_0.85fr]">
-                  <Link
-                    href="/admin/new-sale"
-                    className="app-button-primary min-h-36 flex-col items-start justify-between !rounded-[1.35rem] !px-5 !py-5 text-left"
-                  >
-                    <span className="text-base">Start a new sale</span>
-                    <span className="text-sm font-normal leading-6 text-white/80 dark:text-zinc-700">
-                      Begin with customer, product, quantity, and price only.
-                    </span>
-                  </Link>
-                  <Link
-                    href="/admin/my-sales"
-                    className="app-panel-muted flex min-h-36 flex-col justify-between px-5 py-5 transition hover:-translate-y-0.5"
-                  >
-                    <div>
-                      <span className="text-sm font-semibold text-zinc-950 dark:text-zinc-100">Continue sales in progress</span>
-                      <p className="mt-2 text-sm leading-6 text-zinc-600 dark:text-zinc-300">
-                        Re-open deals that still need a customer response, a manager decision, or the next follow-through step.
-                      </p>
-                    </div>
-                    <span className="mt-4 text-sm font-medium text-zinc-900 dark:text-zinc-100">Go to my sales</span>
-                  </Link>
+                  {canCreateSales && (
+                    <Link
+                      href="/admin/new-sale"
+                      className="app-button-primary min-h-36 flex-col items-start justify-between !rounded-[1.35rem] !px-5 !py-5 text-left"
+                    >
+                      <span className="text-base">Start a new sale</span>
+                      <span className="text-sm font-normal leading-6 text-white/80 dark:text-zinc-700">
+                        Begin with customer, product, quantity, and price only.
+                      </span>
+                    </Link>
+                  )}
+                  {canViewSales && (
+                    <Link
+                      href="/admin/my-sales"
+                      className="app-panel-muted flex min-h-36 flex-col justify-between px-5 py-5 transition hover:-translate-y-0.5"
+                    >
+                      <div>
+                        <span className="text-sm font-semibold text-zinc-950 dark:text-zinc-100">Continue sales in progress</span>
+                        <p className="mt-2 text-sm leading-6 text-zinc-600 dark:text-zinc-300">
+                          Re-open deals that still need a customer response, a manager decision, or the next follow-through step.
+                        </p>
+                      </div>
+                      <span className="mt-4 text-sm font-medium text-zinc-900 dark:text-zinc-100">Go to my sales</span>
+                    </Link>
+                  )}
                   <div className="grid gap-3">
-                    <Link
-                      href="/admin/documents-lite"
-                      className="app-panel-muted flex min-h-[5.75rem] flex-col justify-center px-4 py-4 transition hover:-translate-y-0.5"
-                    >
-                      <span className="text-sm font-semibold text-zinc-950 dark:text-zinc-100">Open my documents</span>
-                      <span className="mt-1 text-sm leading-6 text-zinc-600 dark:text-zinc-300">Jump into proposals, orders, and ready paperwork.</span>
-                    </Link>
-                    <Link
-                      href="/admin/installations-lite"
-                      className="app-panel-muted flex min-h-[5.75rem] flex-col justify-center px-4 py-4 transition hover:-translate-y-0.5"
-                    >
-                      <span className="text-sm font-semibold text-zinc-950 dark:text-zinc-100">Check installations</span>
-                      <span className="mt-1 text-sm leading-6 text-zinc-600 dark:text-zinc-300">See field follow-through that may affect the next customer step.</span>
-                    </Link>
+                    {canViewDocuments && (
+                      <Link
+                        href="/admin/documents-lite"
+                        className="app-panel-muted flex min-h-[5.75rem] flex-col justify-center px-4 py-4 transition hover:-translate-y-0.5"
+                      >
+                        <span className="text-sm font-semibold text-zinc-950 dark:text-zinc-100">Open my documents</span>
+                        <span className="mt-1 text-sm leading-6 text-zinc-600 dark:text-zinc-300">Jump into proposals, orders, and ready paperwork.</span>
+                      </Link>
+                    )}
+                    {canViewInstallations && (
+                      <Link
+                        href="/admin/installations-lite"
+                        className="app-panel-muted flex min-h-[5.75rem] flex-col justify-center px-4 py-4 transition hover:-translate-y-0.5"
+                      >
+                        <span className="text-sm font-semibold text-zinc-950 dark:text-zinc-100">Check installations</span>
+                        <span className="mt-1 text-sm leading-6 text-zinc-600 dark:text-zinc-300">See field follow-through that may affect the next customer step.</span>
+                      </Link>
+                    )}
                   </div>
                 </div>
               </section>
@@ -254,72 +243,85 @@ export default function AdminOverviewPage() {
                         These deals are already in motion. Review them first so the customer is not left waiting.
                       </p>
                       <div className="mt-4 flex flex-wrap gap-3">
-                        <Link href="/admin/my-sales" className="app-link text-sm">
-                          Review active sales
-                        </Link>
-                        <Link href="/admin/approvals" className="app-link text-sm">
-                          Check approvals
-                        </Link>
+                        {canViewSales && (
+                          <Link href="/admin/my-sales" className="app-link text-sm">
+                            Review active sales
+                          </Link>
+                        )}
+                        {canReviewApprovals && (
+                          <Link href="/admin/approvals" className="app-link text-sm">
+                            Check approvals
+                          </Link>
+                        )}
                       </div>
                     </div>
-                    <div className="app-panel-muted px-4 py-4">
-                      <div className="flex items-start justify-between gap-3">
-                        <div>
-                          <p className="app-kicker">Open money follow-through</p>
-                          <p className="mt-2 text-2xl font-semibold tracking-tight text-zinc-950 dark:text-zinc-50">
-                            {formatCurrency(data.payments_summary.total_remaining_amount)}
-                          </p>
+
+                    {canViewPayments && (
+                      <div className="app-panel-muted px-4 py-4">
+                        <div className="flex items-start justify-between gap-3">
+                          <div>
+                            <p className="app-kicker">Open money follow-through</p>
+                            <p className="mt-2 text-2xl font-semibold tracking-tight text-zinc-950 dark:text-zinc-50">
+                              {formatCurrency(data.payments_summary.total_remaining_amount)}
+                            </p>
+                          </div>
+                          <span className="app-chip">Follow up</span>
                         </div>
-                        <span className="app-chip">Follow up</span>
+                        <p className="mt-3 text-sm leading-6 text-zinc-600 dark:text-zinc-300">
+                          Some active sales still need payment movement or a customer callback before they can close cleanly.
+                        </p>
+                        <div className="mt-4 flex flex-wrap gap-3">
+                          {canViewSales && (
+                            <Link href="/admin/my-sales" className="app-link text-sm">
+                              Open my sales
+                            </Link>
+                          )}
+                          {canViewDocuments && (
+                            <Link href="/admin/documents-lite" className="app-link text-sm">
+                              Open documents
+                            </Link>
+                          )}
+                        </div>
                       </div>
-                      <p className="mt-3 text-sm leading-6 text-zinc-600 dark:text-zinc-300">
-                        Some active sales still need payment movement or a customer callback before they can close cleanly.
-                      </p>
-                      <div className="mt-4 flex flex-wrap gap-3">
-                        <Link href="/admin/my-sales" className="app-link text-sm">
-                          Open my sales
-                        </Link>
-                        <Link href="/admin/documents-lite" className="app-link text-sm">
-                          Open documents
-                        </Link>
-                      </div>
-                    </div>
+                    )}
                   </div>
                 </section>
 
-                <section className="app-panel p-5 lg:p-6">
-                  <div className="mb-4 flex items-center justify-between gap-3">
-                    <div className="space-y-1.5">
-                      <h2 className="app-section-title">Recent documents</h2>
-                      <p className="app-section-subtitle">The latest customer-facing documents you may need next.</p>
+                {canViewDocuments && (
+                  <section className="app-panel p-5 lg:p-6">
+                    <div className="mb-4 flex items-center justify-between gap-3">
+                      <div className="space-y-1.5">
+                        <h2 className="app-section-title">Recent documents</h2>
+                        <p className="app-section-subtitle">The latest customer-facing documents you may need next.</p>
+                      </div>
+                      <Link href="/admin/documents-lite" className="app-link text-sm">
+                        Open documents
+                      </Link>
                     </div>
-                    <Link href="/admin/documents-lite" className="app-link text-sm">
-                      Open documents
-                    </Link>
-                  </div>
-                  {data.documents_summary.recent_generated_documents.length === 0 ? (
-                    <div className="app-empty text-sm leading-6 text-zinc-600 dark:text-zinc-300">
-                      No generated documents are ready yet. Start a sale or continue one in progress to create the next proposal or order document.
-                    </div>
-                  ) : (
-                    <div className="space-y-3">
-                      {data.documents_summary.recent_generated_documents.slice(0, 4).map((document) => (
-                        <Link
-                          key={document.id}
-                          href={`/admin/generated-documents/${document.id}`}
-                          className="app-panel-muted block px-4 py-4 transition hover:-translate-y-0.5"
-                        >
-                          <div className="text-sm font-semibold text-zinc-950 dark:text-zinc-100">
-                            {document.title || document.document_number || `Document ${document.id}`}
-                          </div>
-                          <div className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
-                            {document.entity_type} - {document.generation_status} - {document.generated_at}
-                          </div>
-                        </Link>
-                      ))}
-                    </div>
-                  )}
-                </section>
+                    {data.documents_summary.recent_generated_documents.length === 0 ? (
+                      <div className="app-empty text-sm leading-6 text-zinc-600 dark:text-zinc-300">
+                        No generated documents are ready yet. Start a sale or continue one in progress to create the next proposal or order document.
+                      </div>
+                    ) : (
+                      <div className="space-y-3">
+                        {data.documents_summary.recent_generated_documents.slice(0, 4).map((document) => (
+                          <Link
+                            key={document.id}
+                            href={`/admin/generated-documents/${document.id}`}
+                            className="app-panel-muted block px-4 py-4 transition hover:-translate-y-0.5"
+                          >
+                            <div className="text-sm font-semibold text-zinc-950 dark:text-zinc-100">
+                              {document.title || document.document_number || `Document ${document.id}`}
+                            </div>
+                            <div className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
+                              {document.entity_type} - {document.generation_status} - {document.generated_at}
+                            </div>
+                          </Link>
+                        ))}
+                      </div>
+                    )}
+                  </section>
+                )}
               </section>
 
               <section className="app-panel-muted px-4 py-4 lg:px-5 lg:py-5">
@@ -331,18 +333,24 @@ export default function AdminOverviewPage() {
                     </p>
                   </div>
                   <div className="grid gap-2 sm:grid-cols-3 lg:min-w-[34rem] lg:max-w-[42rem]">
-                    <div className="flex items-center justify-between rounded-full border border-black/8 bg-white/55 px-3 py-2 text-sm dark:border-white/10 dark:bg-white/4">
-                      <span className="text-zinc-600 dark:text-zinc-300">Sales in system</span>
-                      <span className="font-semibold text-zinc-950 dark:text-zinc-50">{data.orders_summary.total_orders}</span>
-                    </div>
-                    <div className="flex items-center justify-between rounded-full border border-black/8 bg-white/55 px-3 py-2 text-sm dark:border-white/10 dark:bg-white/4">
-                      <span className="text-zinc-600 dark:text-zinc-300">Completed jobs</span>
-                      <span className="font-semibold text-zinc-950 dark:text-zinc-50">{data.installation_summary.recent_completed_jobs_count}</span>
-                    </div>
-                    <div className="flex items-center justify-between rounded-full border border-black/8 bg-white/55 px-3 py-2 text-sm dark:border-white/10 dark:bg-white/4">
-                      <span className="text-zinc-600 dark:text-zinc-300">Documents ready</span>
-                      <span className="font-semibold text-zinc-950 dark:text-zinc-50">{data.documents_summary.total_generated_documents}</span>
-                    </div>
+                    {canViewSales && (
+                      <div className="flex items-center justify-between rounded-full border border-black/8 bg-white/55 px-3 py-2 text-sm dark:border-white/10 dark:bg-white/4">
+                        <span className="text-zinc-600 dark:text-zinc-300">Sales in system</span>
+                        <span className="font-semibold text-zinc-950 dark:text-zinc-50">{data.orders_summary.total_orders}</span>
+                      </div>
+                    )}
+                    {canViewInstallations && (
+                      <div className="flex items-center justify-between rounded-full border border-black/8 bg-white/55 px-3 py-2 text-sm dark:border-white/10 dark:bg-white/4">
+                        <span className="text-zinc-600 dark:text-zinc-300">Completed jobs</span>
+                        <span className="font-semibold text-zinc-950 dark:text-zinc-50">{data.installation_summary.recent_completed_jobs_count}</span>
+                      </div>
+                    )}
+                    {canViewDocuments && (
+                      <div className="flex items-center justify-between rounded-full border border-black/8 bg-white/55 px-3 py-2 text-sm dark:border-white/10 dark:bg-white/4">
+                        <span className="text-zinc-600 dark:text-zinc-300">Documents ready</span>
+                        <span className="font-semibold text-zinc-950 dark:text-zinc-50">{data.documents_summary.total_generated_documents}</span>
+                      </div>
+                    )}
                   </div>
                 </div>
               </section>
@@ -361,12 +369,16 @@ export default function AdminOverviewPage() {
                 </p>
               </div>
               <div className="flex flex-wrap gap-3">
-                <Link href="/admin/quote-versions" className="app-button-secondary">
-                  Open quotes
-                </Link>
-                <Link href="/admin/orders" className="app-button-secondary">
-                  Open orders
-                </Link>
+                {canViewSales && (
+                  <Link href="/admin/quote-versions" className="app-button-secondary">
+                    Open quotes
+                  </Link>
+                )}
+                {canViewSales && (
+                  <Link href="/admin/orders" className="app-button-secondary">
+                    Open orders
+                  </Link>
+                )}
               </div>
             </div>
 
@@ -390,22 +402,30 @@ export default function AdminOverviewPage() {
 
             {!loading && !error && data && (
               <section className="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-                <div className="app-stat">
-                  <p className="app-kicker">Orders</p>
-                  <p className="mt-3 text-3xl font-semibold tracking-tight text-zinc-950 dark:text-zinc-50">{data.orders_summary.total_orders}</p>
-                </div>
-                <div className="app-stat">
-                  <p className="app-kicker">Paid total</p>
-                  <p className="mt-3 text-3xl font-semibold tracking-tight text-zinc-950 dark:text-zinc-50">{formatCurrency(data.payments_summary.total_paid_amount)}</p>
-                </div>
-                <div className="app-stat">
-                  <p className="app-kicker">Active reservations</p>
-                  <p className="mt-3 text-3xl font-semibold tracking-tight text-zinc-950 dark:text-zinc-50">{data.reservations_summary.active_reservations_count}</p>
-                </div>
-                <div className="app-stat">
-                  <p className="app-kicker">Generated documents</p>
-                  <p className="mt-3 text-3xl font-semibold tracking-tight text-zinc-950 dark:text-zinc-50">{data.documents_summary.total_generated_documents}</p>
-                </div>
+                {canViewSales && (
+                  <div className="app-stat">
+                    <p className="app-kicker">Orders</p>
+                    <p className="mt-3 text-3xl font-semibold tracking-tight text-zinc-950 dark:text-zinc-50">{data.orders_summary.total_orders}</p>
+                  </div>
+                )}
+                {canViewPayments && (
+                  <div className="app-stat">
+                    <p className="app-kicker">Paid total</p>
+                    <p className="mt-3 text-3xl font-semibold tracking-tight text-zinc-950 dark:text-zinc-50">{formatCurrency(data.payments_summary.total_paid_amount)}</p>
+                  </div>
+                )}
+                {canViewOperations && (
+                  <div className="app-stat">
+                    <p className="app-kicker">Active reservations</p>
+                    <p className="mt-3 text-3xl font-semibold tracking-tight text-zinc-950 dark:text-zinc-50">{data.reservations_summary.active_reservations_count}</p>
+                  </div>
+                )}
+                {canViewDocuments && (
+                  <div className="app-stat">
+                    <p className="app-kicker">Generated documents</p>
+                    <p className="mt-3 text-3xl font-semibold tracking-tight text-zinc-950 dark:text-zinc-50">{data.documents_summary.total_generated_documents}</p>
+                  </div>
+                )}
               </section>
             )}
           </section>
@@ -413,128 +433,146 @@ export default function AdminOverviewPage() {
           {!loading && !error && data && (
             <>
               <section className="grid gap-4 xl:grid-cols-[1.15fr_0.85fr]">
-                <section className="app-panel p-5 lg:p-6">
-                  <div className="mb-4 space-y-1.5">
-                    <p className="app-kicker">Commercial pulse</p>
-                    <h2 className="app-section-title">Orders and payments</h2>
-                    <p className="app-section-subtitle">Use this block first for the commercial state that drives daily follow-through.</p>
-                  </div>
-                  <div className="grid gap-4 lg:grid-cols-[1.05fr_0.95fr]">
+                {canViewSales && (
+                  <section className="app-panel p-5 lg:p-6">
+                    <div className="mb-4 space-y-1.5">
+                      <p className="app-kicker">Commercial pulse</p>
+                      <h2 className="app-section-title">Orders and payments</h2>
+                      <p className="app-section-subtitle">Use this block first for the commercial state that drives daily follow-through.</p>
+                    </div>
+                    <div className="grid gap-4 lg:grid-cols-[1.05fr_0.95fr]">
+                      <div className="space-y-2">
+                        {data.orders_summary.counts_by_status.map((item, index) => (
+                          <div key={`${item.status ?? "order"}-${index}`} className="app-panel-muted flex items-center justify-between px-3 py-3 text-sm">
+                            <span className="font-mono text-zinc-700 dark:text-zinc-200">{item.status}</span>
+                            <span className="app-chip">{item.count}</span>
+                          </div>
+                        ))}
+                      </div>
+                      <div className="space-y-3">
+                        <div className="app-panel-muted px-4 py-4">
+                          <p className="app-kicker">Grand total</p>
+                          <p className="mt-2 text-xl font-semibold text-zinc-950 dark:text-zinc-50">{formatCurrency(data.payments_summary.total_order_grand_total)}</p>
+                        </div>
+                        {canViewPayments && (
+                          <>
+                            <div className="app-panel-muted px-4 py-4">
+                              <p className="app-kicker">Remaining total</p>
+                              <p className="mt-2 text-xl font-semibold text-zinc-950 dark:text-zinc-50">{formatCurrency(data.payments_summary.total_remaining_amount)}</p>
+                            </div>
+                            <div className="space-y-2">
+                              {data.payments_summary.counts_by_payment_status.map((item, index) => (
+                                <div key={`${item.status ?? "payment"}-${index}`} className="app-panel-muted flex items-center justify-between px-3 py-3 text-sm">
+                                  <span className="font-mono text-zinc-700 dark:text-zinc-200">{item.status}</span>
+                                  <span className="app-chip">{item.count}</span>
+                                </div>
+                              ))}
+                            </div>
+                          </>
+                        )}
+                      </div>
+                    </div>
+                  </section>
+                )}
+
+                {(canViewOperations || canViewInstallations || canViewSales) && (
+                  <section className="app-panel p-5 lg:p-6">
+                    <div className="mb-4 space-y-1.5">
+                      <p className="app-kicker">Operations pulse</p>
+                      <h2 className="app-section-title">Reservations, jobs, and quotes</h2>
+                      <p className="app-section-subtitle">A tighter read on the operational state supporting the commercial flow.</p>
+                    </div>
+                    <div className="space-y-4">
+                      {canViewOperations && (
+                        <div>
+                          <div className="mb-2 flex items-center justify-between">
+                            <span className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">Reservations</span>
+                            <span className="app-chip">{data.reservations_summary.total_reservations}</span>
+                          </div>
+                          <div className="space-y-2">
+                            {data.reservations_summary.counts_by_status.map((item, index) => (
+                              <div key={`${item.status ?? "reservation"}-${index}`} className="app-panel-muted flex items-center justify-between px-3 py-3 text-sm">
+                                <span className="font-mono text-zinc-700 dark:text-zinc-200">{item.status}</span>
+                                <span className="app-chip">{item.count}</span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                      <div className="grid gap-3 sm:grid-cols-2">
+                        {canViewInstallations && (
+                          <div className="app-panel-muted px-4 py-4">
+                            <p className="app-kicker">Installation</p>
+                            <p className="mt-2 text-xl font-semibold text-zinc-950 dark:text-zinc-50">{data.installation_summary.total_jobs}</p>
+                            <p className="mt-2 text-sm text-zinc-500 dark:text-zinc-400">{data.installation_summary.recent_completed_jobs_count} completed in the last 7 days.</p>
+                          </div>
+                        )}
+                        {canViewSales && (
+                          <div className="app-panel-muted px-4 py-4">
+                            <p className="app-kicker">Quotes</p>
+                            <p className="mt-2 text-xl font-semibold text-zinc-950 dark:text-zinc-50">{data.quotes_summary.total_quotes}</p>
+                            <p className="mt-2 text-sm text-zinc-500 dark:text-zinc-400">Current quote activity across active, sent, and completed stages.</p>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </section>
+                )}
+              </section>
+
+              <section className="grid gap-4 lg:grid-cols-[1.05fr_0.95fr]">
+                {canViewDocuments && (
+                  <section className="app-panel p-5 lg:p-6">
+                    <div className="mb-4 flex items-center justify-between gap-3">
+                      <div className="space-y-1.5">
+                        <p className="app-kicker">Documents</p>
+                        <h2 className="app-section-title">Recent generated output</h2>
+                        <p className="app-section-subtitle">A quieter review area for what is already ready to use.</p>
+                      </div>
+                      <Link href="/admin/generated-documents" className="app-link text-sm">
+                        Open documents
+                      </Link>
+                    </div>
+                    {data.documents_summary.recent_generated_documents.length === 0 ? (
+                      <div className="app-empty text-sm leading-6 text-zinc-600 dark:text-zinc-300">No generated documents yet.</div>
+                    ) : (
+                      <div className="space-y-3">
+                        {data.documents_summary.recent_generated_documents.slice(0, 5).map((document) => (
+                          <Link key={document.id} href={`/admin/generated-documents/${document.id}`} className="app-panel-muted block px-4 py-4 transition hover:-translate-y-0.5">
+                            <div className="text-sm font-semibold text-zinc-950 dark:text-zinc-100">
+                              {document.title || document.document_number || `Document ${document.id}`}
+                            </div>
+                            <div className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
+                              {document.entity_type} - {document.generation_status} - {document.generated_at}
+                            </div>
+                          </Link>
+                        ))}
+                      </div>
+                    )}
+                  </section>
+                )}
+
+                {canViewOperations && (
+                  <section className="app-panel p-5 lg:p-6">
+                    <div className="mb-4 space-y-1.5">
+                      <p className="app-kicker">Warehouse context</p>
+                      <h2 className="app-section-title">Movement types</h2>
+                      <p className="app-section-subtitle">A compact supporting read on stock movement activity.</p>
+                    </div>
+                    <div className="mb-3 app-panel-muted px-4 py-4">
+                      <p className="app-kicker">Total stock movements</p>
+                      <p className="mt-2 text-xl font-semibold text-zinc-950 dark:text-zinc-50">{data.warehouse_summary.total_stock_movements}</p>
+                    </div>
                     <div className="space-y-2">
-                      {data.orders_summary.counts_by_status.map((item, index) => (
-                        <div key={`${item.status ?? "order"}-${index}`} className="app-panel-muted flex items-center justify-between px-3 py-3 text-sm">
-                          <span className="font-mono text-zinc-700 dark:text-zinc-200">{item.status}</span>
+                      {data.warehouse_summary.counts_by_movement_type.map((item, index) => (
+                        <div key={`${item.movement_type ?? "movement"}-${index}`} className="app-panel-muted flex items-center justify-between px-3 py-3 text-sm">
+                          <span className="font-mono text-zinc-700 dark:text-zinc-200">{item.movement_type}</span>
                           <span className="app-chip">{item.count}</span>
                         </div>
                       ))}
                     </div>
-                    <div className="space-y-3">
-                      <div className="app-panel-muted px-4 py-4">
-                        <p className="app-kicker">Grand total</p>
-                        <p className="mt-2 text-xl font-semibold text-zinc-950 dark:text-zinc-50">{formatCurrency(data.payments_summary.total_order_grand_total)}</p>
-                      </div>
-                      <div className="app-panel-muted px-4 py-4">
-                        <p className="app-kicker">Remaining total</p>
-                        <p className="mt-2 text-xl font-semibold text-zinc-950 dark:text-zinc-50">{formatCurrency(data.payments_summary.total_remaining_amount)}</p>
-                      </div>
-                      <div className="space-y-2">
-                        {data.payments_summary.counts_by_payment_status.map((item, index) => (
-                          <div key={`${item.status ?? "payment"}-${index}`} className="app-panel-muted flex items-center justify-between px-3 py-3 text-sm">
-                            <span className="font-mono text-zinc-700 dark:text-zinc-200">{item.status}</span>
-                            <span className="app-chip">{item.count}</span>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-                </section>
-
-                <section className="app-panel p-5 lg:p-6">
-                  <div className="mb-4 space-y-1.5">
-                    <p className="app-kicker">Operations pulse</p>
-                    <h2 className="app-section-title">Reservations, jobs, and quotes</h2>
-                    <p className="app-section-subtitle">A tighter read on the operational state supporting the commercial flow.</p>
-                  </div>
-                  <div className="space-y-4">
-                    <div>
-                      <div className="mb-2 flex items-center justify-between">
-                        <span className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">Reservations</span>
-                        <span className="app-chip">{data.reservations_summary.total_reservations}</span>
-                      </div>
-                      <div className="space-y-2">
-                        {data.reservations_summary.counts_by_status.map((item, index) => (
-                          <div key={`${item.status ?? "reservation"}-${index}`} className="app-panel-muted flex items-center justify-between px-3 py-3 text-sm">
-                            <span className="font-mono text-zinc-700 dark:text-zinc-200">{item.status}</span>
-                            <span className="app-chip">{item.count}</span>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                    <div className="grid gap-3 sm:grid-cols-2">
-                      <div className="app-panel-muted px-4 py-4">
-                        <p className="app-kicker">Installation</p>
-                        <p className="mt-2 text-xl font-semibold text-zinc-950 dark:text-zinc-50">{data.installation_summary.total_jobs}</p>
-                        <p className="mt-2 text-sm text-zinc-500 dark:text-zinc-400">{data.installation_summary.recent_completed_jobs_count} completed in the last 7 days.</p>
-                      </div>
-                      <div className="app-panel-muted px-4 py-4">
-                        <p className="app-kicker">Quotes</p>
-                        <p className="mt-2 text-xl font-semibold text-zinc-950 dark:text-zinc-50">{data.quotes_summary.total_quotes}</p>
-                        <p className="mt-2 text-sm text-zinc-500 dark:text-zinc-400">Current quote activity across active, sent, and completed stages.</p>
-                      </div>
-                    </div>
-                  </div>
-                </section>
-              </section>
-
-              <section className="grid gap-4 lg:grid-cols-[1.05fr_0.95fr]">
-                <section className="app-panel p-5 lg:p-6">
-                  <div className="mb-4 flex items-center justify-between gap-3">
-                    <div className="space-y-1.5">
-                      <p className="app-kicker">Documents</p>
-                      <h2 className="app-section-title">Recent generated output</h2>
-                      <p className="app-section-subtitle">A quieter review area for what is already ready to use.</p>
-                    </div>
-                    <Link href="/admin/generated-documents" className="app-link text-sm">
-                      Open documents
-                    </Link>
-                  </div>
-                  {data.documents_summary.recent_generated_documents.length === 0 ? (
-                    <div className="app-empty text-sm leading-6 text-zinc-600 dark:text-zinc-300">No generated documents yet.</div>
-                  ) : (
-                    <div className="space-y-3">
-                      {data.documents_summary.recent_generated_documents.slice(0, 5).map((document) => (
-                        <Link key={document.id} href={`/admin/generated-documents/${document.id}`} className="app-panel-muted block px-4 py-4 transition hover:-translate-y-0.5">
-                          <div className="text-sm font-semibold text-zinc-950 dark:text-zinc-100">
-                            {document.title || document.document_number || `Document ${document.id}`}
-                          </div>
-                          <div className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
-                            {document.entity_type} - {document.generation_status} - {document.generated_at}
-                          </div>
-                        </Link>
-                      ))}
-                    </div>
-                  )}
-                </section>
-
-                <section className="app-panel p-5 lg:p-6">
-                  <div className="mb-4 space-y-1.5">
-                    <p className="app-kicker">Warehouse context</p>
-                    <h2 className="app-section-title">Movement types</h2>
-                    <p className="app-section-subtitle">A compact supporting read on stock movement activity.</p>
-                  </div>
-                  <div className="mb-3 app-panel-muted px-4 py-4">
-                    <p className="app-kicker">Total stock movements</p>
-                    <p className="mt-2 text-xl font-semibold text-zinc-950 dark:text-zinc-50">{data.warehouse_summary.total_stock_movements}</p>
-                  </div>
-                  <div className="space-y-2">
-                    {data.warehouse_summary.counts_by_movement_type.map((item, index) => (
-                      <div key={`${item.movement_type ?? "movement"}-${index}`} className="app-panel-muted flex items-center justify-between px-3 py-3 text-sm">
-                        <span className="font-mono text-zinc-700 dark:text-zinc-200">{item.movement_type}</span>
-                        <span className="app-chip">{item.count}</span>
-                      </div>
-                    ))}
-                  </div>
-                </section>
+                  </section>
+                )}
               </section>
             </>
           )}
@@ -543,8 +581,3 @@ export default function AdminOverviewPage() {
     </div>
   );
 }
-
-
-
-
-

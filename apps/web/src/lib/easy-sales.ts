@@ -22,6 +22,7 @@ export type Sale = {
   amount: number | null;
   status: SaleStatus;
   updatedAt: string | null;
+  ownerUserId: number | null;
   seller: string | null;
   detailHref: string;
   advancedHref: string;
@@ -230,6 +231,7 @@ export function buildSales(input: BuildSalesInput): Sale[] {
         paymentStatus: linkedOrder?.payment_status,
       }),
       updatedAt,
+      ownerUserId: sellerId,
       seller,
       detailHref: `/admin/approvals/${version.id}`,
       advancedHref: linkedOrder ? `/admin/orders/${linkedOrder.id}` : `/admin/quote-versions/${version.id}`,
