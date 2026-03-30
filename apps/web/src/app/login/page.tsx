@@ -1,4 +1,5 @@
-﻿import { redirect } from "next/navigation";
+﻿import Image from "next/image";
+import { redirect } from "next/navigation";
 import { LoginForm } from "@/components/admin/LoginForm";
 import { getAuthConfigurationError, getCurrentAuthSession } from "@/lib/auth/server";
 
@@ -14,14 +15,26 @@ export default async function LoginPage() {
     <div className="app-shell-bg flex min-h-screen items-center justify-center px-5 py-10 lg:px-8">
       <div className="grid w-full max-w-6xl gap-8 xl:grid-cols-[1.1fr_0.9fr] xl:items-center">
         <section className="space-y-5">
-          <div className="space-y-2">
-            <p className="app-kicker">One Technology ERP</p>
-            <h2 className="app-page-title max-w-3xl text-[2.4rem]">
-              Protected staging access for the full operating workspace.
-            </h2>
-            <p className="app-page-subtitle max-w-2xl">
-              This environment is gated for real product testing. Sign in to enter the seller workspace, boss control layer, or the full advanced ERP.
-            </p>
+          <div className="space-y-4">
+            <div className="relative h-14 w-[17rem] sm:h-16 sm:w-[19rem]">
+              <Image
+                src="/brand/one-technology-logo.png"
+                alt="One Technology"
+                fill
+                sizes="304px"
+                className="object-contain object-left"
+                priority
+              />
+            </div>
+            <div className="space-y-2">
+              <p className="app-kicker">Protected access</p>
+              <h2 className="app-page-title max-w-3xl text-[2.4rem]">
+                Protected staging access for the full operating workspace.
+              </h2>
+              <p className="app-page-subtitle max-w-2xl">
+                This environment is gated for real product testing. Sign in to enter the seller workspace, boss control layer, or the full advanced ERP.
+              </p>
+            </div>
           </div>
 
           <div className="grid gap-3 sm:grid-cols-3">
