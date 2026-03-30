@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useI18n } from "@/components/admin/LanguageProvider";
 import { ApiError, getApiBaseUrl } from "@/lib/api";
 import {
   EasyWorkspace,
@@ -37,6 +38,7 @@ export function EasyWorkspaceLive({
   footerNote?: React.ReactNode;
   loadData: () => Promise<EasyWorkspaceData>;
 }) {
+  const { adminText } = useI18n();
   const [data, setData] = useState<EasyWorkspaceData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -62,7 +64,7 @@ export function EasyWorkspaceLive({
             ? err.message
             : err instanceof Error
               ? err.message
-              : "Failed to load workspace context."
+              : adminText("Failed to load workspace context.")
         );
       } finally {
         if (!cancelled) {
@@ -85,9 +87,8 @@ export function EasyWorkspaceLive({
           className="max-w-5xl rounded border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-950 dark:border-amber-700 dark:bg-amber-950/40 dark:text-amber-100"
           role="status"
         >
-          Set <code className="rounded bg-amber-100 px-1 dark:bg-amber-900">NEXT_PUBLIC_API_BASE_URL</code>{" "}
-          in <code className="rounded bg-amber-100 px-1 dark:bg-amber-900">.env.local</code> to
-          load live workspace updates.
+          {adminText("Set")} <code className="rounded bg-amber-100 px-1 dark:bg-amber-900">NEXT_PUBLIC_API_BASE_URL</code>{" "}
+          {adminText("in")} <code className="rounded bg-amber-100 px-1 dark:bg-amber-900">.env.local</code> {adminText("to load live workspace updates.")}
         </div>
       )}
 

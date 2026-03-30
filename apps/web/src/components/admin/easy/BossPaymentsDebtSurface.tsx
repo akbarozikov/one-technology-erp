@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { useAuth } from "@/components/admin/AuthProvider";
+import { useI18n } from "@/components/admin/LanguageProvider";
 import { ApiError, apiGet, getApiBaseUrl } from "@/lib/api";
 import {
   buildSales,
@@ -31,6 +32,7 @@ function formatCurrency(value: number | null | undefined): string {
 }
 
 function DebtCard({ item }: { item: PaymentDebtItem }) {
+  const { adminText } = useI18n();
   return (
     <Link
       href={item.advancedHref}
@@ -44,14 +46,14 @@ function DebtCard({ item }: { item: PaymentDebtItem }) {
         <span
           className={`inline-flex rounded-full border px-2 py-0.5 text-[11px] font-medium ${paymentDebtTone(item.status)}`}
         >
-          {item.status}
+          {adminText(item.status)}
         </span>
       </div>
 
       <div className="mt-3 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
         <div>
           <p className="text-[11px] font-semibold uppercase tracking-wide text-zinc-500">
-            Total
+            {adminText("Total")}
           </p>
           <p className="mt-1 text-sm text-zinc-700 dark:text-zinc-200">
             {formatCurrency(item.totalAmount)}
@@ -59,7 +61,7 @@ function DebtCard({ item }: { item: PaymentDebtItem }) {
         </div>
         <div>
           <p className="text-[11px] font-semibold uppercase tracking-wide text-zinc-500">
-            Paid
+            {adminText("Paid")}
           </p>
           <p className="mt-1 text-sm text-zinc-700 dark:text-zinc-200">
             {formatCurrency(item.paidAmount)}
@@ -67,7 +69,7 @@ function DebtCard({ item }: { item: PaymentDebtItem }) {
         </div>
         <div>
           <p className="text-[11px] font-semibold uppercase tracking-wide text-zinc-500">
-            Remaining
+            {adminText("Remaining")}
           </p>
           <p className="mt-1 text-sm text-zinc-700 dark:text-zinc-200">
             {formatCurrency(item.remainingAmount)}
@@ -75,7 +77,7 @@ function DebtCard({ item }: { item: PaymentDebtItem }) {
         </div>
         <div>
           <p className="text-[11px] font-semibold uppercase tracking-wide text-zinc-500">
-            Due
+            {adminText("Due")}
           </p>
           <p className="mt-1 text-sm text-zinc-700 dark:text-zinc-200">
             {item.dueDate || "-"}
@@ -88,6 +90,7 @@ function DebtCard({ item }: { item: PaymentDebtItem }) {
 
 export function BossPaymentsDebtSurface() {
   const { hasAnyPermission } = useAuth();
+  const { adminText, formatCurrency } = useI18n();
   const [items, setItems] = useState<PaymentDebtItem[]>([]);
   const [recentPayments, setRecentPayments] = useState<RecentPaymentRow[]>([]);
   const [sales, setSales] = useState<Sale[]>([]);
@@ -138,7 +141,7 @@ export function BossPaymentsDebtSurface() {
             ? err.message
             : err instanceof Error
               ? err.message
-              : "Failed to load payments and debt."
+              : adminText("Failed to load payments and debt.")
         );
       } finally {
         if (!cancelled) {
@@ -204,11 +207,10 @@ export function BossPaymentsDebtSurface() {
     <div className="space-y-6 lg:space-y-8">
       <div>
         <h1 className="app-page-title text-[2rem]">
-          Payments & Debt
+          {adminText("Payments & Debt")}
         </h1>
         <p className="app-page-subtitle">
-          A boss-facing money view for what is collected, what is still open, and what needs
-          attention first.
+          {adminText("A boss-facing money view for what is collected, what is still open, and what needs attention first.")}
         </p>
       </div>
 
@@ -217,14 +219,14 @@ export function BossPaymentsDebtSurface() {
           className="rounded border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-950 dark:border-amber-700 dark:bg-amber-950/40 dark:text-amber-100"
           role="status"
         >
-          Set <code className="rounded bg-amber-100 px-1 dark:bg-amber-900">NEXT_PUBLIC_API_BASE_URL</code>{" "}
-          in <code className="rounded bg-amber-100 px-1 dark:bg-amber-900">.env.local</code>.
+          {adminText("Set")} <code className="rounded bg-amber-100 px-1 dark:bg-amber-900">NEXT_PUBLIC_API_BASE_URL</code>{" "}
+          {adminText("in")} <code className="rounded bg-amber-100 px-1 dark:bg-amber-900">.env.local</code>.
         </div>
       )}
 
       {loading && (
         <section className="app-panel p-5">
-          <p className="text-sm text-zinc-500">Loading payments and debt...</p>
+          <p className="text-sm text-zinc-500">{adminText("Loading payments and debt...")}</p>
         </section>
       )}
 
@@ -239,7 +241,7 @@ export function BossPaymentsDebtSurface() {
           <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
             <div className="app-panel p-5">
               <p className="text-xs font-semibold uppercase tracking-wide text-zinc-500">
-                Outstanding
+                {adminText("Outstanding")}
               </p>
               <p className="mt-2 text-2xl font-semibold text-zinc-900 dark:text-zinc-50">
                 {formatCurrency(outstandingTotal)}
@@ -247,7 +249,7 @@ export function BossPaymentsDebtSurface() {
             </div>
             <div className="app-panel p-5">
               <p className="text-xs font-semibold uppercase tracking-wide text-zinc-500">
-                Overdue
+                {adminText("Overdue")}
               </p>
               <p className="mt-2 text-2xl font-semibold text-zinc-900 dark:text-zinc-50">
                 {formatCurrency(overdueTotal)}
@@ -255,7 +257,7 @@ export function BossPaymentsDebtSurface() {
             </div>
             <div className="app-panel p-5">
               <p className="text-xs font-semibold uppercase tracking-wide text-zinc-500">
-                Partially Paid
+                {adminText("Partially Paid")}
               </p>
               <p className="mt-2 text-2xl font-semibold text-zinc-900 dark:text-zinc-50">
                 {partiallyPaid.length}
@@ -263,7 +265,7 @@ export function BossPaymentsDebtSurface() {
             </div>
             <div className="app-panel p-5">
               <p className="text-xs font-semibold uppercase tracking-wide text-zinc-500">
-                Paid Recently
+                {adminText("Paid Recently")}
               </p>
               <p className="mt-2 text-2xl font-semibold text-zinc-900 dark:text-zinc-50">
                 {paidRecently.length}
@@ -271,7 +273,7 @@ export function BossPaymentsDebtSurface() {
             </div>
             <div className="app-panel p-5">
               <p className="text-xs font-semibold uppercase tracking-wide text-zinc-500">
-                Needs Attention
+                {adminText("Needs Attention")}
               </p>
               <p className="mt-2 text-2xl font-semibold text-zinc-900 dark:text-zinc-50">
                 {overdue.length + highValueOutstanding.length}
@@ -281,43 +283,43 @@ export function BossPaymentsDebtSurface() {
 
           <section className="app-panel p-5 lg:p-6">
             <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-50">
-              Quick Actions
+              {adminText("Quick Actions")}
             </h2>
             <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
               <Link
                 href="/admin/payments"
                 className="app-button-primary min-h-24 flex-col items-start !rounded-[1.2rem] !px-4 !py-4 text-left"
               >
-                <div className="font-medium">Open advanced payments</div>
+                <div className="font-medium">{adminText("Open advanced payments")}</div>
                 <p className="mt-1 text-sm text-zinc-100 dark:text-zinc-700">
-                  Go to the detailed payment records when you need the full ERP screen.
+                  {adminText("Go to the detailed payment records when you need the full ERP screen.")}
                 </p>
               </Link>
               {canViewSales && <Link
                 href="/admin/orders"
                 className="app-panel-muted flex min-h-24 flex-col px-4 py-4 transition hover:-translate-y-0.5"
               >
-                <div className="font-medium text-zinc-900 dark:text-zinc-100">Open orders</div>
+                <div className="font-medium text-zinc-900 dark:text-zinc-100">{adminText("Open orders")}</div>
                 <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
-                  Follow through on the sales that still have money open.
+                  {adminText("Follow through on the sales that still have money open.")}
                 </p>
               </Link>}
               {canReviewApprovals && <Link
                 href="/admin/approvals"
                 className="app-panel-muted flex min-h-24 flex-col px-4 py-4 transition hover:-translate-y-0.5"
               >
-                <div className="font-medium text-zinc-900 dark:text-zinc-100">Review approvals</div>
+                <div className="font-medium text-zinc-900 dark:text-zinc-100">{adminText("Review approvals")}</div>
                 <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
-                  Check the sales pipeline before debt builds up.
+                  {adminText("Check the sales pipeline before debt builds up.")}
                 </p>
               </Link>}
               <Link
                 href="/admin"
                 className="app-panel-muted flex min-h-24 flex-col px-4 py-4 transition hover:-translate-y-0.5"
               >
-                <div className="font-medium text-zinc-900 dark:text-zinc-100">Back to boss dashboard</div>
+                <div className="font-medium text-zinc-900 dark:text-zinc-100">{adminText("Back to boss dashboard")}</div>
                 <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
-                  Return to the wider control surface.
+                  {adminText("Return to the wider control surface.")}
                 </p>
               </Link>
             </div>
@@ -326,15 +328,15 @@ export function BossPaymentsDebtSurface() {
           <section className="grid gap-4 xl:grid-cols-2">
             <section className="app-panel p-5 lg:p-6">
               <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-50">
-                Needs Attention Now
+                {adminText("Needs Attention Now")}
               </h2>
               <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
-                The biggest open amounts should get attention first.
+                {adminText("The biggest open amounts should get attention first.")}
               </p>
               <div className="mt-4 space-y-3">
                 {highValueOutstanding.length === 0 ? (
                   <p className="app-page-subtitle">
-                    No high-value outstanding items are standing out right now.
+                    {adminText("No high-value outstanding items are standing out right now.")}
                   </p>
                 ) : (
                   highValueOutstanding.map((item) => <DebtCard key={item.id} item={item} />)
@@ -344,15 +346,15 @@ export function BossPaymentsDebtSurface() {
 
             <section className="app-panel p-5 lg:p-6">
               <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-50">
-                Overdue
+                {adminText("Overdue")}
               </h2>
               <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
-                Items still open well after the sale was created.
+                {adminText("Items still open well after the sale was created.")}
               </p>
               <div className="mt-4 space-y-3">
                 {overdue.length === 0 ? (
                   <p className="app-page-subtitle">
-                    Nothing looks overdue by the current lightweight rule.
+                    {adminText("Nothing looks overdue by the current lightweight rule.")}
                   </p>
                 ) : (
                   overdue.map((item) => <DebtCard key={item.id} item={item} />)
@@ -364,12 +366,12 @@ export function BossPaymentsDebtSurface() {
           <section className="grid gap-4 xl:grid-cols-2">
             <section className="app-panel p-5 lg:p-6">
               <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-50">
-                Partially Paid
+                {adminText("Partially Paid")}
               </h2>
               <div className="mt-4 space-y-3">
                 {partiallyPaid.length === 0 ? (
                   <p className="app-page-subtitle">
-                    No partially paid sales are showing right now.
+                    {adminText("No partially paid sales are showing right now.")}
                   </p>
                 ) : (
                   partiallyPaid.map((item) => <DebtCard key={item.id} item={item} />)
@@ -379,12 +381,12 @@ export function BossPaymentsDebtSurface() {
 
             <section className="app-panel p-5 lg:p-6">
               <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-50">
-                Paid Recently
+                {adminText("Paid Recently")}
               </h2>
               <div className="mt-4 space-y-3">
                 {paidRecently.length === 0 ? (
                   <p className="app-page-subtitle">
-                    No recent payments are visible yet.
+                    {adminText("No recent payments are visible yet.")}
                   </p>
                 ) : (
                   paidRecently.map((payment) => {
@@ -398,28 +400,28 @@ export function BossPaymentsDebtSurface() {
                         <div className="flex items-start justify-between gap-3">
                           <div>
                             <div className="font-medium text-zinc-900 dark:text-zinc-100">
-                              {sale?.client || `Client ${payment.order_id}`}
+                              {sale?.client || `${adminText("Client")} ${payment.order_id}`}
                             </div>
                             <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
-                              {sale?.product || `Order ${payment.order_id}`}
+                              {sale?.product || `${adminText("Order")} ${payment.order_id}`}
                             </p>
                           </div>
                           <span className="inline-flex rounded-full border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-[11px] font-medium text-emerald-800 dark:border-emerald-900 dark:bg-emerald-950/40 dark:text-emerald-200">
-                            Paid
+                            {adminText("Paid")}
                           </span>
                         </div>
                         <div className="mt-3 grid gap-3 sm:grid-cols-3">
                           <div>
                             <p className="text-[11px] font-semibold uppercase tracking-wide text-zinc-500">
-                              Amount
+                              {adminText("Amount")}
                             </p>
                             <p className="mt-1 text-sm text-zinc-700 dark:text-zinc-200">
-                              {formatCurrency(payment.amount)}
+                              {payment.amount === null ? "-" : formatCurrency(payment.amount)}
                             </p>
                           </div>
                           <div>
                             <p className="text-[11px] font-semibold uppercase tracking-wide text-zinc-500">
-                              Date
+                              {adminText("Date")}
                             </p>
                             <p className="mt-1 text-sm text-zinc-700 dark:text-zinc-200">
                               {payment.payment_date || "-"}
@@ -427,7 +429,7 @@ export function BossPaymentsDebtSurface() {
                           </div>
                           <div>
                             <p className="text-[11px] font-semibold uppercase tracking-wide text-zinc-500">
-                              Reference
+                              {adminText("Reference")}
                             </p>
                             <p className="mt-1 text-sm text-zinc-700 dark:text-zinc-200">
                               {payment.reference_number || "-"}

@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useI18n } from "@/components/admin/LanguageProvider";
 
 export type EasyWorkspaceAction = {
   href: string;
@@ -53,21 +54,22 @@ export function EasyWorkspace({
   activityLinkLabel?: string;
   footerNote?: React.ReactNode;
 }) {
+  const { adminText } = useI18n();
   return (
     <div className="max-w-5xl space-y-6">
       <section className="rounded border border-zinc-200 bg-white p-5 shadow-sm dark:border-zinc-700 dark:bg-zinc-900">
         <p className="text-xs font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
-          Easy Mode
+          {adminText("Easy Mode")}
         </p>
         <h1 className="mt-2 text-2xl font-semibold text-zinc-900 dark:text-zinc-50">
-          {title}
+          {adminText(title)}
         </h1>
-        <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-300">{summary}</p>
-        <p className="mt-3 text-sm text-zinc-500 dark:text-zinc-400">{description}</p>
+        <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-300">{adminText(summary)}</p>
+        <p className="mt-3 text-sm text-zinc-500 dark:text-zinc-400">{adminText(description)}</p>
       </section>
 
       <section className="rounded border border-zinc-200 bg-white p-5 shadow-sm dark:border-zinc-700 dark:bg-zinc-900">
-        <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-50">Start Here</h2>
+        <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-50">{adminText("Start Here")}</h2>
         <div className="mt-4 grid gap-3 md:grid-cols-2">
           {actions.map((action) => (
             <Link
@@ -79,7 +81,7 @@ export function EasyWorkspace({
                   : "border-zinc-200 hover:bg-zinc-50 dark:border-zinc-700 dark:hover:bg-zinc-800"
               }`}
             >
-              <div className="font-medium">{action.label}</div>
+              <div className="font-medium">{adminText(action.label)}</div>
               <p
                 className={`mt-1 text-sm ${
                   action.primary
@@ -87,7 +89,7 @@ export function EasyWorkspace({
                     : "text-zinc-500 dark:text-zinc-400"
                 }`}
               >
-                {action.description}
+                {adminText(action.description)}
               </p>
             </Link>
           ))}
@@ -97,11 +99,11 @@ export function EasyWorkspace({
       {(loading || error || stats.length > 0) && (
         <section className="rounded border border-zinc-200 bg-white p-5 shadow-sm dark:border-zinc-700 dark:bg-zinc-900">
           <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-50">
-            {snapshotTitle}
+            {adminText(snapshotTitle)}
           </h2>
           {loading && (
             <p className="mt-3 text-sm text-zinc-500 dark:text-zinc-400">
-              Loading current context...
+              {adminText("Loading current context...")}
             </p>
           )}
           {!loading && error && (
@@ -117,14 +119,14 @@ export function EasyWorkspace({
                   className="rounded border border-zinc-100 px-4 py-3 dark:border-zinc-800"
                 >
                   <p className="text-xs font-semibold uppercase tracking-wide text-zinc-500">
-                    {stat.label}
+                    {adminText(stat.label)}
                   </p>
                   <p className="mt-2 text-2xl font-semibold text-zinc-900 dark:text-zinc-50">
                     {stat.value}
                   </p>
                   {stat.hint && (
                     <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
-                      {stat.hint}
+                      {adminText(stat.hint)}
                     </p>
                   )}
                 </div>
@@ -138,25 +140,25 @@ export function EasyWorkspace({
         <section className="rounded border border-zinc-200 bg-white p-5 shadow-sm dark:border-zinc-700 dark:bg-zinc-900">
           <div className="flex items-center justify-between gap-3">
             <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-50">
-              {activityTitle}
+              {adminText(activityTitle)}
             </h2>
             {activityLinkHref && (
               <Link
                 href={activityLinkHref}
                 className="text-sm text-blue-700 underline underline-offset-2 hover:text-blue-900 dark:text-blue-300 dark:hover:text-blue-200"
               >
-                {activityLinkLabel}
+                {adminText(activityLinkLabel)}
               </Link>
             )}
           </div>
           {loading && (
             <p className="mt-3 text-sm text-zinc-500 dark:text-zinc-400">
-              Loading recent work...
+              {adminText("Loading recent work...")}
             </p>
           )}
           {!loading && !error && activityItems && activityItems.length === 0 && (
             <p className="mt-3 text-sm text-zinc-500 dark:text-zinc-400">
-              {activityEmptyMessage}
+              {adminText(activityEmptyMessage)}
             </p>
           )}
           {!loading && !error && activityItems && activityItems.length > 0 && (
@@ -165,16 +167,16 @@ export function EasyWorkspace({
                 const content = (
                   <>
                     <div className="font-medium text-zinc-900 dark:text-zinc-100">
-                      {item.title}
+                      {adminText(item.title)}
                     </div>
                     {item.meta && (
                       <div className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
-                        {item.meta}
+                        {adminText(item.meta)}
                       </div>
                     )}
                     {item.description && (
                       <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
-                        {item.description}
+                        {adminText(item.description)}
                       </p>
                     )}
                   </>

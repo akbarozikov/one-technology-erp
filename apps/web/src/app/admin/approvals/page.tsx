@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { useAuth } from "@/components/admin/AuthProvider";
+import { useI18n } from "@/components/admin/LanguageProvider";
 import { ApiError, apiGet, getApiBaseUrl } from "@/lib/api";
 import { EasySalesCard } from "@/components/admin/easy/EasySalesCard";
 import {
@@ -53,6 +54,7 @@ function QuickActionButton({
 
 export default function ApprovalsPage() {
   const { hasAnyPermission } = useAuth();
+  const { adminText } = useI18n();
   const [sales, setSales] = useState<Sale[]>([]);
   const [approvalRecords, setApprovalRecords] = useState<Record<string, EasyApprovalRecord>>({});
   const [loading, setLoading] = useState(true);
@@ -100,7 +102,7 @@ export default function ApprovalsPage() {
             ? err.message
             : err instanceof Error
               ? err.message
-              : "Failed to load sales awaiting approval."
+              : adminText("Failed to load sales awaiting approval.")
         );
       } finally {
         if (!cancelled) {
@@ -160,14 +162,13 @@ export default function ApprovalsPage() {
     <div className="max-w-6xl space-y-6 lg:space-y-8">
       <section className="app-panel-strong p-6 lg:p-8">
         <p className="app-kicker">
-          Boss Mode
+          {adminText("Boss Mode")}
         </p>
         <h1 className="app-page-title text-[2rem]">
-          Sales Awaiting Approval
+          {adminText("Sales Awaiting Approval")}
         </h1>
         <p className="app-page-subtitle">
-                  This is your decision inbox. Review the sale, make the decision, and only open the
-          deeper ERP page when you need the full commercial controls.
+          {adminText("This is your decision inbox. Review the sale, make the decision, and only open the deeper ERP page when you need the full commercial controls.")}
         </p>
       </section>
 
@@ -176,15 +177,14 @@ export default function ApprovalsPage() {
           className="rounded border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-950 dark:border-amber-700 dark:bg-amber-950/40 dark:text-amber-100"
           role="status"
         >
-          Set <code className="rounded bg-amber-100 px-1 dark:bg-amber-900">NEXT_PUBLIC_API_BASE_URL</code>{" "}
-          in <code className="rounded bg-amber-100 px-1 dark:bg-amber-900">.env.local</code> to
-          load live review data.
+          {adminText("Set")} <code className="rounded bg-amber-100 px-1 dark:bg-amber-900">NEXT_PUBLIC_API_BASE_URL</code>{" "}
+          {adminText("in")} <code className="rounded bg-amber-100 px-1 dark:bg-amber-900">.env.local</code> {adminText("to load live review data.")}
         </div>
       )}
 
       {loading && (
         <section className="app-panel p-5">
-          <p className="text-sm text-zinc-500">Loading the decision inbox...</p>
+          <p className="text-sm text-zinc-500">{adminText("Loading the decision inbox...")}</p>
         </section>
       )}
 
@@ -199,43 +199,43 @@ export default function ApprovalsPage() {
           <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
             <div className="app-panel p-5">
               <p className="text-xs font-semibold uppercase tracking-wide text-zinc-500">
-                Pending Decisions
+                {adminText("Pending Decisions")}
               </p>
               <p className="app-page-title text-[2rem]">
                 {pendingSales.length}
               </p>
               <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
-                Waiting for an approve or reject call
+                {adminText("Waiting for an approve or reject call")}
               </p>
             </div>
             <div className="app-panel p-5">
               <p className="text-xs font-semibold uppercase tracking-wide text-zinc-500">
-                Needs Changes
+                {adminText("Needs Changes")}
               </p>
               <p className="app-page-title text-[2rem]">
                 {needsChangesSales.length}
               </p>
               <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
-                Already sent back for another pass
+                {adminText("Already sent back for another pass")}
               </p>
             </div>
             <div className="app-panel p-5">
               <p className="text-xs font-semibold uppercase tracking-wide text-zinc-500">
-                Decisions Recorded
+                {adminText("Decisions Recorded")}
               </p>
               <p className="app-page-title text-[2rem]">
                 {decisionCount}
               </p>
               <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
-                Saved in this lightweight approval layer
+                {adminText("Saved in this lightweight approval layer")}
               </p>
             </div>
             <div className="app-panel p-5">
               <p className="text-xs font-semibold uppercase tracking-wide text-zinc-500">
-                Role Focus
+                {adminText("Role Focus")}
               </p>
               <p className="mt-2 text-sm text-zinc-700 dark:text-zinc-200">
-                Sellers work from My Sales. Managers work from this inbox.
+                {adminText("Sellers work from My Sales. Managers work from this inbox.")}
               </p>
             </div>
           </section>
@@ -244,11 +244,10 @@ export default function ApprovalsPage() {
             <div className="mb-4 flex items-center justify-between gap-3">
               <div>
                 <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-50">
-                  Decision Inbox
+                  {adminText("Decision Inbox")}
                 </h2>
                 <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
-                  Each card is a sale decision. Take action right here, then open the secondary
-                  review page only if you need more context.
+                  {adminText("Each card is a sale decision. Take action right here, then open the secondary review page only if you need more context.")}
                 </p>
               </div>
               {canOpenAdvancedSales && (
@@ -256,7 +255,7 @@ export default function ApprovalsPage() {
                   href="/admin/quote-versions"
                   className="app-link text-sm"
                 >
-                  Open advanced commercial records
+                  {adminText("Open advanced commercial records")}
                 </Link>
               )}
             </div>
@@ -264,10 +263,10 @@ export default function ApprovalsPage() {
             {visibleSales.length === 0 ? (
               <div className="app-empty">
                 <p className="text-sm text-zinc-500 dark:text-zinc-400">
-                  Your decision inbox is clear.
+                  {adminText("Your decision inbox is clear.")}
                 </p>
                 <p className="mt-2 text-sm text-zinc-500 dark:text-zinc-400">
-                  New sales will appear here when they are ready for a manager decision.
+                  {adminText("New sales will appear here when they are ready for a manager decision.")}
                 </p>
               </div>
             ) : (
@@ -279,23 +278,23 @@ export default function ApprovalsPage() {
                     extraBadge={sale.seller || sale.stageLabel}
                     description={
                       sale.decisionComment
-                        ? `Latest note: ${sale.decisionComment}`
-                        : "Use the quick decisions here, or open the review page for more context."
+                        ? `${adminText("Latest note")}: ${sale.decisionComment}`
+                        : adminText("Use the quick decisions here, or open the review page for more context.")
                     }
                     actions={
                       <>
                         <QuickActionButton
-                          label="Approve"
+                          label={adminText("Approve")}
                           tone="primary"
                           onClick={() => applyDecision(sale, "approve")}
                         />
                         <QuickActionButton
-                          label="Send back"
+                          label={adminText("Send back")}
                           tone="warning"
                           onClick={() => applyDecision(sale, "send_back")}
                         />
                         <QuickActionButton
-                          label="Reject"
+                          label={adminText("Reject")}
                           tone="danger"
                           onClick={() => applyDecision(sale, "reject")}
                         />
@@ -303,7 +302,7 @@ export default function ApprovalsPage() {
                           href={sale.detailHref}
                           className="app-button-secondary !px-4 !py-2"
                         >
-                          Open review
+                          {adminText("Open review")}
                         </Link>
                       </>
                     }

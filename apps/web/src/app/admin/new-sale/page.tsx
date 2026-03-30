@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { useAuth } from "@/components/admin/AuthProvider";
+import { useI18n } from "@/components/admin/LanguageProvider";
 import { ApiError, apiGet, apiPost, formatApiError, getApiBaseUrl } from "@/lib/api";
 import { formatMoney } from "@/lib/easy-sales";
 
@@ -83,6 +84,7 @@ const emptySubmission: SubmissionState = {
 
 export default function NewSalePage() {
   const { hasAnyPermission } = useAuth();
+  const { adminText } = useI18n();
   const [products, setProducts] = useState<ProductRow[]>([]);
   const [units, setUnits] = useState<UnitRow[]>([]);
   const [loading, setLoading] = useState(true);
@@ -127,7 +129,7 @@ export default function NewSalePage() {
             ? err.message
             : err instanceof Error
               ? err.message
-              : "Failed to load sales starter data."
+              : adminText("Failed to load sales starter data.")
         );
       } finally {
         if (!cancelled) {
@@ -190,7 +192,7 @@ export default function NewSalePage() {
     if (!trimmedClientName) {
       setSubmission((current) => ({
         ...current,
-        error: "Client or customer name is required.",
+        error: adminText("Client or customer name is required."),
         partialMessage: null,
       }));
       return;
@@ -199,7 +201,7 @@ export default function NewSalePage() {
     if (!selectedProduct) {
       setSubmission((current) => ({
         ...current,
-        error: "Choose a product or solution.",
+        error: adminText("Choose a product or solution."),
         partialMessage: null,
       }));
       return;
@@ -208,7 +210,7 @@ export default function NewSalePage() {
     if (!selectedUnit) {
       setSubmission((current) => ({
         ...current,
-        error: "The selected product is missing a usable default unit.",
+        error: adminText("The selected product is missing a usable default unit."),
         partialMessage: null,
       }));
       return;
@@ -217,7 +219,7 @@ export default function NewSalePage() {
     if (!Number.isFinite(parsedQuantity) || parsedQuantity <= 0) {
       setSubmission((current) => ({
         ...current,
-        error: "Quantity must be a positive number.",
+        error: adminText("Quantity must be a positive number."),
         partialMessage: null,
       }));
       return;
@@ -226,7 +228,7 @@ export default function NewSalePage() {
     if (!Number.isFinite(parsedUnitPrice) || parsedUnitPrice <= 0) {
       setSubmission((current) => ({
         ...current,
-        error: "Price or amount must be a positive number.",
+        error: adminText("Price or amount must be a positive number."),
         partialMessage: null,
       }));
       return;
@@ -310,20 +312,20 @@ export default function NewSalePage() {
           ? formatApiError(err)
           : err instanceof Error
             ? err.message
-            : "Failed to start the sale";
+            : adminText("Failed to start the sale");
 
       setSubmission({
         loading: false,
         error: createdVersion
-          ? `${baseMessage}\nThe sale was started, but the first item still needs attention in advanced mode.`
+          ? `${baseMessage}\n${adminText("The sale was started, but the first item still needs attention in advanced mode.")}`
           : createdQuote
-            ? `${baseMessage}\nThe sale shell was created, but the next commercial step still needs attention.`
+            ? `${baseMessage}\n${adminText("The sale shell was created, but the next commercial step still needs attention.")}`
             : baseMessage,
         partialMessage:
           createdVersion !== null
-            ? "Open the advanced sale details to finish the setup."
+            ? adminText("Open the advanced sale details to finish the setup.")
             : createdQuote !== null
-              ? "Open the advanced commercial list and continue from the partially created sale."
+              ? adminText("Open the advanced commercial list and continue from the partially created sale.")
               : null,
         quote: createdQuote,
         quoteVersion: createdVersion,
@@ -337,11 +339,10 @@ export default function NewSalePage() {
   return (
     <div className="max-w-6xl space-y-6 lg:space-y-8">
       <section className="app-panel-strong p-6 lg:p-8">
-        <p className="app-kicker">Easy Mode</p>
-        <h1 className="app-page-title text-[2rem]">New Sale</h1>
+        <p className="app-kicker">{adminText("Easy Mode")}</p>
+        <h1 className="app-page-title text-[2rem]">{adminText("New Sale")}</h1>
         <p className="app-page-subtitle">
-          Start a sale from the basic customer and product details only. The deeper commercial
-          workflow stays available behind the scenes when you need it.
+          {adminText("Start a sale from the basic customer and product details only. The deeper commercial workflow stays available behind the scenes when you need it.")}
         </p>
       </section>
 
@@ -350,15 +351,14 @@ export default function NewSalePage() {
           className="rounded border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-950 dark:border-amber-700 dark:bg-amber-950/40 dark:text-amber-100"
           role="status"
         >
-          Set <code className="rounded bg-amber-100 px-1 dark:bg-amber-900">NEXT_PUBLIC_API_BASE_URL</code>{" "}
-          in <code className="rounded bg-amber-100 px-1 dark:bg-amber-900">.env.local</code> to
-          load product and sales data.
+          {adminText("Set")} <code className="rounded bg-amber-100 px-1 dark:bg-amber-900">NEXT_PUBLIC_API_BASE_URL</code>{" "}
+          {adminText("in")} <code className="rounded bg-amber-100 px-1 dark:bg-amber-900">.env.local</code> {adminText("to load product and sales data.")}
         </div>
       )}
 
       {loading && (
         <section className="app-panel p-5">
-          <p className="text-sm text-zinc-500">Loading the sales starter...</p>
+          <p className="text-sm text-zinc-500">{adminText("Loading the sales starter...")}</p>
         </section>
       )}
 
@@ -374,11 +374,10 @@ export default function NewSalePage() {
             <section className="app-panel-strong p-6 lg:p-8">
               <div className="mb-4">
                 <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-50">
-                  Sale Details
+                  {adminText("Sale Details")}
                 </h2>
                 <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
-                  Capture the customer, product, quantity, and price. The system will start the
-                  sale record for you behind the scenes.
+                  {adminText("Capture the customer, product, quantity, and price. The system will start the sale record for you behind the scenes.")}
                 </p>
               </div>
 
@@ -386,19 +385,19 @@ export default function NewSalePage() {
                 <div className="grid gap-4 md:grid-cols-2">
                   <label className="block text-sm">
                     <span className="mb-1 block font-medium text-zinc-700 dark:text-zinc-300">
-                      Client / Customer
+                      {adminText("Client / Customer")}
                     </span>
                     <input
                       value={clientName}
                       onChange={(event) => setClientName(event.target.value)}
                       className="app-input"
-                      placeholder="Customer name or company"
+                      placeholder={adminText("Customer name or company")}
                     />
                   </label>
 
                   <label className="block text-sm">
                     <span className="mb-1 block font-medium text-zinc-700 dark:text-zinc-300">
-                      Product / Solution
+                      {adminText("Product / Solution")}
                     </span>
                     <select
                       value={productId}
@@ -408,7 +407,7 @@ export default function NewSalePage() {
                       }}
                       className="app-input"
                     >
-                      <option value="">Choose a product</option>
+                      <option value="">{adminText("Choose a product")}</option>
                       {products.map((product) => (
                         <option key={product.id} value={product.id}>
                           {product.name} - {product.sku}
@@ -419,7 +418,7 @@ export default function NewSalePage() {
 
                   <label className="block text-sm">
                     <span className="mb-1 block font-medium text-zinc-700 dark:text-zinc-300">
-                      Quantity
+                      {adminText("Quantity")}
                     </span>
                     <input
                       value={quantity}
@@ -433,7 +432,7 @@ export default function NewSalePage() {
 
                   <label className="block text-sm">
                     <span className="mb-1 block font-medium text-zinc-700 dark:text-zinc-300">
-                      Price / Amount
+                      {adminText("Price / Amount")}
                     </span>
                     <input
                       value={unitPrice}
@@ -451,14 +450,14 @@ export default function NewSalePage() {
 
                 <label className="block text-sm">
                   <span className="mb-1 block font-medium text-zinc-700 dark:text-zinc-300">
-                    Notes / Comment
+                    {adminText("Notes / Comment")}
                   </span>
                   <textarea
                     value={notes}
                     onChange={(event) => setNotes(event.target.value)}
                     rows={4}
                     className="app-input"
-                    placeholder="Anything the next person should know about this sale"
+                    placeholder={adminText("Anything the next person should know about this sale")}
                   />
                 </label>
 
@@ -480,7 +479,7 @@ export default function NewSalePage() {
                           href={`/admin/quote-versions/${submission.quoteVersion.id}`}
                           className="text-blue-700 underline underline-offset-2 hover:text-blue-900 dark:text-blue-300 dark:hover:text-blue-200"
                         >
-                          Open advanced sale details
+                          {adminText("Open advanced sale details")}
                         </Link>
                       )}
                       {submission.quote && canOpenAdvancedSales && (
@@ -488,7 +487,7 @@ export default function NewSalePage() {
                           href="/admin/quotes"
                           className="text-blue-700 underline underline-offset-2 hover:text-blue-900 dark:text-blue-300 dark:hover:text-blue-200"
                         >
-                          Open advanced commercial list
+                          {adminText("Open advanced commercial list")}
                         </Link>
                       )}
                     </div>
@@ -497,28 +496,28 @@ export default function NewSalePage() {
 
                 {submission.quote && submission.quoteVersion && submission.quoteLine && (
                   <div className="rounded border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-900 dark:border-emerald-900 dark:bg-emerald-950/40 dark:text-emerald-100">
-                    <p>Your sale draft is ready.</p>
+                    <p>{adminText("Your sale draft is ready.")}</p>
                     <div className="mt-2 flex flex-wrap gap-3">
                       {canOpenAdvancedSales && (
                         <Link
                           href={`/admin/quote-versions/${submission.quoteVersion.id}`}
                           className="text-blue-700 underline underline-offset-2 hover:text-blue-900 dark:text-blue-300 dark:hover:text-blue-200"
                         >
-                          Open advanced details
+                          {adminText("Open advanced details")}
                         </Link>
                       )}
                       <Link
                         href="/admin/my-sales"
                         className="text-blue-700 underline underline-offset-2 hover:text-blue-900 dark:text-blue-300 dark:hover:text-blue-200"
                       >
-                        View My Sales
+                        {adminText("View My Sales")}
                       </Link>
                       <button
                         type="button"
                         onClick={resetForm}
                         className="text-blue-700 underline underline-offset-2 hover:text-blue-900 dark:text-blue-300 dark:hover:text-blue-200"
                       >
-                        Create another
+                        {adminText("Create another")}
                       </button>
                     </div>
                   </div>
@@ -530,11 +529,11 @@ export default function NewSalePage() {
                     disabled={submission.loading}
                     className="rounded bg-zinc-900 px-4 py-2 text-sm font-medium text-white hover:bg-zinc-800 disabled:opacity-50 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-white"
                   >
-                    {submission.loading ? "Starting sale..." : "Start Sale"}
+                    {submission.loading ? adminText("Starting sale...") : adminText("Start Sale")}
                   </button>
                   {canOpenAdvancedSales && (
                     <Link href="/admin/quote-versions" className="app-button-secondary">
-                      Open advanced sales
+                      {adminText("Open advanced sales")}
                     </Link>
                   )}
                 </div>
@@ -544,7 +543,7 @@ export default function NewSalePage() {
             <div className="space-y-6">
               <section className="app-panel-strong p-6 lg:p-8">
                 <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-50">
-                  Selected Item
+                  {adminText("Selected Item")}
                 </h2>
                 {selectedProduct ? (
                   <div className="mt-4 space-y-3">
@@ -553,13 +552,13 @@ export default function NewSalePage() {
                         {selectedProduct.name}
                       </p>
                       <p className="text-sm text-zinc-500 dark:text-zinc-400">
-                        SKU: {selectedProduct.sku}
+                        {adminText("SKU")}: {selectedProduct.sku}
                       </p>
                     </div>
                     <div className="grid gap-3 sm:grid-cols-2">
                       <div className="app-panel-muted px-3 py-3">
                         <p className="text-[11px] font-semibold uppercase tracking-wide text-zinc-500">
-                          Default unit
+                          {adminText("Default unit")}
                         </p>
                         <p className="mt-1 text-sm text-zinc-700 dark:text-zinc-200">
                           {selectedUnit ? selectedUnit.symbol || selectedUnit.name : "-"}
@@ -567,7 +566,7 @@ export default function NewSalePage() {
                       </div>
                       <div className="app-panel-muted px-3 py-3">
                         <p className="text-[11px] font-semibold uppercase tracking-wide text-zinc-500">
-                          Suggested price
+                          {adminText("Suggested price")}
                         </p>
                         <p className="mt-1 text-sm text-zinc-700 dark:text-zinc-200">
                           {formatMoney(selectedProduct.minimum_sale_price)}
@@ -575,7 +574,7 @@ export default function NewSalePage() {
                       </div>
                       <div className="rounded border border-zinc-100 px-3 py-2 dark:border-zinc-800 sm:col-span-2">
                         <p className="text-[11px] font-semibold uppercase tracking-wide text-zinc-500">
-                          Estimated total
+                          {adminText("Estimated total")}
                         </p>
                         <p className="mt-1 text-lg font-semibold text-zinc-900 dark:text-zinc-50">
                           {formatMoney(saleTotal)}
@@ -590,19 +589,19 @@ export default function NewSalePage() {
                   </div>
                 ) : (
                   <p className="mt-4 text-sm text-zinc-500 dark:text-zinc-400">
-                    Choose a product to see its default unit, suggested price, and quick summary.
+                    {adminText("Choose a product to see its default unit, suggested price, and quick summary.")}
                   </p>
                 )}
               </section>
 
               <section className="app-panel-strong p-6 lg:p-8">
                 <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-50">
-                  What Happens Next
+                  {adminText("What Happens Next")}
                 </h2>
                 <div className="mt-4 space-y-3 text-sm text-zinc-500 dark:text-zinc-400">
-                  <p>1. The system starts the first commercial record for this sale.</p>
-                  <p>2. Your selected product is added with the quantity and price you entered.</p>
-                  <p>3. When you need proposal, order, or detailed follow-through tools, you can continue in the advanced sales workflow.</p>
+                  <p>{adminText("1. The system starts the first commercial record for this sale.")}</p>
+                  <p>{adminText("2. Your selected product is added with the quantity and price you entered.")}</p>
+                  <p>{adminText("3. When you need proposal, order, or detailed follow-through tools, you can continue in the advanced sales workflow.")}</p>
                 </div>
               </section>
             </div>
@@ -612,15 +611,15 @@ export default function NewSalePage() {
             <div className="flex items-center justify-between gap-3">
               <div>
                 <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-50">
-                  Quick Picks
+                  {adminText("Quick Picks")}
                 </h2>
                 <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
-                  Pick one of the most accessible active products to speed up the sale start.
+                  {adminText("Pick one of the most accessible active products to speed up the sale start.")}
                 </p>
               </div>
               {canManageProducts && (
                 <Link href="/admin/products" className="app-link text-sm">
-                  Open products
+                  {adminText("Open products")}
                 </Link>
               )}
             </div>
@@ -657,7 +656,7 @@ export default function NewSalePage() {
                         : "text-zinc-500 dark:text-zinc-400"
                     }`}
                   >
-                    Suggested price: {formatMoney(product.minimum_sale_price)}
+                    {adminText("Suggested price")}: {formatMoney(product.minimum_sale_price)}
                   </p>
                 </button>
               ))}

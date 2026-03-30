@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { useAuth } from "@/components/admin/AuthProvider";
+import { useI18n } from "@/components/admin/LanguageProvider";
 import { EasySalesCard } from "@/components/admin/easy/EasySalesCard";
 import { ApiError, apiGet, getApiBaseUrl } from "@/lib/api";
 import {
@@ -17,6 +18,7 @@ import {
 
 export default function MySalesPage() {
   const { session, hasPermission, hasAnyPermission } = useAuth();
+  const { adminText } = useI18n();
   const [sales, setSales] = useState<Sale[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -58,7 +60,7 @@ export default function MySalesPage() {
             ? err.message
             : err instanceof Error
               ? err.message
-              : "Failed to load sales activity."
+              : adminText("Failed to load sales activity.")
         );
       } finally {
         if (!cancelled) {
@@ -102,10 +104,10 @@ export default function MySalesPage() {
   return (
     <div className="max-w-6xl space-y-6 lg:space-y-8">
       <section className="app-panel-strong p-6 lg:p-8">
-        <p className="app-kicker">Easy Mode</p>
-        <h1 className="app-page-title text-[2rem]">My Sales</h1>
+        <p className="app-kicker">{adminText("Easy Mode")}</p>
+        <h1 className="app-page-title text-[2rem]">{adminText("My Sales")}</h1>
         <p className="app-page-subtitle">
-          Track your sales in one place without switching between technical commercial screens.
+          {adminText("Track your sales in one place without switching between technical commercial screens.")}
         </p>
       </section>
 
@@ -114,15 +116,14 @@ export default function MySalesPage() {
           className="rounded border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-950 dark:border-amber-700 dark:bg-amber-950/40 dark:text-amber-100"
           role="status"
         >
-          Set <code className="rounded bg-amber-100 px-1 dark:bg-amber-900">NEXT_PUBLIC_API_BASE_URL</code>{" "}
-          in <code className="rounded bg-amber-100 px-1 dark:bg-amber-900">.env.local</code> to
-          load live sales data.
+          {adminText("Set")} <code className="rounded bg-amber-100 px-1 dark:bg-amber-900">NEXT_PUBLIC_API_BASE_URL</code>{" "}
+          {adminText("in")} <code className="rounded bg-amber-100 px-1 dark:bg-amber-900">.env.local</code> {adminText("to load live sales data.")}
         </div>
       )}
 
       {loading && (
         <section className="app-panel p-5">
-          <p className="text-sm text-zinc-500">Loading your sales view...</p>
+          <p className="text-sm text-zinc-500">{adminText("Loading your sales view...")}</p>
         </section>
       )}
 
@@ -137,46 +138,46 @@ export default function MySalesPage() {
           <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
             <div className="app-panel p-5">
               <p className="text-xs font-semibold uppercase tracking-wide text-zinc-500">
-                Active Sales
+                {adminText("Active Sales")}
               </p>
               <p className="app-page-title text-[2rem]">{visibleSales.length}</p>
               <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
-                Sales currently in your workflow
+                {adminText("Sales currently in your workflow")}
               </p>
             </div>
             <div className="app-panel p-5">
               <p className="text-xs font-semibold uppercase tracking-wide text-zinc-500">
-                Pending
+                {adminText("Pending")}
               </p>
               <p className="app-page-title text-[2rem]">
                 {pendingSales.filter((sale) => sale.status === "Pending").length}
               </p>
               <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
-                Still waiting for a decision
+                {adminText("Still waiting for a decision")}
               </p>
             </div>
             <div className="app-panel p-5">
               <p className="text-xs font-semibold uppercase tracking-wide text-zinc-500">
-                Needs Changes
+                {adminText("Needs Changes")}
               </p>
               <p className="app-page-title text-[2rem]">{needsChangesCount}</p>
               <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
-                Sales that need another pass
+                {adminText("Sales that need another pass")}
               </p>
             </div>
             <div className="app-panel p-5">
               <p className="text-xs font-semibold uppercase tracking-wide text-zinc-500">
-                Quick Actions
+                {adminText("Quick Actions")}
               </p>
               <div className="mt-3 flex flex-wrap gap-2">
                 {canStartSale && (
                   <Link href="/admin/new-sale" className="app-button-primary !px-4 !py-2">
-                    New Sale
+                    {adminText("New Sale")}
                   </Link>
                 )}
                 {canOpenAdvancedSales && (
                   <Link href="/admin/quote-versions" className="app-button-secondary !px-4 !py-2">
-                    Advanced Sales
+                    {adminText("Advanced Sales")}
                   </Link>
                 )}
               </div>
@@ -187,15 +188,15 @@ export default function MySalesPage() {
             <div className="mb-4 flex items-center justify-between gap-3">
               <div>
                 <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-50">
-                  Sales That Need You
+                  {adminText("Sales That Need You")}
                 </h2>
                 <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
-                  Keep the next customer conversations moving from one simple list.
+                  {adminText("Keep the next customer conversations moving from one simple list.")}
                 </p>
               </div>
               {canStartSale && (
                 <Link href="/admin/new-sale" className="app-link text-sm">
-                  Start another sale
+                  {adminText("Start another sale")}
                 </Link>
               )}
             </div>
@@ -203,12 +204,12 @@ export default function MySalesPage() {
             {pendingSales.length === 0 ? (
               <div className="app-empty">
                 <p className="text-sm text-zinc-500 dark:text-zinc-400">
-                  Nothing needs your attention right now.
+                  {adminText("Nothing needs your attention right now.")}
                 </p>
                 {canStartSale && (
                   <div className="mt-3">
                     <Link href="/admin/new-sale" className="app-link text-sm">
-                      Start a new sale
+                      {adminText("Start a new sale")}
                     </Link>
                   </div>
                 )}
@@ -220,7 +221,7 @@ export default function MySalesPage() {
                     key={sale.id}
                     sale={sale}
                     href={sale.advancedHref}
-                    description="Open the advanced sales page only when you need the deeper commercial tools."
+                    description={adminText("Open the advanced sales page only when you need the deeper commercial tools.")}
                   />
                 ))}
               </div>
@@ -231,10 +232,10 @@ export default function MySalesPage() {
             <div className="mb-4 flex items-center justify-between gap-3">
               <div>
                 <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-50">
-                  Approved Sales
+                  {adminText("Approved Sales")}
                 </h2>
                 <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
-                  Sales that already cleared the main decision step.
+                  {adminText("Sales that already cleared the main decision step.")}
                 </p>
               </div>
             </div>
@@ -242,7 +243,7 @@ export default function MySalesPage() {
             {approvedSales.length === 0 ? (
               <div className="app-empty">
                 <p className="text-sm text-zinc-500 dark:text-zinc-400">
-                  No approved sales are showing yet.
+                  {adminText("No approved sales are showing yet.")}
                 </p>
               </div>
             ) : (
@@ -252,7 +253,7 @@ export default function MySalesPage() {
                     key={sale.id}
                     sale={sale}
                     href={sale.advancedHref}
-                    description="Open the advanced sales page if you need the full follow-through workflow."
+                    description={adminText("Open the advanced sales page if you need the full follow-through workflow.")}
                   />
                 ))}
               </div>

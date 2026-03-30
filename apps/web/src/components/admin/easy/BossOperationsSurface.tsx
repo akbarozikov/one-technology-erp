@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { useAuth } from "@/components/admin/AuthProvider";
+import { useI18n } from "@/components/admin/LanguageProvider";
 import { ApiError, apiGet, getApiBaseUrl } from "@/lib/api";
 import {
   buildExpenseItems,
@@ -31,6 +32,7 @@ function formatDelta(value: number | null | undefined): string {
 }
 
 function ExpenseCard({ item }: { item: ExpenseViewItem }) {
+  const { adminText } = useI18n();
   return (
     <Link
       href={item.advancedHref}
@@ -44,28 +46,28 @@ function ExpenseCard({ item }: { item: ExpenseViewItem }) {
         <span
           className={`inline-flex rounded-full border px-2 py-0.5 text-[11px] font-medium ${expenseTone(item.attention)}`}
         >
-          {item.attention}
+          {adminText(item.attention)}
         </span>
       </div>
 
       <div className="mt-3 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
         <div>
-          <p className="text-[11px] font-semibold uppercase tracking-wide text-zinc-500">Amount</p>
+          <p className="text-[11px] font-semibold uppercase tracking-wide text-zinc-500">{adminText("Amount")}</p>
           <p className="mt-1 text-sm text-zinc-700 dark:text-zinc-200">
             {formatBossCurrency(item.amount)}
           </p>
         </div>
         <div>
-          <p className="text-[11px] font-semibold uppercase tracking-wide text-zinc-500">Type</p>
-          <p className="mt-1 text-sm text-zinc-700 dark:text-zinc-200">{item.category}</p>
+          <p className="text-[11px] font-semibold uppercase tracking-wide text-zinc-500">{adminText("Type")}</p>
+          <p className="mt-1 text-sm text-zinc-700 dark:text-zinc-200">{adminText(item.category)}</p>
         </div>
         <div>
-          <p className="text-[11px] font-semibold uppercase tracking-wide text-zinc-500">Date</p>
+          <p className="text-[11px] font-semibold uppercase tracking-wide text-zinc-500">{adminText("Date")}</p>
           <p className="mt-1 text-sm text-zinc-700 dark:text-zinc-200">{item.date || "-"}</p>
         </div>
         <div>
-          <p className="text-[11px] font-semibold uppercase tracking-wide text-zinc-500">Status</p>
-          <p className="mt-1 text-sm text-zinc-700 dark:text-zinc-200">{item.status || "-"}</p>
+          <p className="text-[11px] font-semibold uppercase tracking-wide text-zinc-500">{adminText("Status")}</p>
+          <p className="mt-1 text-sm text-zinc-700 dark:text-zinc-200">{item.status ? adminText(item.status) : "-"}</p>
         </div>
       </div>
 
@@ -77,6 +79,7 @@ function ExpenseCard({ item }: { item: ExpenseViewItem }) {
 }
 
 function InventoryCard({ item }: { item: InventoryAdjustmentViewItem }) {
+  const { adminText } = useI18n();
   return (
     <Link
       href={item.advancedHref}
@@ -86,34 +89,34 @@ function InventoryCard({ item }: { item: InventoryAdjustmentViewItem }) {
         <div>
           <div className="font-semibold text-zinc-900 dark:text-zinc-100">{item.label}</div>
           <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-300">
-            {item.relatedItem} in {item.location}
+            {item.relatedItem} {adminText("in")} {item.location}
           </p>
         </div>
         <span
           className={`inline-flex rounded-full border px-2 py-0.5 text-[11px] font-medium ${inventoryAttentionTone(item.attention)}`}
         >
-          {item.attention}
+          {adminText(item.attention)}
         </span>
       </div>
 
       <div className="mt-3 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
         <div>
-          <p className="text-[11px] font-semibold uppercase tracking-wide text-zinc-500">Change</p>
+          <p className="text-[11px] font-semibold uppercase tracking-wide text-zinc-500">{adminText("Change")}</p>
           <p className="mt-1 text-sm text-zinc-700 dark:text-zinc-200">
             {formatDelta(item.quantityDelta)}
           </p>
         </div>
         <div>
-          <p className="text-[11px] font-semibold uppercase tracking-wide text-zinc-500">Type</p>
-          <p className="mt-1 text-sm text-zinc-700 dark:text-zinc-200">{item.category}</p>
+          <p className="text-[11px] font-semibold uppercase tracking-wide text-zinc-500">{adminText("Type")}</p>
+          <p className="mt-1 text-sm text-zinc-700 dark:text-zinc-200">{adminText(item.category)}</p>
         </div>
         <div>
-          <p className="text-[11px] font-semibold uppercase tracking-wide text-zinc-500">Date</p>
+          <p className="text-[11px] font-semibold uppercase tracking-wide text-zinc-500">{adminText("Date")}</p>
           <p className="mt-1 text-sm text-zinc-700 dark:text-zinc-200">{item.date || "-"}</p>
         </div>
         <div>
-          <p className="text-[11px] font-semibold uppercase tracking-wide text-zinc-500">Status</p>
-          <p className="mt-1 text-sm text-zinc-700 dark:text-zinc-200">{item.status || "-"}</p>
+          <p className="text-[11px] font-semibold uppercase tracking-wide text-zinc-500">{adminText("Status")}</p>
+          <p className="mt-1 text-sm text-zinc-700 dark:text-zinc-200">{item.status ? adminText(item.status) : "-"}</p>
         </div>
       </div>
 
@@ -128,6 +131,7 @@ function InventoryCard({ item }: { item: InventoryAdjustmentViewItem }) {
 
 export function BossOperationsSurface() {
   const { hasAnyPermission } = useAuth();
+  const { adminText } = useI18n();
   const [expenses, setExpenses] = useState<ExpenseViewItem[]>([]);
   const [adjustments, setAdjustments] = useState<InventoryAdjustmentViewItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -196,7 +200,7 @@ export function BossOperationsSurface() {
             ? err.message
             : err instanceof Error
               ? err.message
-              : "Failed to load expenses and inventory adjustments."
+              : adminText("Failed to load expenses and inventory adjustments.")
         );
       } finally {
         if (!cancelled) {
@@ -245,11 +249,10 @@ export function BossOperationsSurface() {
     <div className="space-y-6 lg:space-y-8">
       <div>
         <h1 className="app-page-title text-[2rem]">
-          Expenses & Inventory Adjustments
+          {adminText("Expenses & Inventory Adjustments")}
         </h1>
         <p className="app-page-subtitle">
-          A boss-facing view of spend and stock corrections, so unusual operational exceptions are
-          easier to spot before they turn into bigger issues.
+          {adminText("A boss-facing view of spend and stock corrections, so unusual operational exceptions are easier to spot before they turn into bigger issues.")}
         </p>
       </div>
 
@@ -258,14 +261,14 @@ export function BossOperationsSurface() {
           className="rounded border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-950 dark:border-amber-700 dark:bg-amber-950/40 dark:text-amber-100"
           role="status"
         >
-          Set <code className="rounded bg-amber-100 px-1 dark:bg-amber-900">NEXT_PUBLIC_API_BASE_URL</code>{" "}
-          in <code className="rounded bg-amber-100 px-1 dark:bg-amber-900">.env.local</code>.
+          {adminText("Set")} <code className="rounded bg-amber-100 px-1 dark:bg-amber-900">NEXT_PUBLIC_API_BASE_URL</code>{" "}
+          {adminText("in")} <code className="rounded bg-amber-100 px-1 dark:bg-amber-900">.env.local</code>.
         </div>
       )}
 
       {loading && (
         <section className="app-stat">
-          <p className="text-sm text-zinc-500">Loading operational exceptions...</p>
+          <p className="text-sm text-zinc-500">{adminText("Loading operational exceptions...")}</p>
         </section>
       )}
 
@@ -280,7 +283,7 @@ export function BossOperationsSurface() {
           <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
             <div className="app-stat">
               <p className="text-xs font-semibold uppercase tracking-wide text-zinc-500">
-                Recent Expenses
+                {adminText("Recent Expenses")}
               </p>
               <p className="mt-2 text-2xl font-semibold text-zinc-900 dark:text-zinc-50">
                 {recentExpenses.length}
@@ -288,7 +291,7 @@ export function BossOperationsSurface() {
             </div>
             <div className="app-stat">
               <p className="text-xs font-semibold uppercase tracking-wide text-zinc-500">
-                Large Expenses
+                {adminText("Large Expenses")}
               </p>
               <p className="mt-2 text-2xl font-semibold text-zinc-900 dark:text-zinc-50">
                 {formatBossCurrency(largeExpenseTotal)}
@@ -296,7 +299,7 @@ export function BossOperationsSurface() {
             </div>
             <div className="app-stat">
               <p className="text-xs font-semibold uppercase tracking-wide text-zinc-500">
-                Negative Adjustments
+                {adminText("Negative Adjustments")}
               </p>
               <p className="mt-2 text-2xl font-semibold text-zinc-900 dark:text-zinc-50">
                 {negativeAdjustments.length}
@@ -304,7 +307,7 @@ export function BossOperationsSurface() {
             </div>
             <div className="app-stat">
               <p className="text-xs font-semibold uppercase tracking-wide text-zinc-500">
-                Needs Review
+                {adminText("Needs Review")}
               </p>
               <p className="mt-2 text-2xl font-semibold text-zinc-900 dark:text-zinc-50">
                 {needsReview.length + attentionExpenses.length}
@@ -312,7 +315,7 @@ export function BossOperationsSurface() {
             </div>
             <div className="app-stat">
               <p className="text-xs font-semibold uppercase tracking-wide text-zinc-500">
-                Manual Checks
+                {adminText("Manual Checks")}
               </p>
               <p className="mt-2 text-2xl font-semibold text-zinc-900 dark:text-zinc-50">
                 {unusualAdjustments.filter((item) => item.attention === "Manual check").length}
@@ -321,51 +324,51 @@ export function BossOperationsSurface() {
           </section>
 
           <section className="app-panel p-5 lg:p-6">
-            <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-50">Quick Actions</h2>
+            <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-50">{adminText("Quick Actions")}</h2>
             <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
               <Link
                 href="/admin/purchase-receipts"
                 className="app-button-primary min-h-24 flex-col items-start !rounded-[1.2rem] !px-4 !py-4 text-left"
               >
-                <div className="font-medium">Open purchase receipts</div>
+                <div className="font-medium">{adminText("Open purchase receipts")}</div>
                 <p className="mt-1 text-sm text-zinc-100 dark:text-zinc-700">
-                  Review supplier spend in the advanced warehouse workflow.
+                  {adminText("Review supplier spend in the advanced warehouse workflow.")}
                 </p>
               </Link>
               <Link
                 href="/admin/stock-adjustments"
                 className="app-panel-muted flex min-h-24 flex-col px-4 py-4 transition hover:-translate-y-0.5"
               >
-                <div className="font-medium text-zinc-900 dark:text-zinc-100">Open stock adjustments</div>
+                <div className="font-medium text-zinc-900 dark:text-zinc-100">{adminText("Open stock adjustments")}</div>
                 <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
-                  Check manual stock corrections and their reasons.
+                  {adminText("Check manual stock corrections and their reasons.")}
                 </p>
               </Link>
               <Link
                 href="/admin/stock-writeoffs"
                 className="app-panel-muted flex min-h-24 flex-col px-4 py-4 transition hover:-translate-y-0.5"
               >
-                <div className="font-medium text-zinc-900 dark:text-zinc-100">Open writeoffs</div>
+                <div className="font-medium text-zinc-900 dark:text-zinc-100">{adminText("Open writeoffs")}</div>
                 <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
-                  Inspect damage, loss, defect, and other stock reductions.
+                  {adminText("Inspect damage, loss, defect, and other stock reductions.")}
                 </p>
               </Link>
               {canViewCatalog && <Link
                 href="/admin/products"
                 className="app-panel-muted flex min-h-24 flex-col px-4 py-4 transition hover:-translate-y-0.5"
               >
-                <div className="font-medium text-zinc-900 dark:text-zinc-100">Open products</div>
+                <div className="font-medium text-zinc-900 dark:text-zinc-100">{adminText("Open products")}</div>
                 <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
-                  Cross-check the affected catalog items behind these operational exceptions.
+                  {adminText("Cross-check the affected catalog items behind these operational exceptions.")}
                 </p>
               </Link>}
               <Link
                 href="/admin"
                 className="app-panel-muted flex min-h-24 flex-col px-4 py-4 transition hover:-translate-y-0.5"
               >
-                <div className="font-medium text-zinc-900 dark:text-zinc-100">Back to boss dashboard</div>
+                <div className="font-medium text-zinc-900 dark:text-zinc-100">{adminText("Back to boss dashboard")}</div>
                 <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
-                  Return to the wider control surface.
+                  {adminText("Return to the wider control surface.")}
                 </p>
               </Link>
             </div>
@@ -374,15 +377,15 @@ export function BossOperationsSurface() {
           <section className="grid gap-4 xl:grid-cols-2">
             <section className="app-panel p-5 lg:p-6">
               <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-50">
-                Large or Unconfirmed Expenses
+                {adminText("Large or Unconfirmed Expenses")}
               </h2>
               <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
-                Supplier spend that is large enough, recent enough, or still unconfirmed to deserve a second look.
+                {adminText("Supplier spend that is large enough, recent enough, or still unconfirmed to deserve a second look.")}
               </p>
               <div className="mt-4 space-y-3">
                 {largeExpenses.length === 0 ? (
                   <p className="app-page-subtitle">
-                    No supplier spend stands out right now.
+                    {adminText("No supplier spend stands out right now.")}
                   </p>
                 ) : (
                   largeExpenses.slice(0, 5).map((item) => <ExpenseCard key={item.id} item={item} />)
@@ -392,15 +395,15 @@ export function BossOperationsSurface() {
 
             <section className="app-panel p-5 lg:p-6">
               <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-50">
-                Recent Expenses
+                {adminText("Recent Expenses")}
               </h2>
               <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
-                Recent purchase receipts give a quick read on operational spend already entering the system.
+                {adminText("Recent purchase receipts give a quick read on operational spend already entering the system.")}
               </p>
               <div className="mt-4 space-y-3">
                 {recentExpenses.length === 0 ? (
                   <p className="app-page-subtitle">
-                    No recent purchase receipts are visible yet.
+                    {adminText("No recent purchase receipts are visible yet.")}
                   </p>
                 ) : (
                   recentExpenses.map((item) => <ExpenseCard key={item.id} item={item} />)
@@ -412,15 +415,15 @@ export function BossOperationsSurface() {
           <section className="grid gap-4 xl:grid-cols-2">
             <section className="app-panel p-5 lg:p-6">
               <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-50">
-                Negative Adjustments
+                {adminText("Negative Adjustments")}
               </h2>
               <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
-                Stock loss, writeoffs, and downward corrections that reduce what is available.
+                {adminText("Stock loss, writeoffs, and downward corrections that reduce what is available.")}
               </p>
               <div className="mt-4 space-y-3">
                 {negativeAdjustments.length === 0 ? (
                   <p className="app-page-subtitle">
-                    No negative stock changes stand out right now.
+                    {adminText("No negative stock changes stand out right now.")}
                   </p>
                 ) : (
                   negativeAdjustments.slice(0, 6).map((item) => (
@@ -432,15 +435,15 @@ export function BossOperationsSurface() {
 
             <section className="app-panel p-5 lg:p-6">
               <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-50">
-                Manual or Review-Needed Corrections
+                {adminText("Manual or Review-Needed Corrections")}
               </h2>
               <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
-                Manual counts, draft corrections, and other stock exceptions that deserve management awareness.
+                {adminText("Manual counts, draft corrections, and other stock exceptions that deserve management awareness.")}
               </p>
               <div className="mt-4 space-y-3">
                 {unusualAdjustments.length === 0 ? (
                   <p className="app-page-subtitle">
-                    No manual or review-needed stock exceptions are visible right now.
+                    {adminText("No manual or review-needed stock exceptions are visible right now.")}
                   </p>
                 ) : (
                   unusualAdjustments.slice(0, 6).map((item) => (
